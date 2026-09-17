@@ -61,4 +61,31 @@ Breve descripción de lo que muestra esta pantalla.
 Breve descripción de lo que muestra esta pantalla.
 
 ---
+#  Vivero Web — Vista previa (PC / Escritorio)
 
+
+```
+📁 capturas/
+   └── 📁 pc/
+        ├── panel-admin.png
+        └── vista-usuario.png
+```
+
+---
+
+##  Panel Admin
+
+<!-- Reemplaza la ruta si usas otro nombre de archivo -->
+![Panel Admin](./PROTOTIPO_ORDENADOR/PANEL%20ADMIN.jpg)
+
+Breve descripción de lo que muestra esta pantalla.
+
+---
+
+##  Vista Usuario
+
+![Vista Usuario](./PROTOTIPO_ORDENADOR/VISTA%20USUARIO.jpg)
+
+Breve descripción de lo que muestra esta pantalla.
+
+---
