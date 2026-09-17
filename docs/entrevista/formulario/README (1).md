@@ -78,25 +78,7 @@ La encuesta sirvió para tener una primera opinión real sobre el proyecto. Al e
 
 Con esto queda claro que el proyecto tiene potencial para aplicarse en un caso real, aunque hace falta encuestar a más viveros para confirmar que estas necesidades se repiten y no son solo de un caso particular.
 
----
 
-## 🛠️ Tecnologías utilizadas
-
-- Google Forms
-- Excel / Google Sheets
-
----
-
-## 🚀 Cómo usar este repositorio
-
-```bash
-git clone https://github.com/usuario/natutech.git
-cd natutech
-```
-
-Las imágenes de la encuesta y de los resultados se encuentran en la raíz del proyecto (`p1.jpeg`, `p2.jpeg`, `r1.jpeg` a `r7.jpeg`).
-
----
 
 📌 **Autor:** Tu nombre
 📅 **Fecha:** Septiembre 2026
