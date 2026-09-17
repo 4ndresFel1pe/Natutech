@@ -9,7 +9,8 @@ NATUTECH es un proyecto que busca conocer la percepción, el nivel de conocimien
 - [Metodología](#-metodología)
 - [Resultados estadísticos](#-resultados-estadísticos)
 - [Conclusiones](#-conclusiones)
-
+- [Tecnologías utilizadas](#-tecnologías-utilizadas)
+- [Cómo usar este repositorio](#-cómo-usar-este-repositorio)
 
 ---
 
@@ -25,7 +26,7 @@ A continuación se muestran capturas de la encuesta aplicada.
 
 | Página 1 | Página 2 |
 |:---:|:---:|
-| ![Encuesta - Página 1](p1.jpeg) | ![Encuesta - Página 2](p2.jpeg) |
+| ![Encuesta - Página 1](img/p1.jpeg) | ![Encuesta - Página 2](img/p2.jpeg) |
 
 *Figura 1 y 2. Encuesta aplicada al encargado del vivero.*
 
@@ -46,27 +47,27 @@ A continuación se muestran capturas de la encuesta aplicada.
 
 Aquí se presentan los resultados obtenidos tras procesar las respuestas.
 
-![Resultados - Preguntas generales](r1.jpeg)
+![Resultados - Preguntas generales](img/r1.jpeg)
 
 *Figura 3. Distribución de respuestas a la pregunta general del negocio.*
 
 | Manejo actual de inventario |  |
 |:---:|:---:|
-| ![Manejo de inventario 1](r2.jpeg) | ![Manejo de inventario 2](r3.jpeg) |
+| ![Manejo de inventario 1](img/r2.jpeg) | ![Manejo de inventario 2](img/r3.jpeg) |
 
 *Figura 4. Respuestas respecto a situaciones de manejo de mercancía.*
 
-![Resultados - Manejo de precios](r4.jpeg)
+![Resultados - Manejo de precios](img/r4.jpeg)
 
 *Figura 5. Distribución de respuestas sobre precios establecidos.*
 
-![Resultados - Ventas y clientes](r5.jpeg)
+![Resultados - Ventas y clientes](img/r5.jpeg)
 
 *Figura 6. Distribución de respuestas respecto a la atención a sus clientes.*
 
 | Uso de herramienta digital |  |
 |:---:|:---:|
-| ![Herramienta digital 1](r6.jpeg) | ![Herramienta digital 2](r7.jpeg) |
+| ![Herramienta digital 1](img/r6.jpeg) | ![Herramienta digital 2](img/r7.jpeg) |
 
 *Figura 7. Distribución de respuestas respecto al uso de un sistema de inventario y manejo web.*
 
@@ -78,6 +79,25 @@ La encuesta sirvió para tener una primera opinión real sobre el proyecto. Al e
 
 Con esto queda claro que el proyecto tiene potencial para aplicarse en un caso real, aunque hace falta encuestar a más viveros para confirmar que estas necesidades se repiten y no son solo de un caso particular.
 
+---
 
+## 🛠️ Tecnologías utilizadas
 
+- Google Forms
+- Excel / Google Sheets
 
+---
+
+## 🚀 Cómo usar este repositorio
+
+```bash
+git clone https://github.com/usuario/natutech.git
+cd natutech
+```
+
+Las imágenes de la encuesta y de los resultados se encuentran en la carpeta `img/` (`p1.jpeg`, `p2.jpeg`, `r1.jpeg` a `r7.jpeg`).
+
+---
+
+📌 **Autor:** Tu nombre
+📅 **Fecha:** Septiembre 2026
