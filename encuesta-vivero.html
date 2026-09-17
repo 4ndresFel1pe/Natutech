@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico digital para su vivero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F6F4EC;
+    --bg-panel: #FFFFFF;
+    --ink: #23331F;
+    --ink-soft: #4C5A46;
+    --clay: #B0632B;
+    --sage: #6F8F63;
+    --sage-pale: #E3EADC;
+    --line: #D9D3BF;
+    --shadow: rgba(35,51,31,0.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #17201A;
+      --bg-panel: #1F2B22;
+      --ink: #EDEFE7;
+      --ink-soft: #B7C2AF;
+      --clay: #D98A4B;
+      --sage: #8FB07F;
+      --sage-pale: #26332A;
+      --line: #33422F;
+      --shadow: rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #17201A;
+    --bg-panel: #1F2B22;
+    --ink: #EDEFE7;
+    --ink-soft: #B7C2AF;
+    --clay: #D98A4B;
+    --sage: #8FB07F;
+    --sage-pale: #26332A;
+    --line: #33422F;
+    --shadow: rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+    line-height: 1.55;
+  }
+  h1,h2{
+    font-family: 'Fraunces', Georgia, serif;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  .wrap{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  header.hero{
+    padding: 72px 0 56px;
+    border-bottom: 1px solid var(--line);
+  }
+  .kicker{
+    color: var(--sage);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+  }
+  h1{
+    font-size: clamp(2.1rem, 4vw, 3rem);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    max-width: 18ch;
+  }
+  .lede{
+    margin-top: 18px;
+    max-width: 62ch;
+    color: var(--ink-soft);
+    font-size: 1.08rem;
+  }
+
+  .context{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin: 44px 0 0;
+  }
+  .context .item{
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px;
+  }
+  .context .item strong{
+    display:block;
+    font-family: 'Fraunces', serif;
+    font-size: 1.15rem;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--sage);
+  }
+  .context .item span{
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+  }
+
+  section.form-section{
+    padding: 56px 0 80px;
+  }
+  .form-section h2{
+    font-size: 1.6rem;
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .form-section .note{
+    color: var(--ink-soft);
+    max-width: 60ch;
+    margin-bottom: 28px;
+  }
+
+  .form-frame{
+    background: var(--sage-pale);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px;
+    box-shadow: 0 12px 28px -18px var(--shadow);
+  }
+  .form-frame .browser-bar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding: 4px 6px 14px;
+  }
+  .browser-bar .dot{
+    width:9px; height:9px; border-radius:50%;
+    background: var(--line);
+  }
+  iframe{
+    width: 100%;
+    min-height: 1600px;
+    height: 90vh;
+    max-height: 2400px;
+    border: none;
+    border-radius: 3px;
+    background: #fff;
+    display: block;
+  }
+
+  footer{
+    padding: 28px 0 60px;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    border-top: 1px solid var(--line);
+  }
+
+  @media (max-width: 640px){
+    .context{ grid-template-columns: 1fr; }
+    header.hero{ padding: 48px 0 36px; }
+    section.form-section{ padding: 40px 0 56px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="wrap">
+    <header class="hero">
+      <div class="kicker">Proyecto web para su vivero</div>
+      <h1>Antes de construir la herramienta, queremos entender cómo trabaja usted hoy</h1>
+      <p class="lede">
+        Estamos diseñando una página web para ayudarle a manejar su inventario y sus precios
+        con menos esfuerzo. Esta encuesta corta nos permite construir algo que de verdad se
+        ajuste a su negocio, no una plantilla genérica.
+      </p>
+
+      <div class="context">
+        <div class="item">
+          <strong>5 minutos</strong>
+          <span>Es lo que toma responder</span>
+        </div>
+        <div class="item">
+          <strong>20 preguntas</strong>
+          <span>Sobre inventario, precios y ventas</span>
+        </div>
+        <div class="item">
+          <strong>Sin compromiso</strong>
+          <span>Solo para conocer sus necesidades</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="form-section">
+      <h2>Responda aquí</h2>
+      <p class="note">
+        Puede diligenciarla directamente en esta página. Sus respuestas se guardan en el
+        formulario y nos ayudan a priorizar qué construir primero.
+      </p>
+
+      <div class="form-frame">
+        <div class="browser-bar">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScEoxIZPVr11SzTC-It_S1YcL_9PgB4pzqlSpZ2gSR6ysR8Jg/viewform?embedded=true" title="Encuesta para dueño de vivero">Cargando…</iframe>
+      </div>
+    </section>
+
+    <footer>
+      Gracias por su tiempo — su respuesta guía directamente el diseño de la herramienta.
+    </footer>
+  </div>
+
+</body>
+</html>
