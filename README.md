@@ -123,7 +123,7 @@ posible (ventas que se pierden porque no había suficiente) o sobrestock que no
 alcanza a venderse (plantas y flores son perecederas).
 
 Validado con el dueño del Vivero las Acacias,
-Yopal — ver [`docs/entrevista.md`](docs/entrevista) para el detalle completo
+Yopal — ver [`docs/entrevista.md`](docs/entrevist) para el detalle completo
 de la conversación.
 
 ## Arquitectura (parte DevOps)
