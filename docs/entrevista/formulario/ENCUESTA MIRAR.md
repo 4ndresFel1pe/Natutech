@@ -80,5 +80,4 @@ Con esto queda claro que el proyecto tiene potencial para aplicarse en un caso r
 
 
 
-📌 **Autor:** Tu nombre
-📅 **Fecha:** Septiembre 2026
+
