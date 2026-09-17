@@ -22,4 +22,48 @@ Catálogo, inventario y alertas de reabastecimiento estacional para un vivero/fl
 - **Contenerización:** Docker multietapa + Docker Compose
 - **CI/CD:** GitHub Actions → build, pruebas, publicación en GHCR
 - **Despliegue:** Traefik/Caddy con HTTPS vía Let's Encrypt
-- Los últimos dos ítems están sujetos a cambios. 
+- Los últimos dos ítems están sujetos a cambios.
+
+##FRONTED Y EXPERIENCIA
+
+## 🏗️ Arquitectura (parte frontend)
+
+- **Framework**: por definir. Debe funcionar bien tanto en celular (el dueño lo usará desde el mostrador) como en computador, y ser accesible también para los clientes que solo consultan el catálogo.
+- **Autenticación**: el backend entrega un JWT. El frontend debe manejar dos niveles de acceso:
+  - **Público**: solo lectura (catálogo).
+  - **Administrador**: acceso completo tras iniciar sesión.
+- **Consumo de API**: todas las pantallas consumen los endpoints REST expuestos por el backend (Express/Fastify).
+- **Diseño**: mobile-first — prioriza que se vea y funcione bien en pantallas pequeñas antes que en escritorio.
+
+> ⚠️ El framework específico y algunos detalles de despliegue (contenerización, CI/CD) están sujetos a cambios, según lo defina el equipo.
+
+---
+
+## 📁 Estructura de carpetas
+
+Propuesta inicial (ajústala según el framework que elijan):
+
+```
+frontend/
+├── public/
+│   └── favicon, imágenes estáticas
+├── src/
+│   ├── assets/          # imágenes, íconos
+│   ├── components/      # componentes reutilizables (cards, botones, etc.)
+│   ├── pages/
+│   │   ├── Catalogo/    # vista pública
+│   │   ├── Admin/
+│   │   │   ├── Productos/
+│   │   │   ├── Pedidos/
+│   │   │   └── Proveedores/
+│   │   ├── Alertas/     # alertas de reabastecimiento
+│   │   └── Reportes/
+│   ├── services/        # llamadas a la API (fetch/axios)
+│   ├── context/         # manejo de sesión/autenticación (JWT)
+│   ├── hooks/
+│   ├── styles/
+│   └── App.jsx
+├── .env                 # URL de la API, variables de entorno
+├── package.json
+└── README.md
+```
