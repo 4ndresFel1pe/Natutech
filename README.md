@@ -122,7 +122,7 @@ Eso se traduce en dos pérdidas concretas: quiebre de stock en el peor momento
 posible (ventas que se pierden porque no había suficiente) o sobrestock que no
 alcanza a venderse (plantas y flores son perecederas).
 
-Validado con [nombre y rol de la persona entrevistada], [nombre del vivero],
+Validado con el dueño del Vivero las Acacias,
 Yopal — ver [`docs/entrevista.md`](docs/entrevista) para el detalle completo
 de la conversación.
 
