@@ -24,7 +24,7 @@ Catálogo, inventario y alertas de reabastecimiento estacional para un vivero/fl
 - **Despliegue:** Traefik/Caddy con HTTPS vía Let's Encrypt
 - Los últimos dos ítems están sujetos a cambios.
 
-##FRONTED Y EXPERIENCIA
+## Fronted Y Experiencias
 
 ## 🏗️ Arquitectura (parte frontend)
 
