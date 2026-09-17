@@ -9,8 +9,7 @@ NATUTECH es un proyecto que busca conocer la percepción, el nivel de conocimien
 - [Metodología](#-metodología)
 - [Resultados estadísticos](#-resultados-estadísticos)
 - [Conclusiones](#-conclusiones)
-- [Tecnologías utilizadas](#-tecnologías-utilizadas)
-- [Cómo usar este repositorio](#-cómo-usar-este-repositorio)
+
 
 ---
 
