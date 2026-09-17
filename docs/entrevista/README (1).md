@@ -40,7 +40,7 @@ A continuación se muestran capturas de la encuesta aplicada.
 
 Aquí se presentan los resultados obtenidos tras procesar las respuestas.
 
-![Gráfico de resultados 1](imagenes/resultado_1.png)
+![Gráfico de resultados 1](r1.jpeg)
 *Figura 3. Distribución de respuestas a la pregunta X.*
 
 ![Gráfico de resultados 2](imagenes/resultado_2.png)
