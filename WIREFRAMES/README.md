@@ -24,7 +24,7 @@ Breve descripción de lo que muestra esta pantalla.
 ---
 ##  Sobre nosotros6
 
-![Sobre nosotros](./PROTOTIPO_MOVIL/SOBRE%20NOSOTROS.jpg.jpg)
+![Sobre nosotros](./PROTOTIPO_MOVIL/SOBRE%20NOSOTROS.jpg)
 
 Breve descripción de lo que muestra esta pantalla.
 
@@ -40,7 +40,7 @@ Breve descripción de lo que muestra esta pantalla.
 
 ## Detalle planta
 
-![Detalle planta](./PROTOTIPO_MOVIL/DETALLE%20PLANTA.jpg.jpg.jpg)
+![Detalle planta](./PROTOTIPO_MOVIL/DETALLE%20PLANTA.jpg)
 
 Breve descripción de lo que muestra esta pantalla.
 
