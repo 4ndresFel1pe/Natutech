@@ -110,4 +110,79 @@ frontend/
 └── README.md
 ```
 
-j
+## El problema
+
+Los viveros y floristerías pequeños de Casanare llevan su inventario, pedidos
+y proveedores en cuaderno o de memoria, sin ningún control frente a los picos
+de demanda que trae el calendario: Día de la Madre, Amor y Amistad y, sobre
+todo, el Día de los Difuntos (2 de noviembre), la fecha de mayor venta del año
+para este tipo de negocio en la región.
+
+Eso se traduce en dos pérdidas concretas: quiebre de stock en el peor momento
+posible (ventas que se pierden porque no había suficiente) o sobrestock que no
+alcanza a venderse (plantas y flores son perecederas).
+
+Validado con [nombre y rol de la persona entrevistada], [nombre del vivero],
+Yopal — ver [`docs/entrevista.md`](docs/entrevista.md) para el detalle completo
+de la conversación.
+
+## Arquitectura (parte DevOps)
+
+- **Contenerización:** Docker multietapa + Docker Compose. Un servicio por
+  pieza (backend, frontend, PostgreSQL, reverse proxy), con volúmenes
+  nombrados para que los datos sobrevivan al reinicio de los contenedores.
+  La etapa de build queda separada de la de runtime para que la imagen final
+  no cargue dependencias de desarrollo.
+- **CI/CD:** GitHub Actions. En cada push y pull request: instalación de
+  dependencias, linter, pruebas y build de la imagen. En la rama principal,
+  además, publicación de la imagen en GHCR etiquetada con el SHA del commit
+  (no solo `latest`), que es lo que permite volver a una versión anterior
+  sin reconstruir nada.
+- **Despliegue:** Traefik o Caddy como reverse proxy, con HTTPS automático vía
+  Let's Encrypt y renovación sin intervención manual.
+- **Backup:** dump programado de PostgreSQL con restauración probada al menos
+  una vez sobre un entorno limpio, documentada en `docs/backup.md`. Un backup
+  que nunca se restauró no cuenta como backup.
+- **Rollback:** desplegar la etiqueta anterior de la imagen y verificar que las
+  migraciones de base de datos sean reversibles, para que revertir no implique
+  perder pedidos ni movimientos de inventario.
+
+> Traefik/Caddy y algunos detalles del pipeline están sujetos a cambios según
+> lo defina el equipo.
+
+## Cómo levantar el proyecto
+
+**Requisitos:** Node.js 22 LTS, Docker, Docker Compose y Git.
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/[usuario-u-organización]/Natutech.git
+cd Natutech
+
+# 2. Copiar las variables de entorno de ejemplo y ajustarlas
+cp .env.example .env
+
+# 3. Levantar todo el stack
+docker compose up -d --build
+
+# 4. Ver el estado de los servicios
+docker compose ps
+```
+
+Una vez arriba:
+
+| Servicio | URL local |
+|---|---|
+| Catálogo público | http://localhost:[puerto] |
+| Panel de administrador | http://localhost:[puerto]/admin |
+| API | http://localhost:[puerto]/api |
+
+Para detener todo: `docker compose down` (agregar `-v` solo si se quiere
+borrar también la base de datos).
+
+*(En construcción — los puertos, las variables de `.env.example` y el comando
+de migraciones se completan cuando el backend esté listo.)*
+
+
+
+
