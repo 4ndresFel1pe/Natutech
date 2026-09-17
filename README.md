@@ -156,7 +156,7 @@ de la conversación.
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/[usuario-u-organización]/Natutech.git
+git clone https://github.com/4ndresFel1pe/Natutech.git
 cd Natutech
 
 # 2. Copiar las variables de entorno de ejemplo y ajustarlas
