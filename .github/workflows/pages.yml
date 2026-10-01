@@ -1,0 +1,43 @@
+# Publica el prototipo (carpeta web/) en GitHub Pages cada vez que cambia en main.
+# GitHub Pages, cuando publica desde una rama, solo acepta la raíz o /docs;
+# por eso la carpeta web/ se publica con este flujo (ver docs/decisiones.md, D9).
+name: Publicar prototipo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v7
+
+      - name: Preparar GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Empaquetar la carpeta web
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: web
+
+      - name: Publicar
+        id: despliegue
+        uses: actions/deploy-pages@v5
