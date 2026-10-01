@@ -1,4 +1,3 @@
-# Advertencias de Redocly aceptadas por el equipo, con su razón.
 # GET /categorias es una lista pública sin parámetros: no hay una petición del
 # cliente que pueda estar mal formada, así que no tiene una respuesta 4XX real.
 api/openapi.yaml:
