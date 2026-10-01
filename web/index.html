@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Catálogo de plantas e insumos | Vivero Las Acacias, Yopal</title>
+  <meta name="description" content="Plantas de interior y exterior, frutales, materas e insumos del Vivero Las Acacias en Yopal, Casanare. Consulte disponibilidad y compre por WhatsApp.">
+  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fuentes/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/estilos.css">
+  <script src="js/app.js" defer></script>
+</head>
+<body data-pagina="catalogo">
+  <a class="saltar-enlace" href="#contenido">Saltar al contenido</a>
+
+  <header class="encabezado">
+    <div class="contenedor encabezado__fila">
+      <a class="marca" href="index.html">
+        <img class="marca__logo" src="img/logo.svg" alt="" width="40" height="40">
+        <span>
+          <span class="marca__nombre">Vivero Las Acacias</span>
+          <span class="marca__lugar">Yopal, Casanare</span>
+        </span>
+      </a>
+      <nav class="navegacion" aria-label="Principal">
+        <ul>
+          <li><a href="index.html" aria-current="page">Catálogo</a></li>
+          <li><a href="inventario.html">Panel del vivero</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido" class="pagina">
+    <div class="contenedor">
+      <h1>Plantas e insumos del vivero</h1>
+      <p class="pagina__intro">Precios en pesos colombianos. Para comprar o encargar, escríbanos por WhatsApp desde cada producto y le confirmamos disponibilidad.</p>
+    </div>
+
+    <section class="temporada" id="temporada" aria-labelledby="temporada-titulo">
+      <div class="contenedor temporada__fila">
+        <p class="temporada__dias" id="temporada-dias" aria-hidden="true">--</p>
+        <div>
+          <h2 id="temporada-titulo">Próxima temporada</h2>
+          <p class="temporada__texto" id="temporada-texto">Consultando las fechas de mayor demanda.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <div class="contenedor catalogo">
+      <section class="filtros" aria-labelledby="filtros-titulo">
+        <h2 id="filtros-titulo">Buscar y filtrar</h2>
+        <form id="form-filtros" role="search" aria-label="Buscar en el catálogo">
+          <div class="campo">
+            <label for="buscar">Nombre de la planta o insumo</label>
+            <input type="search" id="buscar" name="q" autocomplete="off" aria-describedby="buscar-ayuda">
+            <p class="campo__ayuda" id="buscar-ayuda">Por ejemplo: palma, mango o tierra.</p>
+          </div>
+          <div class="campo">
+            <label for="filtro-categoria">Categoría</label>
+            <select id="filtro-categoria" name="categoria_id">
+              <option value="">Todas las categorías</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="filtro-luz">Luz que necesita</label>
+            <select id="filtro-luz" name="luz">
+              <option value="">Cualquiera</option>
+              <option value="baja">Poca luz (interiores)</option>
+              <option value="media">Luz media o indirecta</option>
+              <option value="alta">Sol directo</option>
+            </select>
+          </div>
+          <div class="casilla">
+            <input type="checkbox" id="solo-disponibles" name="solo_disponibles">
+            <label for="solo-disponibles">Solo lo que hay en existencia</label>
+          </div>
+          <div class="formulario__acciones">
+            <button type="submit" class="boton">Buscar</button>
+            <button type="reset" class="boton boton--secundario">Quitar filtros</button>
+          </div>
+        </form>
+      </section>
+
+      <section aria-labelledby="resultados-titulo">
+        <div class="resultados__cabecera">
+          <h2 id="resultados-titulo">Productos</h2>
+          <p class="conteo" id="conteo" aria-live="polite"></p>
+        </div>
+        <div id="zona-resultados" aria-busy="true">
+          <div class="estado" role="status">
+            <div class="cargador" aria-hidden="true"></div>
+            <h3>Cargando el catálogo</h3>
+            <p>Estamos trayendo los productos y sus precios.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="pie">
+    <div class="contenedor">
+      <div class="pie__columnas">
+        <div>
+          <h2>Vivero Las Acacias</h2>
+          <p>Plantas, frutales e insumos en Yopal, Casanare. Más de nueve años atendiendo patios, casas y fincas del Llano.</p>
+          <a class="boton boton--secundario" id="whatsapp-pie" href="#" target="_blank" rel="noopener">Escribir por WhatsApp<span class="visualmente-oculto"> (se abre en una pestaña nueva)</span></a>
+        </div>
+        <nav aria-labelledby="pie-navegacion">
+          <h2 id="pie-navegacion">Páginas</h2>
+          <ul>
+            <li><a href="index.html">Catálogo</a></li>
+            <li><a href="inventario.html">Panel del vivero</a></li>
+            <li><a href="producto-form.html">Registrar un producto</a></li>
+          </ul>
+        </nav>
+        <nav aria-labelledby="pie-estados">
+          <h2 id="pie-estados">Estados del prototipo</h2>
+          <ul>
+            <li><a href="index.html?estado=cargando">Ver carga lenta</a></li>
+            <li><a href="index.html?estado=vacio">Ver catálogo vacío</a></li>
+            <li><a href="index.html?estado=error">Ver error de carga</a></li>
+          </ul>
+        </nav>
+      </div>
+      <p class="pie__creditos">Prototipo de la Entrega 2 de Natutech, equipo 4 de Tecnologías Web, Unitrópico. Los productos son reales del tipo que vende el vivero; precios, existencias y teléfonos son de ejemplo.</p>
+    </div>
+  </footer>
+</body>
+</html>
