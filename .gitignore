@@ -1,0 +1,27 @@
+# Dependencias de Node.js
+node_modules/
+
+# Variables de entorno: solo se versiona .env.example, nunca valores reales
+.env
+.env.*
+!.env.example
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Configuración personal de editores
+.vscode/
+.idea/
+
+# Registros y resultados de compilación o pruebas
+*.log
+coverage/
+dist/
+build/
+
+# Respaldos de la base de datos (desde la Entrega 4): nunca van al repositorio
+respaldos/
+*.dump
+*.sql.gz
