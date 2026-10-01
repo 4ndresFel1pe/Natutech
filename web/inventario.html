@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventario y alertas | Panel del Vivero Las Acacias</title>
+  <meta name="description" content="Existencias, productos por debajo del mínimo y alertas de reabastecimiento por temporada del Vivero Las Acacias.">
+  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fuentes/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/estilos.css">
+  <script src="js/app.js" defer></script>
+</head>
+<body data-pagina="inventario">
+  <a class="saltar-enlace" href="#contenido">Saltar al contenido</a>
+
+  <header class="encabezado encabezado--panel">
+    <div class="contenedor encabezado__fila">
+      <a class="marca" href="inventario.html">
+        <img class="marca__logo" src="img/logo-claro.svg" alt="" width="40" height="40">
+        <span>
+          <span class="marca__nombre">Vivero Las Acacias</span>
+          <span class="marca__lugar">Panel del vivero</span>
+        </span>
+      </a>
+      <nav class="navegacion" aria-label="Panel">
+        <ul>
+          <li><a href="inventario.html" aria-current="page">Inventario</a></li>
+          <li><a href="producto-form.html">Nuevo producto</a></li>
+          <li><a href="index.html">Ver catálogo público</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido" class="contenedor pagina">
+    <h1>Inventario</h1>
+    <div class="aviso">
+      <p>Prototipo: en la Entrega 3 este panel pedirá iniciar sesión y los cambios se guardarán en el servidor.</p>
+    </div>
+
+    <div id="zona-panel" aria-busy="true">
+      <div class="estado" role="status">
+        <div class="cargador" aria-hidden="true"></div>
+        <h2>Cargando el inventario</h2>
+        <p>Estamos trayendo las existencias y las alertas.</p>
+      </div>
+    </div>
+
+    <p class="visualmente-oculto" id="anuncios" aria-live="polite"></p>
+  </main>
+
+  <footer class="pie">
+    <div class="contenedor">
+      <div class="pie__columnas">
+        <div>
+          <h2>Panel del vivero</h2>
+          <p>Existencias, alertas de reabastecimiento y registro de productos del Vivero Las Acacias.</p>
+        </div>
+        <nav aria-labelledby="pie-navegacion">
+          <h2 id="pie-navegacion">Páginas</h2>
+          <ul>
+            <li><a href="inventario.html">Inventario</a></li>
+            <li><a href="producto-form.html">Nuevo producto</a></li>
+            <li><a href="index.html">Catálogo público</a></li>
+          </ul>
+        </nav>
+        <nav aria-labelledby="pie-estados">
+          <h2 id="pie-estados">Estados del prototipo</h2>
+          <ul>
+            <li><a href="inventario.html?estado=cargando">Ver carga lenta</a></li>
+            <li><a href="inventario.html?estado=vacio">Ver inventario vacío</a></li>
+            <li><a href="inventario.html?estado=error">Ver error de carga</a></li>
+          </ul>
+        </nav>
+      </div>
+      <p class="pie__creditos">Prototipo de la Entrega 2 de Natutech, equipo 4 de Tecnologías Web, Unitrópico. Precios, existencias y teléfonos son de ejemplo.</p>
+    </div>
+  </footer>
+</body>
+</html>

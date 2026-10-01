@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registrar producto | Panel del Vivero Las Acacias</title>
+  <meta name="description" content="Formulario para crear o editar un producto del inventario del Vivero Las Acacias.">
+  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fuentes/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/estilos.css">
+  <script src="js/app.js" defer></script>
+</head>
+<body data-pagina="formulario">
+  <a class="saltar-enlace" href="#contenido">Saltar al contenido</a>
+
+  <header class="encabezado encabezado--panel">
+    <div class="contenedor encabezado__fila">
+      <a class="marca" href="inventario.html">
+        <img class="marca__logo" src="img/logo-claro.svg" alt="" width="40" height="40">
+        <span>
+          <span class="marca__nombre">Vivero Las Acacias</span>
+          <span class="marca__lugar">Panel del vivero</span>
+        </span>
+      </a>
+      <nav class="navegacion" aria-label="Panel">
+        <ul>
+          <li><a href="inventario.html">Inventario</a></li>
+          <li><a href="producto-form.html" id="nav-nuevo">Nuevo producto</a></li>
+          <li><a href="index.html">Ver catálogo público</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido" class="contenedor pagina">
+    <nav class="migas" aria-label="Ruta de navegación">
+      <ol>
+        <li><a href="inventario.html">Inventario</a></li>
+        <li><span id="migas-actual" aria-current="page">Nuevo producto</span></li>
+      </ol>
+    </nav>
+
+    <h1 id="titulo-formulario">Nuevo producto</h1>
+    <p>Los campos marcados con <span class="obligatorio" aria-hidden="true">*</span> son obligatorios.</p>
+
+    <div id="zona-formulario" aria-busy="true">
+      <div class="estado" role="status">
+        <div class="cargador" aria-hidden="true"></div>
+        <h2>Preparando el formulario</h2>
+        <p>Estamos trayendo las categorías y los proveedores.</p>
+      </div>
+    </div>
+
+    <div class="resumen-errores" id="resumen-errores" role="alert" tabindex="-1" hidden>
+      <h2 id="resumen-errores-titulo">Revise los campos marcados</h2>
+      <ul id="resumen-errores-lista"></ul>
+    </div>
+
+    <form class="formulario" id="form-producto" novalidate hidden>
+      <fieldset>
+        <legend>Datos del producto</legend>
+
+        <div class="campo">
+          <label for="nombre">Nombre <span class="obligatorio" aria-hidden="true">*</span></label>
+          <p class="campo__ayuda" id="nombre-ayuda">El nombre con el que lo piden los clientes. Entre 2 y 80 caracteres.</p>
+          <input type="text" id="nombre" name="nombre" required maxlength="80" autocomplete="off" aria-describedby="nombre-ayuda nombre-error">
+          <p class="campo__error" id="nombre-error"></p>
+        </div>
+
+        <div class="campo">
+          <label for="nombre_cientifico">Nombre científico</label>
+          <p class="campo__ayuda" id="nombre_cientifico-ayuda">Opcional. Déjelo vacío en materas e insumos.</p>
+          <input type="text" id="nombre_cientifico" name="nombre_cientifico" maxlength="120" lang="la" autocomplete="off" aria-describedby="nombre_cientifico-ayuda nombre_cientifico-error">
+          <p class="campo__error" id="nombre_cientifico-error"></p>
+        </div>
+
+        <div class="formulario__columnas">
+          <div class="campo">
+            <label for="categoria_id">Categoría <span class="obligatorio" aria-hidden="true">*</span></label>
+            <select id="categoria_id" name="categoria_id" required aria-describedby="categoria_id-error">
+              <option value="">Elija una categoría</option>
+            </select>
+            <p class="campo__error" id="categoria_id-error"></p>
+          </div>
+
+          <div class="campo">
+            <label for="proveedor_id">Proveedor</label>
+            <select id="proveedor_id" name="proveedor_id" aria-describedby="proveedor_id-error">
+              <option value="">Sin proveedor fijo</option>
+            </select>
+            <p class="campo__error" id="proveedor_id-error"></p>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="presentacion">Presentación <span class="obligatorio" aria-hidden="true">*</span></label>
+          <p class="campo__ayuda" id="presentacion-ayuda">Tamaño o empaque en que se vende. Por ejemplo: Matera de 20 cm, Bulto de 25 kg.</p>
+          <input type="text" id="presentacion" name="presentacion" required maxlength="60" autocomplete="off" aria-describedby="presentacion-ayuda presentacion-error">
+          <p class="campo__error" id="presentacion-error"></p>
+        </div>
+
+        <div class="campo">
+          <label for="descripcion">Descripción</label>
+          <p class="campo__ayuda" id="descripcion-ayuda">Lo que le contaría a un cliente en el mostrador. Máximo 600 caracteres.</p>
+          <textarea id="descripcion" name="descripcion" maxlength="600" aria-describedby="descripcion-ayuda descripcion-contador descripcion-error"></textarea>
+          <p class="contador" id="descripcion-contador">0 de 600 caracteres</p>
+          <p class="campo__error" id="descripcion-error"></p>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Precio y existencias</legend>
+        <div class="formulario__columnas">
+          <div class="campo">
+            <label for="precio">Precio de venta en pesos <span class="obligatorio" aria-hidden="true">*</span></label>
+            <p class="campo__ayuda" id="precio-ayuda">Sin puntos ni signo. Por ejemplo: 45000.</p>
+            <input type="number" id="precio" name="precio" required min="0" max="5000000" step="100" inputmode="numeric" aria-describedby="precio-ayuda precio-error">
+            <p class="campo__error" id="precio-error"></p>
+          </div>
+
+          <div class="campo">
+            <label for="stock">Unidades en existencia <span class="obligatorio" aria-hidden="true">*</span></label>
+            <p class="campo__ayuda" id="stock-ayuda">Lo que hay hoy en el vivero.</p>
+            <input type="number" id="stock" name="stock" required min="0" max="100000" step="1" inputmode="numeric" aria-describedby="stock-ayuda stock-error">
+            <p class="campo__error" id="stock-error"></p>
+          </div>
+
+          <div class="campo">
+            <label for="stock_minimo">Existencia mínima <span class="obligatorio" aria-hidden="true">*</span></label>
+            <p class="campo__ayuda" id="stock_minimo-ayuda">Si las unidades bajan de este número, el panel muestra una alerta.</p>
+            <input type="number" id="stock_minimo" name="stock_minimo" required min="0" max="10000" step="1" inputmode="numeric" value="5" aria-describedby="stock_minimo-ayuda stock_minimo-error">
+            <p class="campo__error" id="stock_minimo-error"></p>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cuidados</legend>
+        <p class="campo__ayuda">Solo para plantas. En materas e insumos deje "No aplica".</p>
+        <div class="formulario__columnas">
+          <div class="campo">
+            <label for="luz">Luz que necesita</label>
+            <select id="luz" name="luz" aria-describedby="luz-error">
+              <option value="">No aplica</option>
+              <option value="baja">Poca luz</option>
+              <option value="media">Luz media o indirecta</option>
+              <option value="alta">Sol directo</option>
+            </select>
+            <p class="campo__error" id="luz-error"></p>
+          </div>
+
+          <div class="campo">
+            <label for="riego">Riego</label>
+            <p class="campo__ayuda" id="riego-ayuda">Por ejemplo: 2 veces por semana.</p>
+            <input type="text" id="riego" name="riego" maxlength="60" autocomplete="off" aria-describedby="riego-ayuda riego-error">
+            <p class="campo__error" id="riego-error"></p>
+          </div>
+        </div>
+
+        <div class="campo">
+          <fieldset>
+            <legend>Dificultad de cuidado</legend>
+            <div class="opciones-en-linea">
+              <div class="opcion"><input type="radio" id="cuidado-facil" name="cuidado" value="facil"><label for="cuidado-facil">Fácil</label></div>
+              <div class="opcion"><input type="radio" id="cuidado-intermedio" name="cuidado" value="intermedio"><label for="cuidado-intermedio">Intermedio</label></div>
+              <div class="opcion"><input type="radio" id="cuidado-avanzado" name="cuidado" value="avanzado"><label for="cuidado-avanzado">Avanzado</label></div>
+              <div class="opcion"><input type="radio" id="cuidado-no-aplica" name="cuidado" value="" checked><label for="cuidado-no-aplica">No aplica</label></div>
+            </div>
+          </fieldset>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Publicación</legend>
+        <div class="campo">
+          <label for="imagen_url">Dirección de la foto</label>
+          <p class="campo__ayuda" id="imagen_url-ayuda">Opcional. Una dirección que empiece por https:// o una ruta como img/interior.svg.</p>
+          <input type="text" inputmode="url" id="imagen_url" name="imagen_url" maxlength="300" autocomplete="off" aria-describedby="imagen_url-ayuda imagen_url-error">
+          <p class="campo__error" id="imagen_url-error"></p>
+        </div>
+        <div class="casilla">
+          <input type="checkbox" id="visible_en_catalogo" name="visible_en_catalogo" checked aria-describedby="visible_en_catalogo-ayuda">
+          <label for="visible_en_catalogo">Mostrar en el catálogo público</label>
+        </div>
+        <p class="campo__ayuda" id="visible_en_catalogo-ayuda">Desmárquelo para ocultar un producto sin borrarlo.</p>
+      </fieldset>
+
+      <div class="formulario__acciones">
+        <button type="submit" class="boton" id="boton-guardar">Guardar producto</button>
+        <a class="boton boton--secundario" href="inventario.html">Cancelar</a>
+      </div>
+    </form>
+
+    <div id="zona-resultado"></div>
+  </main>
+
+  <footer class="pie">
+    <div class="contenedor">
+      <div class="pie__columnas">
+        <div>
+          <h2>Panel del vivero</h2>
+          <p>Existencias, alertas de reabastecimiento y registro de productos del Vivero Las Acacias.</p>
+        </div>
+        <nav aria-labelledby="pie-navegacion">
+          <h2 id="pie-navegacion">Páginas</h2>
+          <ul>
+            <li><a href="inventario.html">Inventario</a></li>
+            <li><a href="producto-form.html">Nuevo producto</a></li>
+            <li><a href="index.html">Catálogo público</a></li>
+          </ul>
+        </nav>
+        <nav aria-labelledby="pie-estados">
+          <h2 id="pie-estados">Estados del prototipo</h2>
+          <ul>
+            <li><a href="producto-form.html?id=3da94211-90a8-48a3-b787-059be5559766">Editar un producto existente</a></li>
+            <li><a href="producto-form.html?id=00000000-0000-4000-8000-000000000000">Editar un producto que no existe</a></li>
+            <li><a href="producto-form.html?estado=error">Ver error de carga</a></li>
+          </ul>
+        </nav>
+      </div>
+      <p class="pie__creditos">Prototipo de la Entrega 2 de Natutech, equipo 4 de Tecnologías Web, Unitrópico. Precios, existencias y teléfonos son de ejemplo.</p>
+    </div>
+  </footer>
+</body>
+</html>

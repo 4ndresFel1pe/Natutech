@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Detalle del producto | Vivero Las Acacias, Yopal</title>
+  <meta name="description" content="Precio, presentación y cuidados de una planta o insumo del Vivero Las Acacias en Yopal.">
+  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fuentes/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/estilos.css">
+  <script src="js/app.js" defer></script>
+</head>
+<body data-pagina="detalle">
+  <a class="saltar-enlace" href="#contenido">Saltar al contenido</a>
+
+  <header class="encabezado">
+    <div class="contenedor encabezado__fila">
+      <a class="marca" href="index.html">
+        <img class="marca__logo" src="img/logo.svg" alt="" width="40" height="40">
+        <span>
+          <span class="marca__nombre">Vivero Las Acacias</span>
+          <span class="marca__lugar">Yopal, Casanare</span>
+        </span>
+      </a>
+      <nav class="navegacion" aria-label="Principal">
+        <ul>
+          <li><a href="index.html">Catálogo</a></li>
+          <li><a href="inventario.html">Panel del vivero</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido" class="contenedor pagina">
+    <nav class="migas" aria-label="Ruta de navegación">
+      <ol>
+        <li><a href="index.html">Catálogo</a></li>
+        <li><span id="migas-categoria">Producto</span></li>
+        <li><span id="migas-actual" aria-current="page">Detalle</span></li>
+      </ol>
+    </nav>
+
+    <div id="zona-detalle" aria-busy="true">
+      <h1 class="visualmente-oculto">Detalle del producto</h1>
+      <div class="estado" role="status">
+        <div class="cargador" aria-hidden="true"></div>
+        <h2>Cargando el producto</h2>
+        <p>Estamos trayendo el precio y los cuidados de esta planta.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="pie">
+    <div class="contenedor">
+      <div class="pie__columnas">
+        <div>
+          <h2>Vivero Las Acacias</h2>
+          <p>Plantas, frutales e insumos en Yopal, Casanare. Más de nueve años atendiendo patios, casas y fincas del Llano.</p>
+          <a class="boton boton--secundario" id="whatsapp-pie" href="#" target="_blank" rel="noopener">Escribir por WhatsApp<span class="visualmente-oculto"> (se abre en una pestaña nueva)</span></a>
+        </div>
+        <nav aria-labelledby="pie-navegacion">
+          <h2 id="pie-navegacion">Páginas</h2>
+          <ul>
+            <li><a href="index.html">Catálogo</a></li>
+            <li><a href="inventario.html">Panel del vivero</a></li>
+            <li><a href="producto-form.html">Registrar un producto</a></li>
+          </ul>
+        </nav>
+        <nav aria-labelledby="pie-estados">
+          <h2 id="pie-estados">Estados del prototipo</h2>
+          <ul>
+            <li><a href="detalle.html?id=3da94211-90a8-48a3-b787-059be5559766&amp;estado=cargando">Ver carga lenta</a></li>
+            <li><a href="detalle.html?id=00000000-0000-4000-8000-000000000000">Ver producto que no existe</a></li>
+            <li><a href="detalle.html?id=3da94211-90a8-48a3-b787-059be5559766&amp;estado=error">Ver error de carga</a></li>
+          </ul>
+        </nav>
+      </div>
+      <p class="pie__creditos">Prototipo de la Entrega 2 de Natutech, equipo 4 de Tecnologías Web, Unitrópico. Los productos son reales del tipo que vende el vivero; precios, existencias y teléfonos son de ejemplo.</p>
+    </div>
+  </footer>
+</body>
+</html>
