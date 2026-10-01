@@ -1,152 +1,146 @@
 # Natutech
-Catálogo, inventario y alertas de reabastecimiento estacional para un vivero/floristería en Yopal, Casanare.
 
-## Equipo
+Catálogo en línea, inventario y alertas de reabastecimiento por temporada para el Vivero Las Acacias, en Yopal (Casanare).
 
-| Integrante | Rol |
-|---|---|
-| Brayan David Roa Vega | Líder técnico |
-| Andres Felipe Gomez Gutierrez | Backend y datos |
-| Andres Felipe Abril Lopez | Frontend y experiencia |
-| Joan Sebastián Berbesi Burgos | DevOps y calidad |
+**Prototipo publicado:** https://4ndresfel1pe.github.io/Natutech/
+**Contrato de la API:** [`api/openapi.yaml`](api/openapi.yaml) · **Modelo de datos:** [`docs/modelo-datos.md`](docs/modelo-datos.md) · **Decisiones:** [`docs/decisiones.md`](docs/decisiones.md)
 
 ## El problema
 
-Los viveros y floristerías pequeños de Casanare llevan su inventario, pedidos
-y proveedores en cuaderno o de memoria, sin ningún control frente a los picos
-de demanda que trae el calendario: Día de la Madre, Amor y Amistad y, sobre
-todo, el Día de los Difuntos (2 de noviembre), la fecha de mayor venta del año
-para este tipo de negocio en la región.
+El Vivero Las Acacias lleva nueve años en Yopal y maneja su inventario en Excel, actualizado una vez por semana. Su dueño ha perdido ventas por no saber con exactitud qué tiene en existencia, y el riesgo crece en las fechas de mayor demanda: Día de la Madre, Amor y Amistad y, sobre todo, el Día de los Difuntos (2 de noviembre). En sus palabras, lo más importante es "saber en cualquier momento qué plantas tengo disponibles y cuántas". Ver la [encuesta al vivero](docs/entrevista/formulario/README.md).
 
-Eso se traduce en dos pérdidas concretas: quiebre de stock en el peor momento
-posible (ventas que se pierden porque no había suficiente) o sobrestock que no
-alcanza a venderse (plantas y flores son perecederas).
+## Ruta y equipo
 
-Validado con el dueño del Vivero las Acacias, Yopal — ver el detalle completo
-de la conversación en [docs/entrevista/formulario](docs/entrevista/formulario/README.md).
+**Ruta A: contenerización y DevOps.** El vivero no tiene personal técnico, así que el peso del proyecto está en que el sistema se pueda desplegar, respaldar y recuperar sin nosotros. La justificación completa está en [`docs/decisiones.md`](docs/decisiones.md#d1-ruta-a-contenerización-y-devops).
 
-## Ruta elegida: A — Contenerización y DevOps
+**Equipo 4 · Grupo [1 o 2] · Tecnologías Web 2026-B · Unitrópico**
 
-*El tipo de problema que tenemos no es de lógica de dominio compleja.*
-Catálogo, pedidos, proveedores y alertas son, en esencia, CRUD — no hay
-pagos en línea que integrar (ruta F), no hay necesidad de sincronización
-en tiempo real (ruta B), no hay datos externos de terceros que consumir
-(ruta D), no hay lenguaje natural que procesar (ruta E), ni hardware o
-sensores que monitorear (ruta I). Forzar cualquiera de esas rutas sobre
-este problema sería resolver una dificultad que el negocio no tiene.
+| Integrante | Rol | GitHub |
+|---|---|---|
+| Brayan David Roa Vega | Líder técnico | [@BrayanRoa87](https://github.com/BrayanRoa87) |
+| Andres Felipe Gomez Gutierrez | Backend y datos | [@4ndresFel1pe](https://github.com/4ndresFel1pe) |
+| Andres Felipe Abril Lopez | Frontend y experiencia | [@AndresAbril2005](https://github.com/AndresAbril2005) |
+| Joan Sebastián Berbesi Burgos | DevOps y calidad | [@joanberbesies-art](https://github.com/joanberbesies-art) |
 
-*La dificultad real está en otro lado: la continuidad operativa.*
-El vivero es un negocio familiar sin personal técnico propio. Nadie ahí
-sabe qué es un contenedor, un pipeline de CI/CD o una migración de base
-de datos — y nosotros no vamos a estar disponibles para mantener el
-sistema después de la entrega. Eso significa que el riesgo más grande
-del proyecto no es que el sistema tenga un bug: es que falle sin que
-nadie sepa cómo recuperarlo, justo el día en que más ventas tiene el año.
+## Cómo ejecutarlo en local
 
-*Por eso la ruta A responde directamente al problema, no al revés:*
+### Requisitos
 
-- **Contenerización** → que el sistema completo se levante con un solo
-  comando, sin que alguien tenga que instalar dependencias manualmente
-- **CI/CD** → que un cambio no rompa producción sin que nadie lo note
-  antes de llegar ahí
-- **Despliegue con HTTPS y reverse proxy** → que el sitio esté disponible
-  de forma estable, sin intervención manual constante
-- **Backup probado** (no solo programado) → que si algo se corrompe el
-  2 de noviembre, la recuperación sea cuestión de minutos, no de días
-- **Rollback verificado** → que un despliegue fallido se pueda revertir
-  sin perder datos de pedidos o inventario
+| Herramienta | Versión | Para qué |
+|---|---|---|
+| Git | 2.40 o superior | Clonar el repositorio |
+| Python | 3.10 o superior | Servir el prototipo (opción A) |
+| Node.js | 22 LTS | Servir el prototipo (opción B) y levantar el servidor simulado de la API |
 
-En resumen: la funcionalidad es intencionalmente simple porque el peso
-técnico del proyecto no está en qué hace la app, sino en garantizar que
-siga funcionando de forma confiable y recuperable sin nosotros detrás.
+Compruebe las versiones con `git --version`, `python --version` (en macOS y Linux, `python3 --version`) y `node --version`.
 
-## Alcance funcional
+### Prototipo
 
-- **Catálogo público** (sin login obligatorio): productos, fotos, precio, disponibilidad,
-  con botón directo a WhatsApp para concluir la venta (sin pasarela de pago)
-- **Panel de administrador** (autenticado): CRUD de catálogo, pedidos,
-  proveedores y alertas de reabastecimiento
-- **Alertas de reabastecimiento**: comparación de stock actual contra
-  ventas históricas antes de cada fecha estacional clave
-- **Reportes**: ventas por periodo, productos más vendidos, año contra año
+1. Clone el repositorio y entre a la carpeta:
+   ```bash
+   git clone https://github.com/4ndresFel1pe/Natutech.git
+   cd Natutech
+   ```
+2. Sirva la carpeta `web` con **una** de estas dos opciones (no abra `index.html` con doble clic: el navegador bloquea la lectura de `datos/ejemplo.json` desde un archivo):
+   - Opción A, con Python: `python -m http.server 8080 --directory web`
+   - Opción B, con Node.js: `npx serve web -l 8080`
+3. Abra http://localhost:8080 en el navegador.
+4. Para detener el servidor, vuelva a la terminal y presione `Ctrl + C`.
 
-## Arquitectura
+### Servidor simulado de la API
 
-> El framework de backend y frontend, y algunos detalles del pipeline de despliegue, están sujetos a cambios según lo defina el equipo.
+1. Desde la carpeta del repositorio, levante el servidor simulado con Prism (la primera vez tarda unos segundos mientras descarga Prism):
+   ```bash
+   npx @stoplight/prism-cli@5 mock api/openapi.yaml
+   ```
+2. En otra terminal, pida el catálogo público:
+   ```bash
+   curl http://127.0.0.1:4010/catalogo/productos
+   ```
+3. Las rutas del panel exigen token. Sin él, Prism responde `401`; con cualquier token de prueba responde el ejemplo:
+   ```bash
+   curl -H "Authorization: Bearer prueba" http://127.0.0.1:4010/alertas
+   ```
 
-### Backend
-- **Framework:** por definir (Express o Fastify) + PostgreSQL — se busca algo liviano y suficiente para el volumen de datos de un solo negocio
-- **Autenticación:** JWT con contraseñas cifradas (bcrypt), dos niveles de acceso: público (solo lectura) y administrador
-
-### Frontend
-- **Framework:** por definir. Debe funcionar bien tanto en celular (el dueño lo usará desde el mostrador) como en computador, y ser accesible también para los clientes que solo consultan el catálogo
-- **Autenticación:** el backend entrega un JWT; el frontend maneja dos niveles de acceso — público (solo lectura del catálogo) y administrador (acceso completo tras iniciar sesión)
-- **Consumo de API:** todas las pantallas consumen los endpoints REST expuestos por el backend
-- **Diseño:** mobile-first — prioriza que se vea y funcione bien en pantallas pequeñas antes que en escritorio
-
-### DevOps
-- **Contenerización:** Docker multietapa + Docker Compose. Un servicio por pieza (backend, frontend, PostgreSQL, reverse proxy), con volúmenes nombrados para que los datos sobrevivan al reinicio de los contenedores. La etapa de build queda separada de la de runtime para que la imagen final no cargue dependencias de desarrollo
-- **CI/CD:** GitHub Actions. En cada push y pull request: instalación de dependencias, linter, pruebas y build de la imagen. En la rama principal, además, publicación de la imagen en GHCR etiquetada con el SHA del commit (no solo `latest`), que es lo que permite volver a una versión anterior sin reconstruir nada
-- **Despliegue:** Traefik o Caddy como reverse proxy, con HTTPS automático vía Let's Encrypt y renovación sin intervención manual
-- **Backup:** dump programado de PostgreSQL con restauración probada al menos una vez sobre un entorno limpio, documentada en `docs/backup.md`. Un backup que nunca se restauró no cuenta como backup
-- **Rollback:** desplegar la etiqueta anterior de la imagen y verificar que las migraciones de base de datos sean reversibles, para que revertir no implique perder pedidos ni movimientos de inventario
-
-## Cómo levantar el proyecto
-
-En construcción — los pasos de abajo son el plan objetivo; los puertos, el `.env.example` y el comando de migraciones se completan cuando el backend esté listo.
-
-**Requisitos:** Node.js 22 LTS, Docker, Docker Compose y Git.
+### Validar el contrato
 
 ```bash
-# 1. Clonar el repositorio
-git clone https://github.com/4ndresFel1pe/Natutech.git
-cd Natutech
-
-# 2. Copiar las variables de entorno de ejemplo y ajustarlas
-cp .env.example .env
-
-# 3. Levantar todo el stack
-docker compose up -d --build
-
-# 4. Ver el estado de los servicios
-docker compose ps
+npx @redocly/cli@2 lint api/openapi.yaml
 ```
 
-Una vez arriba:
+Debe terminar con `Your API description is valid`. La misma validación corre sola en cada pull request que cambie el contrato.
 
-| Servicio | URL local |
-|---|---|
-| Catálogo público | http://localhost:[puerto] |
-| Panel de administrador | http://localhost:[puerto]/admin |
-| API | http://localhost:[puerto]/api |
+## Pantallas del prototipo
 
-Para detener todo: `docker compose down` (agregar `-v` solo si se quiere borrar también la base de datos).
+| Pantalla | Archivo | Qué muestra |
+|---|---|---|
+| Catálogo público (principal) | [`web/index.html`](web/index.html) | 19 productos con buscador, filtros por categoría, luz y existencia, y botón de WhatsApp en cada uno |
+| Detalle del producto | [`web/detalle.html`](web/detalle.html) | Precio, disponibilidad, cuidados y productos de la misma categoría |
+| Inventario del vivero | [`web/inventario.html`](web/inventario.html) | Resumen de existencias, cuenta regresiva a la próxima temporada, alertas de reabastecimiento y tabla de productos |
+| Formulario de producto | [`web/producto-form.html`](web/producto-form.html) | Crear o editar un producto con todos los campos del modelo y validaciones visibles |
 
-## Estructura de carpetas
+Los estados de carga, vacío y error se ven desde el pie de cada página, en "Estados del prototipo", o agregando `?estado=cargando`, `?estado=vacio` o `?estado=error` a la dirección.
 
-Propuesta inicial (ajústala según el framework que elijan):
+## Estado del proyecto
+
+| Entrega | Fecha | Estado | Qué hay |
+|---|---|---|---|
+| E1 Anteproyecto | 17 sep | Entregada | Problema validado con el vivero, repositorio, wireframes, ruta y plan de trabajo |
+| E2 Prototipo y contrato | 1 oct | **En esta versión (v0.2.0)** | Prototipo navegable publicado, contrato OpenAPI 3.1 validado con servidor simulado, modelo de datos y tablero de tareas |
+| E3 MVP del backend | 15 oct | Pendiente | API con PostgreSQL, autenticación y validación según el contrato |
+| E4 Despliegue contenerizado | 12 nov | Pendiente | Docker, CI/CD, HTTPS y dominio propio |
+| E5 Versión candidata | 26 nov | Pendiente | Funcionalidades congeladas, pruebas, auditorías, respaldo restaurado |
+| E6 Sustentación EXIS | 4 dic | Pendiente | |
+
+## Estructura del repositorio
 
 ```
-frontend/
-├── public/
-│   └── favicon, imágenes estáticas
-├── src/
-│   ├── assets/          # imágenes, íconos
-│   ├── components/      # componentes reutilizables (cards, botones, etc.)
-│   ├── pages/
-│   │   ├── Catalogo/    # vista pública
-│   │   ├── Admin/
-│   │   │   ├── Productos/
-│   │   │   ├── Pedidos/
-│   │   │   └── Proveedores/
-│   │   ├── Alertas/     # alertas de reabastecimiento
-│   │   └── Reportes/
-│   ├── services/        # llamadas a la API (fetch/axios)
-│   ├── context/         # manejo de sesión/autenticación (JWT)
-│   ├── hooks/
-│   ├── styles/
-│   └── App.jsx
-├── .env                 # URL de la API, variables de entorno
-├── package.json
-└── README.md
+Natutech/
+├── README.md
+├── LICENSE
+├── .gitignore
+├── .env.example              Variables que usará el backend, sin valores reales
+├── .redocly.lint-ignore.yaml Advertencia del contrato aceptada, con su razón
+├── .github/workflows/
+│   ├── pages.yml             Publica web/ en GitHub Pages
+│   └── validar-contrato.yml  Valida api/openapi.yaml en cada pull request
+├── api/
+│   └── openapi.yaml          Contrato de la API (OpenAPI 3.1)
+├── docs/
+│   ├── modelo-datos.md       Entidades, atributos, relaciones e índices
+│   ├── modelo-datos.png      Diagrama entidad-relación
+│   ├── decisiones.md         Decisiones de arquitectura y su porqué
+│   ├── wireframes/           Wireframes de la Entrega 1 y capturas del prototipo
+│   ├── entrevista/           Encuesta aplicada al vivero y sus resultados
+│   ├── evidencias/           Capturas de Lighthouse, validación y servidor simulado
+│   └── Diagrama-Gantt.xlsx   Cronograma del semestre
+└── web/
+    ├── index.html            Catálogo público
+    ├── detalle.html          Detalle del producto
+    ├── inventario.html       Inventario y alertas del vivero
+    ├── producto-form.html    Formulario de producto
+    ├── css/estilos.css       Un solo archivo de estilos, variables en :root
+    ├── js/app.js             Interacción y carga de los datos de ejemplo
+    ├── datos/ejemplo.json    Datos realistas, con los mismos campos del contrato
+    ├── img/                  Logo e ilustraciones por categoría
+    └── fuentes/              Tipografía Atkinson Hyperlegible (licencia OFL)
 ```
+
+## Cómo trabajamos
+
+- Cada cambio va en una rama propia (`feat/...`, `docs/...`, `chore/...`, `ci/...`) y entra a `main` por pull request revisado por otro integrante.
+- Los mensajes de commit siguen [Conventional Commits](https://www.conventionalcommits.org/es/v1.0.0/) y dicen qué cambió y por qué.
+- Ningún `.env`, token ni contraseña se sube al repositorio; solo `.env.example` con los nombres de las variables.
+- Las tareas están en el tablero del proyecto en GitHub, con responsable asignado.
+
+## Uso de inteligencia artificial
+
+| Herramienta | Para qué | Alcance |
+|---|---|---|
+| Claude (Anthropic) | Proponer la estructura del repositorio y redactar borradores del contrato OpenAPI, del modelo de datos, del prototipo (HTML, CSS y JavaScript) y de esta documentación. Revisar la coherencia entre contrato, modelo y datos de ejemplo. | El problema, la encuesta al vivero, la elección de ruta y las decisiones son del equipo. Cada integrante revisó, probó y ajustó lo que subió, y puede explicarlo línea por línea. |
+
+Los datos del prototipo son sintéticos: los productos son del tipo que vende el vivero, pero precios, existencias, proveedores, clientes y teléfonos son de ejemplo.
+
+## Licencia
+
+Código bajo licencia [MIT](LICENSE). La tipografía Atkinson Hyperlegible es del Braille Institute y se distribuye con la licencia [SIL OFL 1.1](web/fuentes/OFL.txt).
