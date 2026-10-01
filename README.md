@@ -137,7 +137,7 @@ Natutech/
 
 | Herramienta | Para qué | Alcance |
 |---|---|---|
-| Claude (Anthropic) | Proponer la estructura del repositorio y redactar borradores del contrato OpenAPI, del modelo de datos, del prototipo (HTML, CSS y JavaScript) y de esta documentación. Revisar la coherencia entre contrato, modelo y datos de ejemplo. | El problema, la encuesta al vivero, la elección de ruta y las decisiones son del equipo. Cada integrante revisó, probó y ajustó lo que subió, y puede explicarlo línea por línea. |
+| Claude (Anthropic) | Proponer la estructura del repositorio y redactar borradores del contrato OpenAPI, del modelo de datos y de esta documentación. Revisar la coherencia entre contrato, modelo y datos de ejemplo. | El problema, la encuesta al vivero, la elección de ruta y las decisiones son del equipo. Cada integrante revisó, probó y ajustó lo que subió, y puede explicarlo línea por línea. |
 
 Los datos del prototipo son sintéticos: los productos son del tipo que vende el vivero, pero precios, existencias, proveedores, clientes y teléfonos son de ejemplo.
 
