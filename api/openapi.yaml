@@ -1,0 +1,1870 @@
+openapi: 3.1.0
+
+info:
+  title: API de Natutech para el Vivero Las Acacias
+  version: 0.2.0
+  summary: Catálogo, inventario, pedidos y alertas de reabastecimiento por temporada.
+  description: |
+    Contrato de la API que implementará el backend en la Entrega 3.
+
+    - El catálogo público (`/catalogo/...` y `/categorias`) no pide sesión.
+    - Todo lo demás exige un token JWT que se obtiene en `POST /sesiones`.
+    - Los precios son pesos colombianos (COP) en números enteros, sin decimales.
+    - Las fechas con hora usan ISO 8601 con zona horaria de Colombia (`-05:00`).
+    - Todos los errores tienen la misma forma: el esquema `Error`.
+
+    Los datos de los ejemplos son sintéticos y realistas para un vivero de Yopal, Casanare.
+  license:
+    name: MIT
+    identifier: MIT
+
+servers:
+  - url: http://127.0.0.1:4010
+    description: Servidor simulado (Prism) levantado desde este contrato
+  - url: http://127.0.0.1:3000
+    description: Backend local del equipo (desde la Entrega 3)
+
+tags:
+  - name: Catálogo público
+    description: Lo que ve cualquier cliente sin iniciar sesión.
+  - name: Categorías
+    description: Agrupaciones del catálogo (interior, exterior, frutales, insumos...).
+  - name: Productos
+    description: Gestión del inventario por parte del personal del vivero.
+  - name: Proveedores
+    description: Quién le surte cada producto al vivero y en cuántos días.
+  - name: Pedidos
+    description: Encargos y ventas que el personal registra después de cerrar la venta por WhatsApp o en la tienda.
+  - name: Temporadas
+    description: Fechas de alta demanda (Día de la Madre, Amor y Amistad, Día de los Difuntos, Navidad).
+  - name: Alertas
+    description: Avisos de reabastecimiento por stock mínimo o por temporada cercana.
+  - name: Sesiones
+    description: Inicio de sesión del personal del vivero.
+
+security:
+  - tokenJwt: []
+
+paths:
+  /catalogo/productos:
+    get:
+      tags: [Catálogo público]
+      operationId: listarCatalogo
+      summary: Lista los productos visibles en el catálogo público
+      description: |
+        Solo devuelve productos con `visible_en_catalogo = true`. No expone proveedor,
+        stock mínimo ni datos internos. Se usa en la pantalla principal del prototipo.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Busqueda'
+        - $ref: '#/components/parameters/FiltroCategoria'
+        - name: luz
+          in: query
+          description: Filtra por la luz que necesita la planta.
+          schema:
+            type: string
+            enum: [baja, media, alta]
+          example: media
+        - name: solo_disponibles
+          in: query
+          description: Si es `true`, excluye los productos con stock en cero.
+          schema:
+            type: boolean
+            default: false
+          example: true
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/PorPagina'
+      responses:
+        '200':
+          description: Página de productos del catálogo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaProductosPublicos'
+              examples:
+                plantasDeInterior:
+                  summary: Plantas de interior, primera página
+                  value:
+                    datos:
+                      - id: 43562f72-bf9b-4438-bf98-f1bb8c9e51d5
+                        categoria_id: d75df7ee-5c1f-4a9f-9213-5cb13ccc38b7
+                        nombre: Monstera deliciosa
+                        nombre_cientifico: Monstera deliciosa
+                        descripcion: Hojas grandes y perforadas que se abren a medida que la planta crece. Aguanta bien el calor de Yopal si no le da el sol directo de la tarde.
+                        presentacion: Matera plástica de 25 cm, 60 cm de alto
+                        precio: 45000
+                        stock: 12
+                        luz: media
+                        riego: 2 veces por semana
+                        cuidado: facil
+                        imagen_url: img/interior.svg
+                      - id: d1d37c83-b213-4a63-80f9-1ecf63628ff7
+                        categoria_id: d75df7ee-5c1f-4a9f-9213-5cb13ccc38b7
+                        nombre: Espatifilo (cuna de Moisés)
+                        nombre_cientifico: Spathiphyllum wallisii
+                        descripcion: Flor blanca que se pide mucho para arreglos del Día de los Difuntos.
+                        presentacion: Matera de 18 cm
+                        precio: 35000
+                        stock: 6
+                        luz: baja
+                        riego: 2 veces por semana
+                        cuidado: facil
+                        imagen_url: img/interior.svg
+                    paginacion:
+                      pagina: 1
+                      por_pagina: 12
+                      total: 6
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+
+  /catalogo/productos/{producto_id}:
+    parameters:
+      - $ref: '#/components/parameters/ProductoId'
+    get:
+      tags: [Catálogo público]
+      operationId: verProductoCatalogo
+      summary: Muestra el detalle público de un producto
+      security: []
+      responses:
+        '200':
+          description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductoPublico'
+              examples:
+                crisantemo:
+                  summary: Crisantemo para el Día de los Difuntos
+                  value:
+                    id: 3da94211-90a8-48a3-b787-059be5559766
+                    categoria_id: a1cc719d-b705-4664-9417-07dc8770f0b6
+                    nombre: Crisantemo amarillo en matera
+                    nombre_cientifico: Chrysanthemum morifolium
+                    descripcion: La flor que más se vende para el Día de los Difuntos. Se puede llevar en matera o sembrar después en el jardín.
+                    presentacion: Matera de 14 cm
+                    precio: 15000
+                    stock: 14
+                    luz: alta
+                    riego: Día de por medio
+                    cuidado: facil
+                    imagen_url: img/exterior.svg
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+
+  /categorias:
+    get:
+      tags: [Categorías]
+      operationId: listarCategorias
+      summary: Lista las categorías del catálogo
+      description: Público, porque el catálogo las usa para filtrar. Son pocas, así que no se paginan.
+      security: []
+      responses:
+        '200':
+          description: Todas las categorías
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Categoria'
+              examples:
+                categorias:
+                  summary: Dos de las siete categorías
+                  value:
+                    - id: d75df7ee-5c1f-4a9f-9213-5cb13ccc38b7
+                      nombre: Interior
+                      descripcion: Plantas que viven bien bajo techo, con luz indirecta.
+                      creado_en: '2026-08-04T09:00:00-05:00'
+                      actualizado_en: '2026-08-04T09:00:00-05:00'
+                    - id: ad000eac-13f3-49c0-bbb0-d683c286c20e
+                      nombre: Frutales
+                      descripcion: Árboles frutales injertados para patio y finca.
+                      creado_en: '2026-08-04T09:00:00-05:00'
+                      actualizado_en: '2026-08-04T09:00:00-05:00'
+
+  /productos:
+    get:
+      tags: [Productos]
+      operationId: listarProductos
+      summary: Lista el inventario completo
+      description: Incluye productos ocultos del catálogo, stock mínimo y proveedor.
+      parameters:
+        - $ref: '#/components/parameters/Busqueda'
+        - $ref: '#/components/parameters/FiltroCategoria'
+        - name: bajo_stock
+          in: query
+          description: Si es `true`, solo devuelve productos con `stock` menor que `stock_minimo`.
+          schema:
+            type: boolean
+            default: false
+          example: true
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/PorPagina'
+      responses:
+        '200':
+          description: Página del inventario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaProductos'
+              examples:
+                bajoStock:
+                  summary: Productos por debajo del stock mínimo
+                  value:
+                    datos:
+                      - id: 1f491554-7cdd-48dd-a438-47ce97802716
+                        categoria_id: d75df7ee-5c1f-4a9f-9213-5cb13ccc38b7
+                        proveedor_id: 44856780-e256-4e4b-9091-3a1f31064483
+                        nombre: Anturio rojo
+                        nombre_cientifico: Anthurium andraeanum
+                        descripcion: Flor roja y brillante que dura varias semanas. Prefiere humedad alta y sombra; el sol directo le quema las hojas.
+                        presentacion: Matera de 15 cm, con 2 flores
+                        precio: 38000
+                        stock: 3
+                        stock_minimo: 5
+                        luz: media
+                        riego: Cada 3 días
+                        cuidado: intermedio
+                        imagen_url: img/interior.svg
+                        visible_en_catalogo: true
+                        creado_en: '2026-08-04T09:00:00-05:00'
+                        actualizado_en: '2026-09-28T17:40:00-05:00'
+                    paginacion:
+                      pagina: 1
+                      por_pagina: 20
+                      total: 4
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+    post:
+      tags: [Productos]
+      operationId: crearProducto
+      summary: Crea un producto en el inventario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoEntrada'
+            examples:
+              helecho:
+                summary: Helecho Boston que llegó del proveedor de Aguazul
+                value:
+                  categoria_id: 302f0ae0-2661-4dfe-9963-5f3e1fc4be40
+                  proveedor_id: 44856780-e256-4e4b-9091-3a1f31064483
+                  nombre: Helecho Boston
+                  nombre_cientifico: Nephrolepis exaltata
+                  descripcion: Helecho de hojas largas y arqueadas para materas colgantes en corredores con sombra.
+                  presentacion: Matera colgante de 20 cm
+                  precio: 28000
+                  stock: 10
+                  stock_minimo: 4
+                  luz: media
+                  riego: Cada 2 días
+                  cuidado: intermedio
+                  imagen_url: img/colgantes.svg
+                  visible_en_catalogo: true
+      responses:
+        '201':
+          description: Producto creado
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+              examples:
+                helechoCreado:
+                  summary: El helecho ya guardado, con su id y fechas
+                  value:
+                    id: 13f6a1e7-b124-4c1b-9d3f-578cede15ff1
+                    categoria_id: 302f0ae0-2661-4dfe-9963-5f3e1fc4be40
+                    proveedor_id: 44856780-e256-4e4b-9091-3a1f31064483
+                    nombre: Helecho Boston
+                    nombre_cientifico: Nephrolepis exaltata
+                    descripcion: Helecho de hojas largas y arqueadas para materas colgantes en corredores con sombra.
+                    presentacion: Matera colgante de 20 cm
+                    precio: 28000
+                    stock: 10
+                    stock_minimo: 4
+                    luz: media
+                    riego: Cada 2 días
+                    cuidado: intermedio
+                    imagen_url: img/colgantes.svg
+                    visible_en_catalogo: true
+                    creado_en: '2026-10-01T08:20:00-05:00'
+                    actualizado_en: '2026-10-01T08:20:00-05:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '409':
+          description: Ya existe un producto con ese nombre
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                nombreRepetido:
+                  summary: Nombre duplicado
+                  value:
+                    codigo: CONFLICTO
+                    mensaje: Ya existe un producto llamado «Helecho Boston». Edite ese producto en lugar de crear otro.
+                    detalles:
+                      - campo: nombre
+                        problema: ya está en uso
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+
+  /productos/{producto_id}:
+    parameters:
+      - $ref: '#/components/parameters/ProductoId'
+    get:
+      tags: [Productos]
+      operationId: verProducto
+      summary: Muestra un producto con todos sus campos
+      responses:
+        '200':
+          description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+              examples:
+                anturio:
+                  $ref: '#/components/examples/ProductoAnturio'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+    patch:
+      tags: [Productos]
+      operationId: actualizarProducto
+      summary: Cambia uno o varios campos de un producto
+      description: |
+        Solo se envían los campos que cambian. Es la operación que más se usa en
+        temporada: el vivero sube precios y repone stock antes de cada fecha.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoCambios'
+            examples:
+              subidaDeTemporada:
+                summary: Precio de temporada y reposición antes del 2 de noviembre
+                value:
+                  precio: 17000
+                  stock: 60
+      responses:
+        '200':
+          description: Producto actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+              examples:
+                crisantemoActualizado:
+                  summary: Crisantemo con el precio y el stock nuevos
+                  value:
+                    id: 3da94211-90a8-48a3-b787-059be5559766
+                    categoria_id: a1cc719d-b705-4664-9417-07dc8770f0b6
+                    proveedor_id: 44856780-e256-4e4b-9091-3a1f31064483
+                    nombre: Crisantemo amarillo en matera
+                    nombre_cientifico: Chrysanthemum morifolium
+                    descripcion: La flor que más se vende para el Día de los Difuntos. Se puede llevar en matera o sembrar después en el jardín.
+                    presentacion: Matera de 14 cm
+                    precio: 17000
+                    stock: 60
+                    stock_minimo: 10
+                    luz: alta
+                    riego: Día de por medio
+                    cuidado: facil
+                    imagen_url: img/exterior.svg
+                    visible_en_catalogo: true
+                    creado_en: '2026-08-04T09:00:00-05:00'
+                    actualizado_en: '2026-10-01T09:05:00-05:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: El nombre nuevo ya lo usa otro producto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                nombreRepetido:
+                  summary: Nombre duplicado
+                  value:
+                    codigo: CONFLICTO
+                    mensaje: Ya existe un producto llamado «Poto».
+                    detalles:
+                      - campo: nombre
+                        problema: ya está en uso
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+    delete:
+      tags: [Productos]
+      operationId: eliminarProducto
+      summary: Elimina un producto que nunca se ha vendido
+      description: |
+        Si el producto aparece en algún pedido no se elimina (se perdería el historial
+        con el que se calculan las alertas de temporada). En ese caso se responde 409
+        y se recomienda ocultarlo con `visible_en_catalogo = false`.
+      responses:
+        '204':
+          description: Producto eliminado
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: El producto tiene pedidos asociados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                conPedidos:
+                  summary: Producto con historial de ventas
+                  value:
+                    codigo: CONFLICTO
+                    mensaje: El crisantemo aparece en 12 pedidos. Ocúltelo del catálogo en lugar de eliminarlo.
+                    detalles:
+                      - campo: visible_en_catalogo
+                        problema: cambie este campo a false para retirarlo del catálogo
+
+  /proveedores:
+    get:
+      tags: [Proveedores]
+      operationId: listarProveedores
+      summary: Lista los proveedores
+      description: Son pocos (menos de veinte), así que no se paginan.
+      responses:
+        '200':
+          description: Todos los proveedores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Proveedor'
+              examples:
+                proveedores:
+                  summary: Proveedores de plantas y de insumos
+                  value:
+                    - id: 44856780-e256-4e4b-9091-3a1f31064483
+                      nombre: Cultivos Ornamentales El Morichal
+                      telefono: +57 300 000 1101
+                      municipio: Aguazul
+                      suministra: Plantas ornamentales de interior y exterior
+                      dias_entrega: 3
+                      activo: true
+                      creado_en: '2026-08-04T09:00:00-05:00'
+                      actualizado_en: '2026-08-04T09:00:00-05:00'
+                    - id: ce0bd65b-6406-427d-90c9-5e2c411bff12
+                      nombre: Agroinsumos La Llanura
+                      telefono: +57 300 000 1102
+                      municipio: Yopal
+                      suministra: Tierra, abonos y sustratos
+                      dias_entrega: 1
+                      activo: true
+                      creado_en: '2026-08-04T09:00:00-05:00'
+                      actualizado_en: '2026-08-04T09:00:00-05:00'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+    post:
+      tags: [Proveedores]
+      operationId: crearProveedor
+      summary: Registra un proveedor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProveedorEntrada'
+            examples:
+              materas:
+                summary: Proveedor nuevo de materas plásticas
+                value:
+                  nombre: Plásticos del Casanare
+                  telefono: +57 608 000 1105
+                  municipio: Yopal
+                  suministra: Materas plásticas y bandejas de germinación
+                  dias_entrega: 2
+                  activo: true
+      responses:
+        '201':
+          description: Proveedor creado
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proveedor'
+              examples:
+                creado:
+                  summary: Proveedor guardado
+                  value:
+                    id: db589bdd-1a84-4f0d-9549-49efe35fed0d
+                    nombre: Plásticos del Casanare
+                    telefono: +57 608 000 1105
+                    municipio: Yopal
+                    suministra: Materas plásticas y bandejas de germinación
+                    dias_entrega: 2
+                    activo: true
+                    creado_en: '2026-10-01T10:00:00-05:00'
+                    actualizado_en: '2026-10-01T10:00:00-05:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '422':
+          description: Algún campo no cumple las reglas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                telefonoMalo:
+                  summary: Teléfono sin indicativo
+                  value:
+                    codigo: VALIDACION_FALLIDA
+                    mensaje: Revise los campos marcados.
+                    detalles:
+                      - campo: telefono
+                        problema: use el formato +57 300 000 0000
+
+  /proveedores/{proveedor_id}:
+    parameters:
+      - name: proveedor_id
+        in: path
+        required: true
+        description: Identificador del proveedor.
+        schema:
+          type: string
+          format: uuid
+        example: 44856780-e256-4e4b-9091-3a1f31064483
+    get:
+      tags: [Proveedores]
+      operationId: verProveedor
+      summary: Muestra un proveedor
+      responses:
+        '200':
+          description: Proveedor encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proveedor'
+              examples:
+                morichal:
+                  $ref: '#/components/examples/ProveedorMorichal'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+    patch:
+      tags: [Proveedores]
+      operationId: actualizarProveedor
+      summary: Cambia uno o varios campos de un proveedor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProveedorCambios'
+            examples:
+              invierno:
+                summary: En invierno la vía a Aguazul demora más las entregas
+                value:
+                  dias_entrega: 5
+      responses:
+        '200':
+          description: Proveedor actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proveedor'
+              examples:
+                actualizado:
+                  summary: Proveedor con el nuevo tiempo de entrega
+                  value:
+                    id: 44856780-e256-4e4b-9091-3a1f31064483
+                    nombre: Cultivos Ornamentales El Morichal
+                    telefono: +57 300 000 1101
+                    municipio: Aguazul
+                    suministra: Plantas ornamentales de interior y exterior
+                    dias_entrega: 5
+                    activo: true
+                    creado_en: '2026-08-04T09:00:00-05:00'
+                    actualizado_en: '2026-10-01T10:30:00-05:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+
+  /pedidos:
+    get:
+      tags: [Pedidos]
+      operationId: listarPedidos
+      summary: Lista los pedidos, del más reciente al más antiguo
+      parameters:
+        - name: estado
+          in: query
+          description: Filtra por estado del pedido.
+          schema:
+            $ref: '#/components/schemas/EstadoPedido'
+          example: confirmado
+        - name: desde
+          in: query
+          description: Fecha mínima de creación (inclusive).
+          schema:
+            type: string
+            format: date
+          example: '2026-09-01'
+        - name: hasta
+          in: query
+          description: Fecha máxima de creación (inclusive).
+          schema:
+            type: string
+            format: date
+          example: '2026-09-30'
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/PorPagina'
+      responses:
+        '200':
+          description: Página de pedidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaPedidos'
+              examples:
+                septiembre:
+                  summary: Pedidos de finales de septiembre
+                  value:
+                    datos:
+                      - id: fdec65fe-7212-4737-b222-d7283ab5a383
+                        cliente_nombre: Luz Marina Pérez
+                        cliente_telefono: +57 300 000 2201
+                        canal: whatsapp
+                        estado: confirmado
+                        fecha_entrega: '2026-10-31'
+                        nota: Arreglo para llevar al cementerio el 1 de noviembre. Recoge en el vivero.
+                        total: 160000
+                        detalles:
+                          - id: 0a3bf4d9-c097-4e13-89a5-b1d8560d8297
+                            pedido_id: fdec65fe-7212-4737-b222-d7283ab5a383
+                            producto_id: 3da94211-90a8-48a3-b787-059be5559766
+                            cantidad: 6
+                            precio_unitario: 15000
+                            creado_en: '2026-09-29T10:12:00-05:00'
+                            actualizado_en: '2026-09-29T10:12:00-05:00'
+                          - id: ab00ca3e-e989-4e77-b218-d06eec35bea1
+                            pedido_id: fdec65fe-7212-4737-b222-d7283ab5a383
+                            producto_id: d1d37c83-b213-4a63-80f9-1ecf63628ff7
+                            cantidad: 2
+                            precio_unitario: 35000
+                            creado_en: '2026-09-29T10:12:00-05:00'
+                            actualizado_en: '2026-09-29T10:12:00-05:00'
+                        creado_en: '2026-09-29T10:12:00-05:00'
+                        actualizado_en: '2026-09-29T11:30:00-05:00'
+                      - id: d4d49510-4513-49a4-9354-8b905e5c7474
+                        cliente_nombre: Jhon Fredy Rincón
+                        cliente_telefono: +57 300 000 2202
+                        canal: tienda
+                        estado: entregado
+                        fecha_entrega: null
+                        nota: null
+                        total: 50000
+                        detalles:
+                          - id: 99fb6ec6-63bc-45c1-8c1a-87369f4b56d2
+                            pedido_id: d4d49510-4513-49a4-9354-8b905e5c7474
+                            producto_id: 178d1501-3f49-496b-b907-7d6a94fc0f4a
+                            cantidad: 2
+                            precio_unitario: 25000
+                            creado_en: '2026-09-28T15:40:00-05:00'
+                            actualizado_en: '2026-09-28T15:40:00-05:00'
+                        creado_en: '2026-09-28T15:40:00-05:00'
+                        actualizado_en: '2026-09-28T15:52:00-05:00'
+                    paginacion:
+                      pagina: 1
+                      por_pagina: 20
+                      total: 2
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+    post:
+      tags: [Pedidos]
+      operationId: crearPedido
+      summary: Registra un pedido cerrado por WhatsApp o en la tienda
+      description: |
+        El precio de cada línea se copia del producto en el momento de crear el pedido
+        (`precio_unitario`), así una subida de precio posterior no cambia pedidos viejos.
+        El `total` lo calcula el servidor. Crear el pedido descuenta el stock.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoEntrada'
+            examples:
+              encargoDifuntos:
+                summary: Encargo para el Día de los Difuntos
+                value:
+                  cliente_nombre: Luz Marina Pérez
+                  cliente_telefono: +57 300 000 2201
+                  canal: whatsapp
+                  fecha_entrega: '2026-10-31'
+                  nota: Arreglo para llevar al cementerio el 1 de noviembre. Recoge en el vivero.
+                  detalles:
+                    - producto_id: 3da94211-90a8-48a3-b787-059be5559766
+                      cantidad: 6
+                    - producto_id: d1d37c83-b213-4a63-80f9-1ecf63628ff7
+                      cantidad: 2
+      responses:
+        '201':
+          description: Pedido registrado
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+              examples:
+                registrado:
+                  $ref: '#/components/examples/PedidoDifuntos'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '422':
+          description: El pedido no se puede registrar así
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                sinStock:
+                  summary: Se piden más unidades de las que hay
+                  value:
+                    codigo: VALIDACION_FALLIDA
+                    mensaje: No hay stock suficiente para registrar el pedido.
+                    detalles:
+                      - campo: detalles[1].cantidad
+                        problema: se piden 8 espatifilos y hay 6 en stock
+
+  /pedidos/{pedido_id}:
+    parameters:
+      - name: pedido_id
+        in: path
+        required: true
+        description: Identificador del pedido.
+        schema:
+          type: string
+          format: uuid
+        example: fdec65fe-7212-4737-b222-d7283ab5a383
+    get:
+      tags: [Pedidos]
+      operationId: verPedido
+      summary: Muestra un pedido con sus líneas
+      responses:
+        '200':
+          description: Pedido encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+              examples:
+                encargo:
+                  $ref: '#/components/examples/PedidoDifuntos'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+    patch:
+      tags: [Pedidos]
+      operationId: actualizarPedido
+      summary: Cambia el estado, la fecha de entrega o la nota de un pedido
+      description: |
+        Transiciones permitidas: pendiente → confirmado → entregado, y pendiente o
+        confirmado → cancelado. Un pedido entregado o cancelado ya no cambia de estado.
+        Cancelar devuelve las unidades al stock.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoCambios'
+            examples:
+              entregado:
+                summary: La clienta recogió el encargo
+                value:
+                  estado: entregado
+      responses:
+        '200':
+          description: Pedido actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+              examples:
+                entregado:
+                  summary: Encargo marcado como entregado
+                  value:
+                    id: fdec65fe-7212-4737-b222-d7283ab5a383
+                    cliente_nombre: Luz Marina Pérez
+                    cliente_telefono: +57 300 000 2201
+                    canal: whatsapp
+                    estado: entregado
+                    fecha_entrega: '2026-10-31'
+                    nota: Arreglo para llevar al cementerio el 1 de noviembre. Recoge en el vivero.
+                    total: 160000
+                    detalles:
+                      - id: 0a3bf4d9-c097-4e13-89a5-b1d8560d8297
+                        pedido_id: fdec65fe-7212-4737-b222-d7283ab5a383
+                        producto_id: 3da94211-90a8-48a3-b787-059be5559766
+                        cantidad: 6
+                        precio_unitario: 15000
+                        creado_en: '2026-09-29T10:12:00-05:00'
+                        actualizado_en: '2026-09-29T10:12:00-05:00'
+                      - id: ab00ca3e-e989-4e77-b218-d06eec35bea1
+                        pedido_id: fdec65fe-7212-4737-b222-d7283ab5a383
+                        producto_id: d1d37c83-b213-4a63-80f9-1ecf63628ff7
+                        cantidad: 2
+                        precio_unitario: 35000
+                        creado_en: '2026-09-29T10:12:00-05:00'
+                        actualizado_en: '2026-09-29T10:12:00-05:00'
+                    creado_en: '2026-09-29T10:12:00-05:00'
+                    actualizado_en: '2026-10-31T16:20:00-05:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          description: Transición de estado no permitida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                yaEntregado:
+                  summary: Se intenta volver a pendiente un pedido entregado
+                  value:
+                    codigo: VALIDACION_FALLIDA
+                    mensaje: Un pedido entregado no puede volver a pendiente.
+                    detalles:
+                      - campo: estado
+                        problema: transición de entregado a pendiente no permitida
+
+  /temporadas:
+    get:
+      tags: [Temporadas]
+      operationId: listarTemporadas
+      summary: Lista las fechas de alta demanda, ordenadas por fecha
+      responses:
+        '200':
+          description: Temporadas registradas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Temporada'
+              examples:
+                segundoSemestre:
+                  summary: Temporadas del segundo semestre de 2026
+                  value:
+                    - id: 7fca59fa-5f46-4048-855f-87627cdb7487
+                      nombre: Día de los Difuntos
+                      fecha: '2026-11-02'
+                      dias_anticipacion: 21
+                      creado_en: '2026-08-04T09:00:00-05:00'
+                      actualizado_en: '2026-08-04T09:00:00-05:00'
+                    - id: 8c4159ce-a80e-45d4-8977-335b43d1494f
+                      nombre: Temporada navideña
+                      fecha: '2026-12-16'
+                      dias_anticipacion: 21
+                      creado_en: '2026-08-04T09:00:00-05:00'
+                      actualizado_en: '2026-08-04T09:00:00-05:00'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+    post:
+      tags: [Temporadas]
+      operationId: crearTemporada
+      summary: Registra una fecha de alta demanda
+      description: Las fechas móviles (Día de la Madre, Amor y Amistad) cambian cada año, por eso se registran por año.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemporadaEntrada'
+            examples:
+              madre2027:
+                summary: Día de la Madre de 2027
+                value:
+                  nombre: Día de la Madre
+                  fecha: '2027-05-09'
+                  dias_anticipacion: 21
+      responses:
+        '201':
+          description: Temporada creada
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Temporada'
+              examples:
+                creada:
+                  summary: Temporada guardada
+                  value:
+                    id: e99662ad-eefe-4237-be07-33f5bd72f56d
+                    nombre: Día de la Madre
+                    fecha: '2027-05-09'
+                    dias_anticipacion: 21
+                    creado_en: '2026-10-01T11:00:00-05:00'
+                    actualizado_en: '2026-10-01T11:00:00-05:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '409':
+          description: Esa temporada ya existe en esa fecha
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                repetida:
+                  summary: Temporada duplicada
+                  value:
+                    codigo: CONFLICTO
+                    mensaje: El Día de la Madre del 9 de mayo de 2027 ya está registrado.
+                    detalles:
+                      - campo: fecha
+                        problema: ya existe una temporada con ese nombre y esa fecha
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+
+  /alertas:
+    get:
+      tags: [Alertas]
+      operationId: listarAlertas
+      summary: Lista las alertas de reabastecimiento
+      description: |
+        Las alertas las genera el servidor (Entrega 3) cuando el stock baja del mínimo
+        o cuando una temporada entra en su ventana de anticipación y el stock no alcanza
+        lo que se vendió en la misma ventana del año anterior (`demanda_estimada`).
+      parameters:
+        - name: estado
+          in: query
+          description: Filtra por estado. Por defecto solo las activas.
+          schema:
+            $ref: '#/components/schemas/EstadoAlerta'
+          example: activa
+        - name: tipo
+          in: query
+          description: Filtra por tipo de alerta.
+          schema:
+            $ref: '#/components/schemas/TipoAlerta'
+          example: temporada
+      responses:
+        '200':
+          description: Alertas encontradas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alerta'
+              examples:
+                activas:
+                  summary: Una alerta de temporada y una de stock mínimo
+                  value:
+                    - id: ae772a0e-ac28-47fd-b10c-23ec255f40a9
+                      producto_id: 3da94211-90a8-48a3-b787-059be5559766
+                      temporada_id: 7fca59fa-5f46-4048-855f-87627cdb7487
+                      tipo: temporada
+                      stock_actual: 14
+                      demanda_estimada: 60
+                      estado: activa
+                      creado_en: '2026-09-30T06:00:00-05:00'
+                      actualizado_en: '2026-09-30T06:00:00-05:00'
+                    - id: 82cbc6bb-0e13-4eae-8b36-5edc3a418cb1
+                      producto_id: 1f491554-7cdd-48dd-a438-47ce97802716
+                      temporada_id: null
+                      tipo: stock_minimo
+                      stock_actual: 3
+                      demanda_estimada: null
+                      estado: activa
+                      creado_en: '2026-09-27T11:05:00-05:00'
+                      actualizado_en: '2026-09-27T11:05:00-05:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+
+  /alertas/{alerta_id}:
+    parameters:
+      - name: alerta_id
+        in: path
+        required: true
+        description: Identificador de la alerta.
+        schema:
+          type: string
+          format: uuid
+        example: ae772a0e-ac28-47fd-b10c-23ec255f40a9
+    patch:
+      tags: [Alertas]
+      operationId: actualizarAlerta
+      summary: Marca una alerta como atendida o descartada
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertaCambios'
+            examples:
+              atendida:
+                summary: Ya se hizo el pedido al proveedor
+                value:
+                  estado: atendida
+      responses:
+        '200':
+          description: Alerta actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alerta'
+              examples:
+                atendida:
+                  summary: Alerta del crisantemo atendida
+                  value:
+                    id: ae772a0e-ac28-47fd-b10c-23ec255f40a9
+                    producto_id: 3da94211-90a8-48a3-b787-059be5559766
+                    temporada_id: 7fca59fa-5f46-4048-855f-87627cdb7487
+                    tipo: temporada
+                    stock_actual: 14
+                    demanda_estimada: 60
+                    estado: atendida
+                    creado_en: '2026-09-30T06:00:00-05:00'
+                    actualizado_en: '2026-10-01T09:10:00-05:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+
+  /sesiones:
+    post:
+      tags: [Sesiones]
+      operationId: iniciarSesion
+      summary: Inicia sesión y entrega un token JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credenciales'
+            examples:
+              administradora:
+                summary: La administradora del vivero entra al panel
+                value:
+                  correo: administracion@viverolasacacias.test
+                  contrasena: cambie-esta-clave-2026
+      responses:
+        '201':
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sesion'
+              examples:
+                sesion:
+                  summary: Token válido por ocho horas, una jornada del vivero
+                  value:
+                    token: eyJhbGciOiJIUzI1NiJ9.ejemplo.firma
+                    expira_en: '2026-10-01T16:00:00-05:00'
+                    usuario:
+                      id: 1eefb5c0-fe3f-4f14-a06f-c89649f9b43a
+                      nombre: Administración Vivero Las Acacias
+                      correo: administracion@viverolasacacias.test
+                      rol: administrador
+                      activo: true
+                      creado_en: '2026-08-04T09:00:00-05:00'
+                      actualizado_en: '2026-08-04T09:00:00-05:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          description: Correo o contraseña incorrectos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                credencialesMalas:
+                  summary: No se dice cuál de los dos falló, a propósito
+                  value:
+                    codigo: NO_AUTENTICADO
+                    mensaje: El correo o la contraseña no coinciden.
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+
+components:
+  securitySchemes:
+    tokenJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Token que entrega `POST /sesiones`. Se envía en la cabecera `Authorization: Bearer <token>`.'
+
+  parameters:
+    ProductoId:
+      name: producto_id
+      in: path
+      required: true
+      description: Identificador del producto.
+      schema:
+        type: string
+        format: uuid
+      example: 3da94211-90a8-48a3-b787-059be5559766
+    Busqueda:
+      name: q
+      in: query
+      description: Texto a buscar en el nombre común o científico.
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 60
+      example: palma
+    FiltroCategoria:
+      name: categoria_id
+      in: query
+      description: Solo productos de esta categoría.
+      schema:
+        type: string
+        format: uuid
+      example: d75df7ee-5c1f-4a9f-9213-5cb13ccc38b7
+    Pagina:
+      name: pagina
+      in: query
+      description: Número de página, empezando en 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      example: 1
+    PorPagina:
+      name: por_pagina
+      in: query
+      description: Cantidad de elementos por página.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+      example: 12
+
+  headers:
+    Location:
+      description: Ruta del recurso recién creado.
+      schema:
+        type: string
+      example: /productos/13f6a1e7-b124-4c1b-9d3f-578cede15ff1
+
+  responses:
+    SolicitudInvalida:
+      description: La petición está mal formada (JSON inválido, parámetro con tipo equivocado)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            parametroMalo:
+              summary: Página con un valor no permitido
+              value:
+                codigo: SOLICITUD_INVALIDA
+                mensaje: El parámetro «pagina» debe ser un número entero mayor o igual a 1.
+                detalles:
+                  - campo: pagina
+                    problema: se recibió «cero»
+    NoAutenticado:
+      description: Falta el token o ya venció
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            sinToken:
+              summary: Petición sin token
+              value:
+                codigo: NO_AUTENTICADO
+                mensaje: Inicie sesión para usar esta operación.
+    NoEncontrado:
+      description: No existe un recurso con ese identificador
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            noExiste:
+              summary: Identificador que no está en la base de datos
+              value:
+                codigo: NO_ENCONTRADO
+                mensaje: No existe un registro con el identificador 00000000-0000-4000-8000-000000000000.
+    ValidacionFallida:
+      description: El JSON está bien formado pero algún valor no cumple las reglas
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            precioNegativo:
+              summary: Precio negativo y nombre vacío
+              value:
+                codigo: VALIDACION_FALLIDA
+                mensaje: Revise los campos marcados.
+                detalles:
+                  - campo: precio
+                    problema: debe ser un número entero mayor o igual a 0
+                  - campo: nombre
+                    problema: es obligatorio
+
+  examples:
+    ProductoAnturio:
+      summary: Anturio por debajo de su stock mínimo
+      value:
+        id: 1f491554-7cdd-48dd-a438-47ce97802716
+        categoria_id: d75df7ee-5c1f-4a9f-9213-5cb13ccc38b7
+        proveedor_id: 44856780-e256-4e4b-9091-3a1f31064483
+        nombre: Anturio rojo
+        nombre_cientifico: Anthurium andraeanum
+        descripcion: Flor roja y brillante que dura varias semanas. Prefiere humedad alta y sombra; el sol directo le quema las hojas.
+        presentacion: Matera de 15 cm, con 2 flores
+        precio: 38000
+        stock: 3
+        stock_minimo: 5
+        luz: media
+        riego: Cada 3 días
+        cuidado: intermedio
+        imagen_url: img/interior.svg
+        visible_en_catalogo: true
+        creado_en: '2026-08-04T09:00:00-05:00'
+        actualizado_en: '2026-09-28T17:40:00-05:00'
+    ProveedorMorichal:
+      summary: Proveedor de plantas ornamentales de Aguazul
+      value:
+        id: 44856780-e256-4e4b-9091-3a1f31064483
+        nombre: Cultivos Ornamentales El Morichal
+        telefono: +57 300 000 1101
+        municipio: Aguazul
+        suministra: Plantas ornamentales de interior y exterior
+        dias_entrega: 3
+        activo: true
+        creado_en: '2026-08-04T09:00:00-05:00'
+        actualizado_en: '2026-08-04T09:00:00-05:00'
+    PedidoDifuntos:
+      summary: Encargo de crisantemos y espatifilos para el 2 de noviembre
+      value:
+        id: fdec65fe-7212-4737-b222-d7283ab5a383
+        cliente_nombre: Luz Marina Pérez
+        cliente_telefono: +57 300 000 2201
+        canal: whatsapp
+        estado: pendiente
+        fecha_entrega: '2026-10-31'
+        nota: Arreglo para llevar al cementerio el 1 de noviembre. Recoge en el vivero.
+        total: 160000
+        detalles:
+          - id: 0a3bf4d9-c097-4e13-89a5-b1d8560d8297
+            pedido_id: fdec65fe-7212-4737-b222-d7283ab5a383
+            producto_id: 3da94211-90a8-48a3-b787-059be5559766
+            cantidad: 6
+            precio_unitario: 15000
+            creado_en: '2026-09-29T10:12:00-05:00'
+            actualizado_en: '2026-09-29T10:12:00-05:00'
+          - id: ab00ca3e-e989-4e77-b218-d06eec35bea1
+            pedido_id: fdec65fe-7212-4737-b222-d7283ab5a383
+            producto_id: d1d37c83-b213-4a63-80f9-1ecf63628ff7
+            cantidad: 2
+            precio_unitario: 35000
+            creado_en: '2026-09-29T10:12:00-05:00'
+            actualizado_en: '2026-09-29T10:12:00-05:00'
+        creado_en: '2026-09-29T10:12:00-05:00'
+        actualizado_en: '2026-09-29T10:12:00-05:00'
+
+  schemas:
+    Error:
+      type: object
+      description: Forma única de todos los errores de la API.
+      required: [codigo, mensaje]
+      properties:
+        codigo:
+          type: string
+          description: Código estable que el frontend puede usar para decidir qué mostrar.
+          enum: [SOLICITUD_INVALIDA, NO_AUTENTICADO, NO_ENCONTRADO, CONFLICTO, VALIDACION_FALLIDA, ERROR_INTERNO]
+        mensaje:
+          type: string
+          description: Explicación en español, lista para mostrarle a la persona.
+        detalles:
+          type: array
+          description: Un elemento por cada campo con problema.
+          items:
+            type: object
+            required: [campo, problema]
+            properties:
+              campo:
+                type: string
+              problema:
+                type: string
+
+    Paginacion:
+      type: object
+      required: [pagina, por_pagina, total]
+      properties:
+        pagina:
+          type: integer
+          minimum: 1
+        por_pagina:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+          description: Total de elementos que cumplen el filtro, en todas las páginas.
+
+    Uuid:
+      type: string
+      format: uuid
+      readOnly: true
+
+    Marca:
+      type: string
+      format: date-time
+      readOnly: true
+
+    Luz:
+      type: [string, 'null']
+      enum: [baja, media, alta, null]
+      description: Luz que necesita la planta. Nulo en macetas e insumos.
+
+    Cuidado:
+      type: [string, 'null']
+      enum: [facil, intermedio, avanzado, null]
+      description: Dificultad de cuidado. Nulo en macetas e insumos.
+
+    Telefono:
+      type: string
+      pattern: '^\+57 \d{3} \d{3} \d{4}$'
+      description: Número colombiano con indicativo, en el formato +57 300 000 0000.
+
+    EstadoPedido:
+      type: string
+      enum: [pendiente, confirmado, entregado, cancelado]
+
+    EstadoAlerta:
+      type: string
+      enum: [activa, atendida, descartada]
+
+    TipoAlerta:
+      type: string
+      enum: [stock_minimo, temporada]
+
+    Categoria:
+      type: object
+      required: [id, nombre, descripcion, creado_en, actualizado_en]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        nombre:
+          type: string
+          minLength: 2
+          maxLength: 40
+        descripcion:
+          type: [string, 'null']
+          maxLength: 200
+        creado_en:
+          $ref: '#/components/schemas/Marca'
+        actualizado_en:
+          $ref: '#/components/schemas/Marca'
+
+    ProductoPublico:
+      type: object
+      description: Proyección del producto para el catálogo público. No incluye proveedor, stock mínimo ni datos de control.
+      required: [id, categoria_id, nombre, nombre_cientifico, descripcion, presentacion, precio, stock, luz, riego, cuidado, imagen_url]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        categoria_id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        nombre_cientifico:
+          type: [string, 'null']
+        descripcion:
+          type: [string, 'null']
+        presentacion:
+          type: string
+        precio:
+          type: integer
+          minimum: 0
+        stock:
+          type: integer
+          minimum: 0
+        luz:
+          $ref: '#/components/schemas/Luz'
+        riego:
+          type: [string, 'null']
+        cuidado:
+          $ref: '#/components/schemas/Cuidado'
+        imagen_url:
+          type: [string, 'null']
+
+    ProductoCampos:
+      type: object
+      description: Campos de un producto que el personal puede diligenciar. Base de las demás variantes.
+      properties:
+        categoria_id:
+          type: string
+          format: uuid
+        proveedor_id:
+          type: [string, 'null']
+          format: uuid
+        nombre:
+          type: string
+          minLength: 2
+          maxLength: 80
+        nombre_cientifico:
+          type: [string, 'null']
+          maxLength: 120
+        descripcion:
+          type: [string, 'null']
+          maxLength: 600
+        presentacion:
+          type: string
+          minLength: 2
+          maxLength: 60
+          description: Tamaño o empaque en que se vende (matera de 20 cm, bulto de 25 kg...).
+        precio:
+          type: integer
+          minimum: 0
+          maximum: 5000000
+          description: Precio de venta en pesos colombianos, sin decimales.
+        stock:
+          type: integer
+          minimum: 0
+          maximum: 100000
+        stock_minimo:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          default: 5
+          description: Por debajo de este número se genera una alerta de reabastecimiento.
+        luz:
+          $ref: '#/components/schemas/Luz'
+        riego:
+          type: [string, 'null']
+          maxLength: 60
+        cuidado:
+          $ref: '#/components/schemas/Cuidado'
+        imagen_url:
+          type: [string, 'null']
+          format: uri-reference
+          maxLength: 300
+        visible_en_catalogo:
+          type: boolean
+          default: true
+
+    ProductoEntrada:
+      description: Lo que se envía para crear un producto. Rechaza campos desconocidos.
+      allOf:
+        - $ref: '#/components/schemas/ProductoCampos'
+      required: [categoria_id, nombre, presentacion, precio, stock, stock_minimo]
+      unevaluatedProperties: false
+
+    ProductoCambios:
+      description: Lo que se envía para editar un producto. Todos los campos son opcionales, pero debe venir al menos uno.
+      allOf:
+        - $ref: '#/components/schemas/ProductoCampos'
+      minProperties: 1
+      unevaluatedProperties: false
+
+    Producto:
+      description: Producto completo, como lo ve el personal del vivero.
+      allOf:
+        - $ref: '#/components/schemas/ProductoCampos'
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/Uuid'
+            creado_en:
+              $ref: '#/components/schemas/Marca'
+            actualizado_en:
+              $ref: '#/components/schemas/Marca'
+      required: [id, categoria_id, proveedor_id, nombre, nombre_cientifico, descripcion, presentacion, precio, stock, stock_minimo, luz, riego, cuidado, imagen_url, visible_en_catalogo, creado_en, actualizado_en]
+      unevaluatedProperties: false
+
+    PaginaProductosPublicos:
+      type: object
+      required: [datos, paginacion]
+      properties:
+        datos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductoPublico'
+        paginacion:
+          $ref: '#/components/schemas/Paginacion'
+
+    PaginaProductos:
+      type: object
+      required: [datos, paginacion]
+      properties:
+        datos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Producto'
+        paginacion:
+          $ref: '#/components/schemas/Paginacion'
+
+    ProveedorCampos:
+      type: object
+      properties:
+        nombre:
+          type: string
+          minLength: 2
+          maxLength: 80
+        telefono:
+          $ref: '#/components/schemas/Telefono'
+        municipio:
+          type: string
+          minLength: 3
+          maxLength: 60
+        suministra:
+          type: [string, 'null']
+          maxLength: 120
+          description: Qué le vende al vivero.
+        dias_entrega:
+          type: integer
+          minimum: 0
+          maximum: 60
+          default: 3
+          description: Días que tarda en llegar un pedido a Yopal.
+        activo:
+          type: boolean
+          default: true
+
+    ProveedorEntrada:
+      allOf:
+        - $ref: '#/components/schemas/ProveedorCampos'
+      required: [nombre, telefono, municipio]
+      unevaluatedProperties: false
+
+    ProveedorCambios:
+      allOf:
+        - $ref: '#/components/schemas/ProveedorCampos'
+      minProperties: 1
+      unevaluatedProperties: false
+
+    Proveedor:
+      allOf:
+        - $ref: '#/components/schemas/ProveedorCampos'
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/Uuid'
+            creado_en:
+              $ref: '#/components/schemas/Marca'
+            actualizado_en:
+              $ref: '#/components/schemas/Marca'
+      required: [id, nombre, telefono, municipio, suministra, dias_entrega, activo, creado_en, actualizado_en]
+      unevaluatedProperties: false
+
+    DetallePedidoEntrada:
+      type: object
+      required: [producto_id, cantidad]
+      additionalProperties: false
+      properties:
+        producto_id:
+          type: string
+          format: uuid
+        cantidad:
+          type: integer
+          minimum: 1
+          maximum: 1000
+
+    DetallePedido:
+      type: object
+      description: Una línea del pedido. El precio queda congelado al momento de registrarlo.
+      required: [id, pedido_id, producto_id, cantidad, precio_unitario, creado_en, actualizado_en]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        pedido_id:
+          type: string
+          format: uuid
+          readOnly: true
+        producto_id:
+          type: string
+          format: uuid
+        cantidad:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        precio_unitario:
+          type: integer
+          minimum: 0
+          readOnly: true
+        creado_en:
+          $ref: '#/components/schemas/Marca'
+        actualizado_en:
+          $ref: '#/components/schemas/Marca'
+
+    PedidoEntrada:
+      type: object
+      required: [cliente_nombre, cliente_telefono, detalles]
+      additionalProperties: false
+      properties:
+        cliente_nombre:
+          type: string
+          minLength: 2
+          maxLength: 80
+        cliente_telefono:
+          $ref: '#/components/schemas/Telefono'
+        canal:
+          type: string
+          enum: [whatsapp, tienda]
+          default: whatsapp
+          description: Por dónde se cerró la venta.
+        fecha_entrega:
+          type: [string, 'null']
+          format: date
+          description: Solo para encargos con fecha (por ejemplo, el 31 de octubre).
+        nota:
+          type: [string, 'null']
+          maxLength: 300
+        detalles:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/DetallePedidoEntrada'
+
+    PedidoCambios:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        estado:
+          $ref: '#/components/schemas/EstadoPedido'
+        fecha_entrega:
+          type: [string, 'null']
+          format: date
+        nota:
+          type: [string, 'null']
+          maxLength: 300
+
+    Pedido:
+      type: object
+      required: [id, cliente_nombre, cliente_telefono, canal, estado, fecha_entrega, nota, total, detalles, creado_en, actualizado_en]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        cliente_nombre:
+          type: string
+        cliente_telefono:
+          $ref: '#/components/schemas/Telefono'
+        canal:
+          type: string
+          enum: [whatsapp, tienda]
+        estado:
+          $ref: '#/components/schemas/EstadoPedido'
+        fecha_entrega:
+          type: [string, 'null']
+          format: date
+        nota:
+          type: [string, 'null']
+        total:
+          type: integer
+          minimum: 0
+          readOnly: true
+          description: Suma de cantidad × precio_unitario de todas las líneas. Lo calcula el servidor.
+        detalles:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DetallePedido'
+        creado_en:
+          $ref: '#/components/schemas/Marca'
+        actualizado_en:
+          $ref: '#/components/schemas/Marca'
+
+    PaginaPedidos:
+      type: object
+      required: [datos, paginacion]
+      properties:
+        datos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pedido'
+        paginacion:
+          $ref: '#/components/schemas/Paginacion'
+
+    TemporadaCampos:
+      type: object
+      properties:
+        nombre:
+          type: string
+          minLength: 3
+          maxLength: 60
+        fecha:
+          type: string
+          format: date
+        dias_anticipacion:
+          type: integer
+          minimum: 1
+          maximum: 90
+          default: 21
+          description: Cuántos días antes de la fecha se empiezan a revisar las existencias.
+
+    TemporadaEntrada:
+      allOf:
+        - $ref: '#/components/schemas/TemporadaCampos'
+      required: [nombre, fecha]
+      unevaluatedProperties: false
+
+    Temporada:
+      allOf:
+        - $ref: '#/components/schemas/TemporadaCampos'
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/Uuid'
+            creado_en:
+              $ref: '#/components/schemas/Marca'
+            actualizado_en:
+              $ref: '#/components/schemas/Marca'
+      required: [id, nombre, fecha, dias_anticipacion, creado_en, actualizado_en]
+      unevaluatedProperties: false
+
+    Alerta:
+      type: object
+      required: [id, producto_id, temporada_id, tipo, stock_actual, demanda_estimada, estado, creado_en, actualizado_en]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        producto_id:
+          type: string
+          format: uuid
+        temporada_id:
+          type: [string, 'null']
+          format: uuid
+          description: Solo en alertas de tipo temporada.
+        tipo:
+          $ref: '#/components/schemas/TipoAlerta'
+        stock_actual:
+          type: integer
+          minimum: 0
+          description: Stock del producto cuando se generó la alerta.
+        demanda_estimada:
+          type: [integer, 'null']
+          minimum: 0
+          description: Unidades vendidas en la misma ventana de la temporada del año anterior. Nulo en alertas de stock mínimo.
+        estado:
+          $ref: '#/components/schemas/EstadoAlerta'
+        creado_en:
+          $ref: '#/components/schemas/Marca'
+        actualizado_en:
+          $ref: '#/components/schemas/Marca'
+
+    AlertaCambios:
+      type: object
+      required: [estado]
+      additionalProperties: false
+      properties:
+        estado:
+          type: string
+          enum: [atendida, descartada]
+
+    Credenciales:
+      type: object
+      required: [correo, contrasena]
+      additionalProperties: false
+      properties:
+        correo:
+          type: string
+          format: email
+          maxLength: 120
+        contrasena:
+          type: string
+          minLength: 8
+          maxLength: 72
+          writeOnly: true
+          description: Nunca se guarda tal cual; el servidor guarda solo su hash bcrypt (72 bytes es el límite de bcrypt).
+
+    Usuario:
+      type: object
+      description: Persona del vivero que usa el panel. El hash de la contraseña nunca sale de la API.
+      required: [id, nombre, correo, rol, activo, creado_en, actualizado_en]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        nombre:
+          type: string
+          maxLength: 80
+        correo:
+          type: string
+          format: email
+        rol:
+          type: string
+          enum: [administrador, empleado]
+        activo:
+          type: boolean
+        creado_en:
+          $ref: '#/components/schemas/Marca'
+        actualizado_en:
+          $ref: '#/components/schemas/Marca'
+
+    Sesion:
+      type: object
+      description: Respuesta del inicio de sesión. No se guarda en la base de datos (el JWT no tiene estado en el servidor).
+      required: [token, expira_en, usuario]
+      properties:
+        token:
+          type: string
+        expira_en:
+          type: string
+          format: date-time
+        usuario:
+          $ref: '#/components/schemas/Usuario'
