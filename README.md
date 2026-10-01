@@ -13,7 +13,7 @@ El Vivero Las Acacias lleva nueve años en Yopal y maneja su inventario en Excel
 
 **Ruta A: contenerización y DevOps.** El vivero no tiene personal técnico, así que el peso del proyecto está en que el sistema se pueda desplegar, respaldar y recuperar sin nosotros. La justificación completa está en [`docs/decisiones.md`](docs/decisiones.md#d1-ruta-a-contenerización-y-devops).
 
-**Equipo 4 · Grupo [1 o 2] · Tecnologías Web 2026-B · Unitrópico**
+**Grupo 4 · Tecnologías Web 2026-B · Unitrópico**
 
 | Integrante | Rol | GitHub |
 |---|---|---|
