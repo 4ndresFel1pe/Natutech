@@ -1,0 +1,17 @@
+# Lo que NO entra al construir la imagen de la API (el contexto es la raíz del repositorio).
+# Primero se excluye todo y luego se permite solo lo que el Dockerfile copia: así ningún
+# archivo .env, respaldo o documento puede terminar dentro de la imagen por accidente.
+*
+!servidor/package.json
+!servidor/package-lock.json
+!servidor/src/
+!servidor/db/
+!servidor/scripts/
+!api/openapi.yaml
+!web/datos/ejemplo.json
+
+# Aunque estén dentro de una carpeta permitida, estos nunca entran.
+**/node_modules
+**/.env
+**/.env.*
+**/*.log

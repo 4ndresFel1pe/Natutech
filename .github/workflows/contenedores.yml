@@ -1,0 +1,74 @@
+# Comprueba el hito H2/H3 de la ruta A en cada pull request: "docker compose up"
+# levanta la base de datos, la API y el prototipo sin pasos manuales, y la API
+# responde a través de nginx. El .env de esta prueba se arma en el momento con
+# valores aleatorios: no hay ninguna credencial escrita en el repositorio.
+name: Conjunto con Docker Compose
+
+on:
+  pull_request:
+    paths:
+      - "servidor/**"
+      - "api/**"
+      - "web/**"
+      - "infra/**"
+      - "docker-compose.yml"
+      - ".dockerignore"
+      - ".env.example"
+      - ".github/workflows/contenedores.yml"
+  push:
+    branches: [main]
+    paths:
+      - "servidor/**"
+      - "api/**"
+      - "web/**"
+      - "infra/**"
+      - "docker-compose.yml"
+      - ".dockerignore"
+      - ".env.example"
+      - ".github/workflows/contenedores.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  levantar:
+    name: docker compose up
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v7
+
+      - name: Crear un .env de prueba a partir de .env.example
+        run: |
+          cp .env.example .env
+          CLAVE_ADMIN="$(openssl rand -hex 12)"
+          echo "::add-mask::$CLAVE_ADMIN"
+          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 16)/" .env
+          sed -i "s/^JWT_SECRETO=.*/JWT_SECRETO=$(openssl rand -hex 32)/" .env
+          sed -i "s/^ADMIN_CORREO=.*/ADMIN_CORREO=admin@ci.test/" .env
+          sed -i "s/^ADMIN_CONTRASENA=.*/ADMIN_CONTRASENA=$CLAVE_ADMIN/" .env
+          echo "CLAVE_ADMIN=$CLAVE_ADMIN" >> "$GITHUB_ENV"
+
+      - name: Levantar el conjunto y esperar a que esté sano
+        run: docker compose up --build --detach --wait --wait-timeout 180
+
+      - name: Probar el prototipo y la API a través de nginx
+        run: |
+          set -euo pipefail
+          B=http://localhost:8080
+          curl -fsS "$B/" -o /dev/null
+          curl -fsS "$B/api/salud" | jq -e '.estado == "ok" and .base_de_datos == "ok"'
+          curl -fsS "$B/api/catalogo/productos" | jq -e '.paginacion.total > 0'
+          TOKEN="$(curl -fsS -X POST "$B/api/sesiones" -H 'content-type: application/json' \
+            -d "{\"correo\":\"admin@ci.test\",\"contrasena\":\"$CLAVE_ADMIN\"}" | jq -r .token)"
+          curl -fsS "$B/api/alertas?estado=activa" -H "authorization: Bearer $TOKEN" | jq -e 'length > 0'
+          # Sin sesión, la gestión responde 401.
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$B/api/productos")" = "401"
+
+      - name: Mostrar los registros si algo falló
+        if: failure()
+        run: docker compose logs
+
+      - name: Apagar y borrar los datos de prueba
+        if: always()
+        run: docker compose down --volumes
