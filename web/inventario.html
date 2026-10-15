@@ -8,6 +8,7 @@
   <link rel="icon" href="img/logo.svg" type="image/svg+xml">
   <link rel="preload" href="fuentes/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/estilos.css">
+  <script src="js/api.js" defer></script>
   <script src="js/app.js" defer></script>
 </head>
 <body data-pagina="inventario">
@@ -25,6 +26,7 @@
       <nav class="navegacion" aria-label="Panel">
         <ul>
           <li><a href="inventario.html" aria-current="page">Inventario</a></li>
+          <li><a href="pedidos.html">Pedidos</a></li>
           <li><a href="producto-form.html">Nuevo producto</a></li>
           <li><a href="index.html">Ver catálogo público</a></li>
         </ul>
@@ -34,9 +36,6 @@
 
   <main id="contenido" class="contenedor pagina">
     <h1>Inventario</h1>
-    <div class="aviso">
-      <p>Prototipo: en la Entrega 3 este panel pedirá iniciar sesión y los cambios se guardarán en el servidor.</p>
-    </div>
 
     <div id="zona-panel" aria-busy="true">
       <div class="estado" role="status">
@@ -54,18 +53,19 @@
       <div class="pie__columnas">
         <div>
           <h2>Panel del vivero</h2>
-          <p>Existencias, alertas de reabastecimiento y registro de productos del Vivero Las Acacias.</p>
+          <p>Existencias, pedidos, alertas de reabastecimiento y registro de productos del Vivero Las Acacias.</p>
         </div>
         <nav aria-labelledby="pie-navegacion">
           <h2 id="pie-navegacion">Páginas</h2>
           <ul>
             <li><a href="inventario.html">Inventario</a></li>
+            <li><a href="pedidos.html">Pedidos</a></li>
             <li><a href="producto-form.html">Nuevo producto</a></li>
             <li><a href="index.html">Catálogo público</a></li>
           </ul>
         </nav>
         <nav aria-labelledby="pie-estados">
-          <h2 id="pie-estados">Estados del prototipo</h2>
+          <h2 id="pie-estados">Estados de la pantalla</h2>
           <ul>
             <li><a href="inventario.html?estado=cargando">Ver carga lenta</a></li>
             <li><a href="inventario.html?estado=vacio">Ver inventario vacío</a></li>
@@ -73,7 +73,7 @@
           </ul>
         </nav>
       </div>
-      <p class="pie__creditos">Prototipo de la Entrega 2 de Natutech, equipo 4 de Tecnologías Web, Unitrópico. Precios, existencias y teléfonos son de ejemplo.</p>
+      <p class="pie__creditos">Natutech, equipo 4 de Tecnologías Web, Unitrópico. Entrega 3. Precios, existencias y teléfonos de los datos de ejemplo son inventados.</p>
     </div>
   </footer>
 </body>

@@ -8,6 +8,7 @@
   <link rel="icon" href="img/logo.svg" type="image/svg+xml">
   <link rel="preload" href="fuentes/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/estilos.css">
+  <script src="js/api.js" defer></script>
   <script src="js/app.js" defer></script>
 </head>
 <body data-pagina="formulario">
@@ -25,6 +26,7 @@
       <nav class="navegacion" aria-label="Panel">
         <ul>
           <li><a href="inventario.html">Inventario</a></li>
+          <li><a href="pedidos.html">Pedidos</a></li>
           <li><a href="producto-form.html" id="nav-nuevo">Nuevo producto</a></li>
           <li><a href="index.html">Ver catálogo público</a></li>
         </ul>
@@ -199,18 +201,19 @@
       <div class="pie__columnas">
         <div>
           <h2>Panel del vivero</h2>
-          <p>Existencias, alertas de reabastecimiento y registro de productos del Vivero Las Acacias.</p>
+          <p>Existencias, pedidos, alertas de reabastecimiento y registro de productos del Vivero Las Acacias.</p>
         </div>
         <nav aria-labelledby="pie-navegacion">
           <h2 id="pie-navegacion">Páginas</h2>
           <ul>
             <li><a href="inventario.html">Inventario</a></li>
+            <li><a href="pedidos.html">Pedidos</a></li>
             <li><a href="producto-form.html">Nuevo producto</a></li>
             <li><a href="index.html">Catálogo público</a></li>
           </ul>
         </nav>
         <nav aria-labelledby="pie-estados">
-          <h2 id="pie-estados">Estados del prototipo</h2>
+          <h2 id="pie-estados">Estados de la pantalla</h2>
           <ul>
             <li><a href="producto-form.html?id=3da94211-90a8-48a3-b787-059be5559766">Editar un producto existente</a></li>
             <li><a href="producto-form.html?id=00000000-0000-4000-8000-000000000000">Editar un producto que no existe</a></li>
@@ -218,7 +221,7 @@
           </ul>
         </nav>
       </div>
-      <p class="pie__creditos">Prototipo de la Entrega 2 de Natutech, equipo 4 de Tecnologías Web, Unitrópico. Precios, existencias y teléfonos son de ejemplo.</p>
+      <p class="pie__creditos">Natutech, equipo 4 de Tecnologías Web, Unitrópico. Entrega 3. Precios, existencias y teléfonos de los datos de ejemplo son inventados.</p>
     </div>
   </footer>
 </body>

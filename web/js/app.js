@@ -1,12 +1,12 @@
 /* =========================================================================
-   Natutech · Vivero Las Acacias · Lógica del prototipo (Entrega 2)
+   Natutech · Vivero Las Acacias · Lógica de las pantallas (Entrega 3)
 
-   Un solo archivo para las cuatro pantallas. Cada página dice cuál es en
+   Un solo archivo para las seis pantallas. Cada página dice cuál es en
    <body data-pagina="...">, y al final del archivo se llama la función que le toca.
 
-   Los datos vienen de datos/ejemplo.json, que usa exactamente los mismos nombres
-   de campo que api/openapi.yaml y docs/modelo-datos.md. En la Entrega 3 solo
-   cambia cargarDatos(): leerá de la API en lugar del archivo.
+   Los datos llegan de la API (js/api.js) cuando el sitio corre con Docker Compose,
+   o de datos/ejemplo.json en modo demostración (GitHub Pages). Los dos usan los
+   mismos nombres de campo que api/openapi.yaml, así que las pantallas no cambian.
 
    El HTML se construye con la función crear() y nunca con innerHTML, para que
    ningún texto (ni lo que alguien escriba en el buscador) se interprete como HTML.
@@ -102,17 +102,52 @@ function proximaTemporada(temporadas) {
 
 /* ---------- Carga de datos y estados de la interfaz ---------- */
 
-async function cargarDatos() {
+// alcance "publico": lo que ve cualquier cliente. "panel": lo que ve el vivero (pide sesión).
+// Siempre devuelve { categorias, proveedores, productos, temporadas, alertas }.
+async function cargarDatos(alcance = "publico") {
   if (estadoForzado === "cargando") await esperar(CONFIG.esperaCargaLenta);
-  const ruta = estadoForzado === "error" ? "datos/no-existe.json" : CONFIG.rutaDatos;
-  const respuesta = await fetch(ruta);
-  if (!respuesta.ok) throw new Error(`No se pudo leer ${ruta}: respuesta ${respuesta.status}`);
-  const datos = await respuesta.json();
+  if (estadoForzado === "error") throw new Error("Error de carga forzado con ?estado=error");
+  const modo = await Api.detectarModo();
+  let datos;
+  if (modo === "demostracion") datos = await leerArchivoDeEjemplo();
+  else if (alcance === "panel") datos = await leerPanelDeLaApi();
+  else datos = await leerCatalogoDeLaApi();
   if (estadoForzado === "vacio") {
     datos.productos = [];
     datos.alertas = [];
   }
   return datos;
+}
+
+async function leerArchivoDeEjemplo() {
+  const respuesta = await fetch(CONFIG.rutaDatos);
+  if (!respuesta.ok) throw new Error(`No se pudo leer ${CONFIG.rutaDatos}: respuesta ${respuesta.status}`);
+  return respuesta.json();
+}
+
+// GET /categorias, GET /temporadas y GET /catalogo/productos: rutas públicas.
+async function leerCatalogoDeLaApi() {
+  const [categorias, temporadas, productos] = await Promise.all([
+    Api.pedir("/categorias"),
+    Api.pedir("/temporadas"),
+    Api.todasLasPaginas("/catalogo/productos"),
+  ]);
+  // El catálogo público solo trae productos visibles; se marca para reutilizar los filtros.
+  const visibles = productos.map((producto) => ({ ...producto, visible_en_catalogo: true }));
+  return { categorias, temporadas, productos: visibles, proveedores: [], alertas: [] };
+}
+
+// Inventario completo, proveedores y alertas activas: rutas que piden sesión.
+async function leerPanelDeLaApi() {
+  const conSesion = { conSesion: true };
+  const [categorias, temporadas, productos, proveedores, alertas] = await Promise.all([
+    Api.pedir("/categorias"),
+    Api.pedir("/temporadas"),
+    Api.todasLasPaginas("/productos", conSesion),
+    Api.pedir("/proveedores", conSesion),
+    Api.pedir("/alertas?estado=activa", conSesion),
+  ]);
+  return { categorias, temporadas, productos, proveedores, alertas };
 }
 
 // Panel para los estados cargando, vacío, error y éxito. Siempre con título y texto.
@@ -128,25 +163,115 @@ function panelEstado(tipo, { titulo, texto, nivel = "h2", acciones = [] }) {
   );
 }
 
-function panelError(nivel = "h2") {
+function panelError(nivel = "h2", error = null) {
   const abiertoComoArchivo = window.location.protocol === "file:";
   const reintentar = crear("button", { type: "button", clase: "boton", texto: "Intentar de nuevo" });
   reintentar.addEventListener("click", () => {
     parametros.delete("estado");
     window.location.search = parametros.toString();
   });
-  return panelEstado("error", {
-    nivel,
-    titulo: "No se pudieron cargar los datos",
-    texto: abiertoComoArchivo
-      ? "El navegador no deja leer datos/ejemplo.json cuando la página se abre como archivo. Ábrala con un servidor local, como explica el README."
-      : "Revise su conexión a internet e intente de nuevo. Si el problema sigue, escríbanos por WhatsApp.",
-    acciones: [reintentar],
+  if (error instanceof Api.ErrorApi && error.estado === 401) {
+    return panelEstado("cargando", { nivel, titulo: "Su sesión terminó", texto: "Lo llevamos a la página de ingreso." });
+  }
+  let texto = "Revise su conexión a internet e intente de nuevo. Si el problema sigue, escríbanos por WhatsApp.";
+  if (abiertoComoArchivo) {
+    texto = "El navegador no deja leer datos/ejemplo.json cuando la página se abre como archivo. Ábrala con un servidor local, como explica el README.";
+  } else if (error instanceof Api.ErrorApi) {
+    texto = error.message;
+  }
+  return panelEstado("error", { nivel, titulo: "No se pudieron cargar los datos", texto, acciones: [reintentar] });
+}
+
+/* ---------- Panel del vivero: sesión y modo ---------- */
+
+// En modo API el panel pide sesión; en modo demostración avisa que nada se guarda.
+// Devuelve el modo, o null si la página se va a la pantalla de ingreso.
+async function prepararPanel() {
+  const modo = await Api.detectarModo();
+  if (modo === "api") {
+    const actual = Api.sesion.leer();
+    if (!actual) {
+      Api.irAIngresar();
+      return null;
+    }
+    agregarSalida(actual.usuario);
+  }
+  return modo;
+}
+
+// Aviso del modo demostración. Cada pantalla lo pinta junto con su contenido, en el
+// mismo momento, para que nada de lo que ya se ve se corra hacia abajo (CLS).
+function avisoDemostracion(modo) {
+  if (modo === "api") return null;
+  return crear(
+    "div",
+    { clase: "aviso" },
+    crear(
+      "p",
+      {},
+      crear("strong", { texto: "Modo demostración. " }),
+      "Esta copia no tiene servidor: muestra datos de ejemplo y los cambios no se guardan. El sistema completo se levanta con docker compose up (vea el README)."
+    )
+  );
+}
+
+// Agrega a la barra del panel el nombre de quien ingresó y el botón para salir.
+function agregarSalida(usuario) {
+  const lista = $(".navegacion ul");
+  if (!lista) return;
+  const salir = crear("button", { type: "button", clase: "navegacion__salir", texto: "Cerrar sesión" });
+  salir.addEventListener("click", () => {
+    Api.sesion.cerrar();
+    window.location.assign("ingresar.html?salida=1");
   });
+  lista.append(
+    crear("li", {}, crear("span", { clase: "navegacion__usuario", texto: `${usuario.nombre} (${usuario.rol})` })),
+    crear("li", {}, salir)
+  );
+}
+
+/* ---------- Errores de formulario (los del navegador y los de la API) ---------- */
+
+// errores: [{ campo, mensaje }]. "campo" es el id del control en la página.
+function mostrarErrores(resumen, errores, titulo) {
+  resumen.querySelector("ul").replaceChildren(
+    ...errores.map((error) =>
+      crear("li", {}, document.getElementById(error.campo) ? crear("a", { href: `#${error.campo}`, texto: error.mensaje }) : error.mensaje)
+    )
+  );
+  for (const error of errores) {
+    const control = document.getElementById(error.campo);
+    if (control) control.setAttribute("aria-invalid", "true");
+    const mensaje = document.getElementById(`${error.campo}-error`);
+    if (mensaje) mensaje.textContent = error.mensaje;
+  }
+  resumen.querySelector("h2").textContent =
+    titulo || (errores.length === 1 ? "Revise 1 campo antes de guardar" : `Revise ${errores.length} campos antes de guardar`);
+  resumen.hidden = false;
+  resumen.focus();
+}
+
+function limpiarErrores(formulario, resumen) {
+  for (const control of formulario.querySelectorAll("[aria-invalid]")) control.removeAttribute("aria-invalid");
+  for (const mensaje of formulario.querySelectorAll(".campo__error")) mensaje.textContent = "";
+  resumen.hidden = true;
+}
+
+// Convierte los "detalles" de un error 422 o 409 de la API en errores de formulario.
+// nombres: { campo_de_la_api: "Nombre que ve la persona" }. idDe traduce el campo a un id.
+function erroresDeLaApi(error, nombres, idDe = (campo) => campo) {
+  if (!error.detalles.length) return [{ campo: "", mensaje: error.message }];
+  return error.detalles.map((detalle) => ({
+    campo: idDe(detalle.campo),
+    mensaje:
+      error.estado === 409
+        ? error.message
+        : `${(typeof nombres === "function" ? nombres(detalle.campo) : nombres[detalle.campo]) || detalle.campo}: ${detalle.problema}.`,
+  }));
 }
 
 function mostrarEn(zona, ...contenido) {
-  zona.replaceChildren(...contenido);
+  zona.replaceChildren(...contenido.filter((parte) => parte !== null && parte !== undefined));
   zona.setAttribute("aria-busy", "false");
 }
 
@@ -264,7 +389,7 @@ async function iniciarCatalogo() {
   } catch (error) {
     console.error(error);
     $("#temporada").hidden = true;
-    mostrarEn(zona, panelError("h3"));
+    mostrarEn(zona, panelError("h3", error));
     return;
   }
 
@@ -380,7 +505,7 @@ async function iniciarDetalle() {
     datos = await cargarDatos();
   } catch (error) {
     console.error(error);
-    mostrarEn(zona, crear("h1", { clase: "visualmente-oculto", texto: "Detalle del producto" }), panelError());
+    mostrarEn(zona, crear("h1", { clase: "visualmente-oculto", texto: "Detalle del producto" }), panelError("h2", error));
     return;
   }
 
@@ -484,19 +609,22 @@ async function iniciarDetalle() {
 async function iniciarInventario() {
   const zona = $("#zona-panel");
   const anuncios = $("#anuncios");
+  const modo = await prepararPanel();
+  if (!modo) return;
 
   let datos;
   try {
-    datos = await cargarDatos();
+    datos = await cargarDatos("panel");
   } catch (error) {
     console.error(error);
-    mostrarEn(zona, panelError());
+    mostrarEn(zona, panelError("h2", error));
     return;
   }
 
   if (datos.productos.length === 0) {
     mostrarEn(
       zona,
+      avisoDemostracion(modo),
       panelEstado("vacio", {
         titulo: "El inventario está vacío",
         texto: "Registre el primer producto para empezar a controlar existencias y recibir alertas de reabastecimiento.",
@@ -582,15 +710,29 @@ async function iniciarInventario() {
     const etiquetaTipo = crear("p", { clase: "alerta__tipo", texto: tipo });
     const titulo = crear("h3", { id: idTitulo, tabindex: "-1", texto: producto.nombre });
     const atender = crear("button", { type: "button", clase: "boton boton--secundario" }, "Marcar como atendida", crear("span", { clase: "visualmente-oculto", texto: `: ${producto.nombre}` }));
+    const errorAlerta = crear("p", { clase: "campo__error", id: `${idTitulo}-error` });
     const elemento = crear(
       "li",
       { clase: `alerta${alerta.tipo === "temporada" ? " alerta--temporada" : ""}` },
       crear("div", {}, etiquetaTipo, titulo, crear("p", { texto: detalle }), crear("p", { clase: "alerta__meta", texto: meta })),
-      crear("div", {}, atender)
+      crear("div", {}, atender, errorAlerta)
     );
 
-    // En el prototipo el cambio vive solo en memoria. En la Entrega 3 será PATCH /alertas/{id}.
-    atender.addEventListener("click", () => {
+    // Con la API: PATCH /alertas/{id}. En modo demostración el cambio vive solo en memoria.
+    atender.addEventListener("click", async () => {
+      errorAlerta.textContent = "";
+      if (modo === "api") {
+        atender.disabled = true;
+        try {
+          await Api.pedir(`/alertas/${alerta.id}`, { metodo: "PATCH", cuerpo: { estado: "atendida" }, conSesion: true });
+        } catch (error) {
+          atender.disabled = false;
+          errorAlerta.textContent = `No se pudo marcar como atendida. ${error.message}`;
+          anuncios.textContent = errorAlerta.textContent;
+          atender.focus();
+          return;
+        }
+      }
       alerta.estado = "atendida";
       elemento.classList.add("alerta--atendida");
       etiquetaTipo.textContent = `${tipo}, atendida`;
@@ -677,6 +819,7 @@ async function iniciarInventario() {
 
   mostrarEn(
     zona,
+    avisoDemostracion(modo),
     resumen,
     franja,
     crear(
@@ -772,20 +915,40 @@ function leerProducto(formulario) {
   };
 }
 
+// Nombres que ve la persona para los campos del producto (mensajes de error de la API).
+const CAMPOS_PRODUCTO = {
+  nombre: "Nombre",
+  nombre_cientifico: "Nombre científico",
+  categoria_id: "Categoría",
+  proveedor_id: "Proveedor",
+  presentacion: "Presentación",
+  descripcion: "Descripción",
+  precio: "Precio",
+  stock: "Unidades en existencia",
+  stock_minimo: "Existencia mínima",
+  luz: "Luz",
+  riego: "Riego",
+  cuidado: "Dificultad de cuidado",
+  imagen_url: "Dirección de la foto",
+  visible_en_catalogo: "Mostrar en el catálogo",
+};
+
 async function iniciarFormulario() {
   const zona = $("#zona-formulario");
   const formulario = $("#form-producto");
   const resumen = $("#resumen-errores");
-  const listaErrores = $("#resumen-errores-lista");
   const zonaResultado = $("#zona-resultado");
+  const botonGuardar = $("#boton-guardar");
   const id = parametros.get("id");
+  const modo = await prepararPanel();
+  if (!modo) return;
 
   let datos;
   try {
-    datos = await cargarDatos();
+    datos = await cargarDatos("panel");
   } catch (error) {
     console.error(error);
-    mostrarEn(zona, panelError());
+    mostrarEn(zona, panelError("h2", error));
     return;
   }
 
@@ -821,7 +984,7 @@ async function iniciarFormulario() {
     $("#titulo-formulario").textContent = `Editar ${existente.nombre}`;
     $("#migas-actual").textContent = `Editar ${existente.nombre}`;
     document.title = `Editar ${existente.nombre} | Panel del Vivero Las Acacias`;
-    $("#boton-guardar").textContent = "Guardar cambios";
+    botonGuardar.textContent = "Guardar cambios";
     for (const campo of ["nombre", "nombre_cientifico", "categoria_id", "proveedor_id", "presentacion", "descripcion", "precio", "stock", "stock_minimo", "luz", "riego", "imagen_url"]) {
       formulario.elements[campo].value = existente[campo] ?? "";
     }
@@ -830,6 +993,7 @@ async function iniciarFormulario() {
   } else {
     $("#nav-nuevo").setAttribute("aria-current", "page");
   }
+  const textoBoton = botonGuardar.textContent;
 
   // Contador de caracteres de la descripción
   const descripcion = formulario.elements.descripcion;
@@ -840,44 +1004,46 @@ async function iniciarFormulario() {
   descripcion.addEventListener("input", actualizarContador);
   actualizarContador();
 
-  zona.replaceChildren();
-  zona.setAttribute("aria-busy", "false");
+  mostrarEn(zona, avisoDemostracion(modo));
   formulario.hidden = false;
-
-  function limpiarError(campo) {
-    const control = formulario.elements[campo];
-    if (control && control.removeAttribute) control.removeAttribute("aria-invalid");
-    const mensaje = document.getElementById(`${campo}-error`);
-    if (mensaje) mensaje.textContent = "";
-  }
 
   // Al corregir un campo, su error desaparece.
   formulario.addEventListener("input", (evento) => {
-    if (evento.target.name) limpiarError(evento.target.name);
+    const campo = evento.target.name;
+    if (!campo) return;
+    evento.target.removeAttribute("aria-invalid");
+    const mensaje = document.getElementById(`${campo}-error`);
+    if (mensaje) mensaje.textContent = "";
   });
 
-  formulario.addEventListener("submit", (evento) => {
+  function mostrarExito(titulo, texto, ...extra) {
+    formulario.hidden = true;
+    zonaResultado.replaceChildren(
+      panelEstado("exito", {
+        titulo,
+        texto,
+        acciones: [
+          crear("a", { clase: "boton", href: "inventario.html", texto: "Volver al inventario" }),
+          crear("a", { clase: "boton boton--secundario", href: "producto-form.html", texto: "Registrar otro producto" }),
+        ],
+      }),
+      ...extra
+    );
+    zonaResultado.querySelector("h2").focus();
+  }
+
+  formulario.addEventListener("submit", async (evento) => {
     evento.preventDefault();
-    for (const control of formulario.elements) if (control.name) limpiarError(control.name);
+    limpiarErrores(formulario, resumen);
     zonaResultado.replaceChildren();
 
+    // 1. Las reglas del contrato, revisadas en el navegador para avisar de inmediato.
     const errores = validarProducto(formulario, datos.productos, existente ? existente.id : null);
     if (errores.length > 0) {
-      listaErrores.replaceChildren(
-        ...errores.map((error) => crear("li", {}, crear("a", { href: `#${error.campo}`, texto: error.mensaje })))
-      );
-      for (const error of errores) {
-        formulario.elements[error.campo].setAttribute("aria-invalid", "true");
-        document.getElementById(`${error.campo}-error`).textContent = error.mensaje;
-      }
-      $("#resumen-errores-titulo").textContent =
-        errores.length === 1 ? "Revise 1 campo antes de guardar" : `Revise ${errores.length} campos antes de guardar`;
-      resumen.hidden = false;
-      resumen.focus();
+      mostrarErrores(resumen, errores);
       return;
     }
 
-    resumen.hidden = true;
     const producto = leerProducto(formulario);
 
     // Al editar solo se envían los campos que cambiaron (esquema ProductoCambios).
@@ -892,28 +1058,486 @@ async function iniciarFormulario() {
         return;
       }
     }
-
     const operacion = existente ? `PATCH /productos/${existente.id}` : "POST /productos";
-    const vistaPrevia = crear(
-      "details",
-      {},
-      crear("summary", { texto: "Ver lo que se enviaría a la API" }),
-      crear("pre", { clase: "codigo" }, crear("code", { texto: `${operacion}\n\n${JSON.stringify(cuerpo, null, 2)}` }))
-    );
-    formulario.hidden = true;
-    zonaResultado.replaceChildren(
-      panelEstado("exito", {
-        titulo: existente ? "Cambios guardados" : "Producto guardado",
-        texto: `Este prototipo no guarda en ningún servidor. Desde la Entrega 3, este formulario hará ${operacion} con estos datos.`,
-        acciones: [
-          crear("a", { clase: "boton", href: "inventario.html", texto: "Volver al inventario" }),
-          crear("a", { clase: "boton boton--secundario", href: "producto-form.html", texto: "Registrar otro producto" }),
-        ],
-      }),
-      vistaPrevia
-    );
-    zonaResultado.querySelector("h2").focus();
+
+    // 2a. Modo demostración: no hay servidor; se muestra lo que se enviaría.
+    if (modo !== "api") {
+      mostrarExito(
+        existente ? "Cambios revisados" : "Producto revisado",
+        `Modo demostración: no se guardó en ningún servidor. Con el sistema completo, este formulario hace ${operacion} con estos datos.`,
+        crear(
+          "details",
+          {},
+          crear("summary", { texto: "Ver lo que se enviaría a la API" }),
+          crear("pre", { clase: "codigo" }, crear("code", { texto: `${operacion}\n\n${JSON.stringify(cuerpo, null, 2)}` }))
+        )
+      );
+      return;
+    }
+
+    // 2b. Con la API: el servidor vuelve a validar todo y responde 201, 200, 409 o 422.
+    botonGuardar.disabled = true;
+    botonGuardar.textContent = "Guardando…";
+    try {
+      const guardado = existente
+        ? await Api.pedir(`/productos/${existente.id}`, { metodo: "PATCH", cuerpo, conSesion: true })
+        : await Api.pedir("/productos", { metodo: "POST", cuerpo, conSesion: true });
+      mostrarExito(
+        existente ? "Cambios guardados" : "Producto guardado",
+        `${guardado.nombre} quedó en el inventario con ${plural(guardado.stock, "unidad", "unidades")}${guardado.visible_en_catalogo ? " y ya aparece en el catálogo público" : ""}.`
+      );
+    } catch (error) {
+      if (!(error instanceof Api.ErrorApi)) console.error(error);
+      if (error instanceof Api.ErrorApi && (error.estado === 409 || error.estado === 422)) {
+        mostrarErrores(resumen, erroresDeLaApi(error, CAMPOS_PRODUCTO), "El servidor no aceptó el producto");
+      } else if (!(error instanceof Api.ErrorApi && error.estado === 401)) {
+        zonaResultado.replaceChildren(panelEstado("error", { titulo: "No se pudo guardar", texto: error.message }));
+        zonaResultado.querySelector("h2").focus();
+      }
+    } finally {
+      botonGuardar.disabled = false;
+      botonGuardar.textContent = textoBoton;
+    }
   });
+}
+
+/* ---------- Pantalla 5: ingreso al panel (ingresar.html) ---------- */
+
+async function iniciarIngresar() {
+  const formulario = $("#form-ingresar");
+  const resumen = $("#resumen-errores");
+  const zona = $("#zona-ingresar");
+  const boton = $("#boton-ingresar");
+  const volver = Api.destinoSeguro(parametros.get("volver"));
+  // El envío se intercepta antes de cualquier espera: el formulario nunca se envía
+  // por su cuenta (la contraseña no puede terminar en la dirección de la página).
+  formulario.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    limpiarErrores(formulario, resumen);
+    const correo = formulario.elements.correo.value.trim();
+    const contrasena = formulario.elements.contrasena.value;
+
+    const errores = [];
+    if (!correo) errores.push({ campo: "correo", mensaje: "Escriba su correo." });
+    else if (!formulario.elements.correo.validity.valid) errores.push({ campo: "correo", mensaje: "Escriba un correo válido, por ejemplo: nombre@vivero.co." });
+    if (!contrasena) errores.push({ campo: "contrasena", mensaje: "Escriba su contraseña." });
+    if (errores.length) {
+      mostrarErrores(resumen, errores, "Revise los datos para ingresar");
+      return;
+    }
+
+    boton.disabled = true;
+    boton.textContent = "Ingresando…";
+    try {
+      // POST /sesiones: si el correo y la contraseña coinciden, la API entrega un token JWT.
+      const nuevaSesion = await Api.pedir("/sesiones", { metodo: "POST", cuerpo: { correo, contrasena } });
+      Api.sesion.guardar(nuevaSesion);
+      window.location.replace(volver);
+    } catch (error) {
+      formulario.elements.contrasena.value = "";
+      const mensaje =
+        error instanceof Api.ErrorApi && error.estado === 422
+          ? erroresDeLaApi(error, { correo: "Correo", contrasena: "Contraseña" })
+          : [{ campo: error.estado === 401 ? "contrasena" : "", mensaje: error.message }];
+      mostrarErrores(resumen, mensaje, "No pudimos iniciar la sesión");
+      boton.disabled = false;
+      boton.textContent = "Ingresar";
+    }
+  });
+
+  const modo = await Api.detectarModo();
+
+  if (modo !== "api") {
+    formulario.hidden = true;
+    mostrarEn(
+      zona,
+      panelEstado("vacio", {
+        titulo: "Esta copia no tiene servidor",
+        texto: "El ingreso funciona cuando el sistema corre con docker compose up (vea el README). Aquí puede recorrer el panel con datos de ejemplo.",
+        acciones: [crear("a", { clase: "boton", href: "inventario.html", texto: "Ver el panel en modo demostración" })],
+      })
+    );
+    return;
+  }
+  if (Api.sesion.leer()) {
+    window.location.replace(volver);
+    return;
+  }
+
+  if (parametros.get("salida")) $("#anuncios").textContent = "Cerró la sesión.";
+  formulario.elements.correo.focus();
+}
+
+/* ---------- Pantalla 6: pedidos (pedidos.html) ---------- */
+
+const NOMBRES_ESTADO = { pendiente: "Pendiente", confirmado: "Confirmado", entregado: "Entregado", cancelado: "Cancelado" };
+const CLASE_ESTADO = { pendiente: "disponibilidad--pocas", cancelado: "disponibilidad--agotado" };
+// Las mismas transiciones que valida el servidor: [estado nuevo, texto del botón].
+const TRANSICIONES = {
+  pendiente: [["confirmado", "Confirmar"], ["cancelado", "Cancelar"]],
+  confirmado: [["entregado", "Marcar entregado"], ["cancelado", "Cancelar"]],
+};
+const CAMPOS_PEDIDO = {
+  cliente_nombre: "Nombre del cliente",
+  cliente_telefono: "Teléfono",
+  canal: "Canal",
+  fecha_entrega: "Fecha de entrega",
+  nota: "Nota",
+  detalles: "Productos",
+};
+
+// "3001234567" o "300 123 4567" → "+57 300 123 4567". Si no son 10 dígitos, lo deja igual.
+function formatoTelefono(texto) {
+  const digitos = texto.replace(/\D/g, "").replace(/^57(?=\d{10}$)/, "");
+  return digitos.length === 10 ? `+57 ${digitos.slice(0, 3)} ${digitos.slice(3, 6)} ${digitos.slice(6)}` : texto.trim();
+}
+
+const formatoFechaHora = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Bogota" });
+
+async function iniciarPedidos() {
+  const zona = $("#zona-pedidos");
+  const anuncios = $("#anuncios");
+  const formulario = $("#form-pedido");
+  const resumen = $("#resumen-errores");
+  const lineas = $("#lineas");
+  const totalPedido = $("#total-pedido");
+  const filtroEstado = $("#filtro-estado");
+  const modo = await prepararPanel();
+  if (!modo) return;
+
+  if (modo !== "api") {
+    $("#seccion-lista").hidden = true;
+    mostrarEn(
+      $("#zona-formulario-pedido"),
+      avisoDemostracion(modo),
+      panelEstado("vacio", {
+        nivel: "h3",
+        titulo: "Los pedidos se guardan en el servidor",
+        texto: "En modo demostración no hay pedidos. Levante el sistema con docker compose up (vea el README) para registrarlos y cambiar su estado.",
+        acciones: [crear("a", { clase: "boton", href: "inventario.html", texto: "Volver al inventario" })],
+      })
+    );
+    return;
+  }
+
+  let productos = [];
+  const porId = new Map();
+  async function cargarProductos() {
+    productos = (await Api.todasLasPaginas("/productos", { conSesion: true })).sort(porNombre);
+    porId.clear();
+    for (const producto of productos) porId.set(producto.id, producto);
+  }
+
+  /* --- Lista de pedidos, con filtro por estado y paginación --- */
+
+  let pagina = 1;
+  async function pintarLista() {
+    zona.setAttribute("aria-busy", "true");
+    $("#error-lista").textContent = "";
+    const estado = filtroEstado.value;
+    let respuesta;
+    try {
+      respuesta = await Api.pedir(`/pedidos?pagina=${pagina}&por_pagina=10${estado ? `&estado=${estado}` : ""}`, { conSesion: true });
+    } catch (error) {
+      mostrarEn(zona, panelError("h3", error));
+      return;
+    }
+    const { datos: pedidos, paginacion } = respuesta;
+    if (pedidos.length === 0) {
+      mostrarEn(
+        zona,
+        panelEstado("vacio", {
+          nivel: "h3",
+          titulo: estado ? `No hay pedidos en estado ${NOMBRES_ESTADO[estado].toLowerCase()}` : "Todavía no hay pedidos",
+          texto: "Los pedidos que registre aparecerán aquí, del más reciente al más antiguo.",
+        })
+      );
+      return;
+    }
+
+    const filas = pedidos.map((pedido) => {
+      const lineasTexto = pedido.detalles
+        .map((d) => `${d.cantidad} × ${porId.get(d.producto_id)?.nombre || "producto retirado"}`)
+        .join(", ");
+      const acciones = (TRANSICIONES[pedido.estado] || []).map(([nuevo, texto]) => {
+        const boton = crear(
+          "button",
+          { type: "button", clase: nuevo === "cancelado" ? "boton boton--secundario" : "boton" },
+          texto,
+          crear("span", { clase: "visualmente-oculto", texto: ` el pedido de ${pedido.cliente_nombre}` })
+        );
+        boton.addEventListener("click", () => cambiarEstado(pedido, nuevo, boton));
+        return boton;
+      });
+      return crear(
+        "tr",
+        {},
+        crear(
+          "th",
+          { scope: "row", clase: "tabla__producto" },
+          pedido.cliente_nombre,
+          crear("span", { clase: "tabla__presentacion", texto: `${pedido.cliente_telefono} · ${pedido.canal === "tienda" ? "En la tienda" : "WhatsApp"}` })
+        ),
+        crear("td", { "data-etiqueta": "Productos", texto: lineasTexto }),
+        crear("td", { clase: "numero", "data-etiqueta": "Total", texto: formatoPrecio.format(pedido.total) }),
+        crear("td", { "data-etiqueta": "Registrado", texto: formatoFechaHora.format(new Date(pedido.creado_en)) }),
+        crear("td", { "data-etiqueta": "Entrega", texto: pedido.fecha_entrega ? formatoFecha.format(fechaLocal(pedido.fecha_entrega)) : "Sin fecha" }),
+        crear("td", { "data-etiqueta": "Estado" }, crear("span", { clase: `disponibilidad ${CLASE_ESTADO[pedido.estado] || ""}`, texto: NOMBRES_ESTADO[pedido.estado] })),
+        crear("td", { "data-etiqueta": "Acciones" }, acciones.length ? crear("div", { clase: "acciones-fila" }, ...acciones) : "Cerrado")
+      );
+    });
+
+    const paginas = Math.max(1, Math.ceil(paginacion.total / paginacion.por_pagina));
+    const anterior = crear("button", { type: "button", clase: "boton boton--secundario", texto: "Más recientes", disabled: pagina <= 1 });
+    const siguiente = crear("button", { type: "button", clase: "boton boton--secundario", texto: "Más antiguos", disabled: pagina >= paginas });
+    anterior.addEventListener("click", () => irAPagina(pagina - 1));
+    siguiente.addEventListener("click", () => irAPagina(pagina + 1));
+
+    mostrarEn(
+      zona,
+      crear(
+        "table",
+        { clase: "tabla" },
+        crear("caption", { texto: `${plural(paginacion.total, "pedido", "pedidos")}, del más reciente al más antiguo. Página ${pagina} de ${paginas}.` }),
+        crear(
+          "thead",
+          {},
+          crear(
+            "tr",
+            {},
+            ...["Cliente", "Productos", "Total", "Registrado", "Entrega", "Estado", "Acciones"].map((columna) =>
+              crear("th", { scope: "col", clase: columna === "Total" ? "numero" : null, texto: columna })
+            )
+          )
+        ),
+        crear("tbody", {}, ...filas)
+      ),
+      paginas > 1 ? crear("nav", { clase: "paginacion", "aria-label": "Páginas de pedidos" }, anterior, crear("p", { texto: `Página ${pagina} de ${paginas}` }), siguiente) : null
+    );
+  }
+
+  async function irAPagina(numero) {
+    pagina = numero;
+    await pintarLista();
+    $("#lista-titulo").focus();
+  }
+
+  // PATCH /pedidos/{id}: cancelar devuelve el stock; el servidor rechaza los saltos no permitidos.
+  async function cambiarEstado(pedido, nuevo, boton) {
+    if (nuevo === "cancelado" && !window.confirm(`¿Cancelar el pedido de ${pedido.cliente_nombre}? Las unidades vuelven al inventario.`)) return;
+    boton.disabled = true;
+    try {
+      await Api.pedir(`/pedidos/${pedido.id}`, { metodo: "PATCH", cuerpo: { estado: nuevo }, conSesion: true });
+      anuncios.textContent = `Pedido de ${pedido.cliente_nombre}: ${NOMBRES_ESTADO[nuevo].toLowerCase()}.`;
+      if (nuevo === "cancelado") {
+        await cargarProductos();
+        actualizarOpciones();
+      }
+      await pintarLista();
+      $("#lista-titulo").focus();
+    } catch (error) {
+      boton.disabled = false;
+      $("#error-lista").textContent = `No se pudo cambiar el pedido de ${pedido.cliente_nombre}. ${error.message}`;
+      boton.focus();
+    }
+  }
+
+  filtroEstado.addEventListener("change", () => {
+    pagina = 1;
+    pintarLista();
+  });
+
+  /* --- Formulario de pedido nuevo --- */
+
+  let contadorLineas = 0;
+
+  function opcionesProducto(seleccionado) {
+    return [
+      crear("option", { value: "", texto: "Elija un producto" }),
+      ...productos.map((p) =>
+        crear("option", {
+          value: p.id,
+          selected: p.id === seleccionado,
+          disabled: p.stock === 0 && p.id !== seleccionado,
+          texto: `${p.nombre} · ${formatoPrecio.format(p.precio)} · ${p.stock === 0 ? "agotado" : `hay ${p.stock}`}`,
+        })
+      ),
+    ];
+  }
+
+  function actualizarOpciones() {
+    for (const selector of lineas.querySelectorAll("select")) selector.replaceChildren(...opcionesProducto(selector.value));
+    actualizarTotal();
+  }
+
+  function agregarLinea() {
+    contadorLineas += 1;
+    const n = contadorLineas;
+    const idProducto = `linea-${n}-producto`;
+    const idCantidad = `linea-${n}-cantidad`;
+    const quitar = crear("button", { type: "button", clase: "boton boton--secundario" }, "Quitar", crear("span", { clase: "visualmente-oculto", texto: " este producto del pedido" }));
+    const linea = crear(
+      "div",
+      { clase: "linea-pedido", role: "group", "aria-label": "Producto del pedido" },
+      crear(
+        "div",
+        { clase: "campo" },
+        crear("label", { for: idProducto, texto: "Producto" }),
+        crear("select", { id: idProducto, "aria-describedby": `${idProducto}-error` }, ...opcionesProducto(""))
+      ),
+      crear(
+        "div",
+        { clase: "campo" },
+        crear("label", { for: idCantidad, texto: "Cantidad" }),
+        crear("input", { type: "number", id: idCantidad, min: 1, max: 1000, step: 1, value: 1, inputmode: "numeric", "aria-describedby": `${idCantidad}-error` })
+      ),
+      quitar,
+      // Los errores van debajo de toda la línea, a lo ancho, para que se lean completos.
+      crear("p", { clase: "campo__error", id: `${idProducto}-error` }),
+      crear("p", { clase: "campo__error", id: `${idCantidad}-error` })
+    );
+    quitar.addEventListener("click", () => {
+      linea.remove();
+      revisarBotonesQuitar();
+      actualizarTotal();
+      $("#agregar-linea").focus();
+    });
+    lineas.append(linea);
+    revisarBotonesQuitar();
+    return linea;
+  }
+
+  // Un pedido tiene al menos un producto: con una sola línea no se puede quitar.
+  function revisarBotonesQuitar() {
+    const botones = lineas.querySelectorAll(".linea-pedido > .boton");
+    botones.forEach((boton) => {
+      boton.hidden = botones.length === 1;
+    });
+  }
+
+  function leerLineas() {
+    return [...lineas.querySelectorAll(".linea-pedido")].map((linea) => {
+      const [selector, cantidad] = linea.querySelectorAll("select, input");
+      return { selector, cantidad, producto_id: selector.value, valor: cantidad.value.trim() };
+    });
+  }
+
+  function actualizarTotal() {
+    const total = leerLineas().reduce((suma, l) => suma + (porId.get(l.producto_id)?.precio || 0) * (Number.parseInt(l.valor, 10) || 0), 0);
+    totalPedido.textContent = `Total: ${formatoPrecio.format(total)}`;
+  }
+
+  formulario.addEventListener("input", (evento) => {
+    evento.target.removeAttribute("aria-invalid");
+    const mensaje = document.getElementById(`${evento.target.id}-error`);
+    if (mensaje) mensaje.textContent = "";
+    actualizarTotal();
+  });
+  formulario.elements.cliente_telefono.addEventListener("blur", (evento) => {
+    evento.target.value = formatoTelefono(evento.target.value);
+  });
+  $("#agregar-linea").addEventListener("click", () => {
+    agregarLinea().querySelector("select").focus();
+  });
+
+  // Reglas de PedidoEntrada en api/openapi.yaml, revisadas antes de enviar.
+  function validarPedido(lista) {
+    const errores = [];
+    const nombre = formulario.elements.cliente_nombre.value.trim();
+    if (nombre.length < 2) errores.push({ campo: "cliente_nombre", mensaje: "Escriba el nombre del cliente (al menos 2 letras)." });
+    const telefono = formatoTelefono(formulario.elements.cliente_telefono.value);
+    if (!/^\+57 \d{3} \d{3} \d{4}$/.test(telefono)) {
+      errores.push({ campo: "cliente_telefono", mensaje: "Escriba un celular de 10 dígitos, por ejemplo: 300 123 4567." });
+    }
+    const vistos = new Set();
+    for (const linea of lista) {
+      if (!linea.producto_id) errores.push({ campo: linea.selector.id, mensaje: "Elija el producto." });
+      else if (vistos.has(linea.producto_id)) errores.push({ campo: linea.selector.id, mensaje: "Este producto ya está en otra línea: sume las cantidades en una sola." });
+      vistos.add(linea.producto_id);
+      const cantidad = Number(linea.valor);
+      if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > 1000) {
+        errores.push({ campo: linea.cantidad.id, mensaje: "La cantidad debe ser un número entero entre 1 y 1000." });
+      }
+    }
+    return errores;
+  }
+
+  formulario.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    limpiarErrores(formulario, resumen);
+    const lista = leerLineas();
+    const errores = validarPedido(lista);
+    if (errores.length) {
+      mostrarErrores(resumen, errores, errores.length === 1 ? "Revise 1 dato del pedido" : `Revise ${errores.length} datos del pedido`);
+      return;
+    }
+
+    const cuerpo = {
+      cliente_nombre: formulario.elements.cliente_nombre.value.trim(),
+      cliente_telefono: formatoTelefono(formulario.elements.cliente_telefono.value),
+      canal: formulario.elements.canal.value,
+      fecha_entrega: formulario.elements.fecha_entrega.value || null,
+      nota: formulario.elements.nota.value.trim() || null,
+      detalles: lista.map((l) => ({ producto_id: l.producto_id, cantidad: Number(l.valor) })),
+    };
+
+    const boton = $("#boton-registrar");
+    boton.disabled = true;
+    boton.textContent = "Registrando…";
+    try {
+      // POST /pedidos: el servidor descuenta el stock en una transacción.
+      const pedido = await Api.pedir("/pedidos", { metodo: "POST", cuerpo, conSesion: true });
+      formulario.reset();
+      lineas.replaceChildren();
+      await cargarProductos();
+      agregarLinea();
+      actualizarTotal();
+      filtroEstado.value = "";
+      pagina = 1;
+      await pintarLista();
+      $("#resultado-pedido").replaceChildren(
+        panelEstado("exito", {
+          nivel: "h3",
+          titulo: "Pedido registrado",
+          texto: `Pedido de ${pedido.cliente_nombre} por ${formatoPrecio.format(pedido.total)}. Las unidades ya se descontaron del inventario.`,
+        })
+      );
+      $("#resultado-pedido h3").focus();
+    } catch (error) {
+      if (!(error instanceof Api.ErrorApi)) console.error(error);
+      if (error instanceof Api.ErrorApi && error.estado === 422) {
+        // "detalles[1].cantidad" → el campo de la segunda línea que está en pantalla.
+        const idDe = (campo) => {
+          const linea = /^detalles\[(\d+)\]\.(producto_id|cantidad)$/.exec(campo);
+          if (!linea) return campo;
+          const elegida = lista[Number(linea[1])];
+          return linea[2] === "cantidad" ? elegida.cantidad.id : elegida.selector.id;
+        };
+        const nombreDe = (campo) => (campo.startsWith("detalles[") ? `Producto ${Number(/\d+/.exec(campo)[0]) + 1}` : CAMPOS_PEDIDO[campo]);
+        mostrarErrores(resumen, erroresDeLaApi(error, nombreDe, idDe), error.message);
+      } else if (!(error instanceof Api.ErrorApi && error.estado === 401)) {
+        mostrarErrores(resumen, [{ campo: "", mensaje: error.message }], "No se pudo registrar el pedido");
+      }
+    } finally {
+      boton.disabled = false;
+      boton.textContent = "Registrar pedido";
+    }
+  });
+
+  try {
+    await cargarProductos();
+  } catch (error) {
+    $("#seccion-nuevo").hidden = true;
+    mostrarEn(zona, panelError("h3", error));
+    return;
+  }
+  formulario.elements.fecha_entrega.min = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
+  agregarLinea();
+  actualizarTotal();
+  $("#zona-formulario-pedido").replaceChildren();
+  $("#zona-formulario-pedido").setAttribute("aria-busy", "false");
+  formulario.hidden = false;
+  await pintarLista();
 }
 
 /* ---------- Arranque ---------- */
@@ -923,6 +1547,8 @@ const PANTALLAS = {
   detalle: iniciarDetalle,
   inventario: iniciarInventario,
   formulario: iniciarFormulario,
+  ingresar: iniciarIngresar,
+  pedidos: iniciarPedidos,
 };
 
 document.addEventListener("DOMContentLoaded", () => {
