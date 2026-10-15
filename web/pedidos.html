@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pedidos | Panel del Vivero Las Acacias</title>
+  <meta name="description" content="Registro de pedidos por WhatsApp y en tienda del Vivero Las Acacias, con su estado y el descuento del inventario.">
+  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fuentes/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/estilos.css">
+  <script src="js/api.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body data-pagina="pedidos">
+  <a class="saltar-enlace" href="#contenido">Saltar al contenido</a>
+
+  <header class="encabezado encabezado--panel">
+    <div class="contenedor encabezado__fila">
+      <a class="marca" href="inventario.html">
+        <img class="marca__logo" src="img/logo-claro.svg" alt="" width="40" height="40">
+        <span>
+          <span class="marca__nombre">Vivero Las Acacias</span>
+          <span class="marca__lugar">Panel del vivero</span>
+        </span>
+      </a>
+      <nav class="navegacion" aria-label="Panel">
+        <ul>
+          <li><a href="inventario.html">Inventario</a></li>
+          <li><a href="pedidos.html" aria-current="page">Pedidos</a></li>
+          <li><a href="producto-form.html">Nuevo producto</a></li>
+          <li><a href="index.html">Ver catálogo público</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido" class="contenedor pagina">
+    <h1>Pedidos</h1>
+
+    <section id="seccion-nuevo" aria-labelledby="nuevo-titulo">
+      <h2 id="nuevo-titulo">Registrar un pedido</h2>
+      <p>Para ventas por WhatsApp o en la tienda. Al registrarlo, las unidades se descuentan del inventario.</p>
+
+      <div id="zona-formulario-pedido" aria-busy="true">
+        <div class="estado" role="status">
+          <div class="cargador" aria-hidden="true"></div>
+          <h3>Preparando el formulario</h3>
+          <p>Estamos trayendo los productos y sus existencias.</p>
+        </div>
+      </div>
+
+      <div class="resumen-errores" id="resumen-errores" role="alert" tabindex="-1" hidden>
+        <h2>Revise los datos del pedido</h2>
+        <ul></ul>
+      </div>
+
+      <form class="formulario" id="form-pedido" novalidate hidden>
+        <fieldset>
+          <legend>Cliente</legend>
+          <div class="formulario__columnas">
+            <div class="campo">
+              <label for="cliente_nombre">Nombre <span class="obligatorio" aria-hidden="true">*</span></label>
+              <input type="text" id="cliente_nombre" name="cliente_nombre" required maxlength="80" autocomplete="off" aria-describedby="cliente_nombre-error">
+              <p class="campo__error" id="cliente_nombre-error"></p>
+            </div>
+            <div class="campo">
+              <label for="cliente_telefono">Celular <span class="obligatorio" aria-hidden="true">*</span></label>
+              <p class="campo__ayuda" id="cliente_telefono-ayuda">10 dígitos. Por ejemplo: 300 123 4567.</p>
+              <input type="tel" id="cliente_telefono" name="cliente_telefono" required maxlength="17" autocomplete="off" inputmode="tel" aria-describedby="cliente_telefono-ayuda cliente_telefono-error">
+              <p class="campo__error" id="cliente_telefono-error"></p>
+            </div>
+          </div>
+
+          <div class="campo">
+            <fieldset>
+              <legend>Por dónde llegó el pedido</legend>
+              <div class="opciones-en-linea">
+                <div class="opcion"><input type="radio" id="canal-whatsapp" name="canal" value="whatsapp" checked><label for="canal-whatsapp">WhatsApp</label></div>
+                <div class="opcion"><input type="radio" id="canal-tienda" name="canal" value="tienda"><label for="canal-tienda">En la tienda</label></div>
+              </div>
+            </fieldset>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Productos</legend>
+          <div id="lineas"></div>
+          <p><button type="button" class="boton boton--secundario" id="agregar-linea">Agregar otro producto</button></p>
+          <p class="total-pedido" id="total-pedido" aria-live="polite">Total: $ 0</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Entrega</legend>
+          <div class="formulario__columnas">
+            <div class="campo">
+              <label for="fecha_entrega">Fecha de entrega</label>
+              <p class="campo__ayuda" id="fecha_entrega-ayuda">Opcional. Para encargos con fecha, como el Día de los Difuntos.</p>
+              <input type="date" id="fecha_entrega" name="fecha_entrega" aria-describedby="fecha_entrega-ayuda fecha_entrega-error">
+              <p class="campo__error" id="fecha_entrega-error"></p>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="nota">Nota</label>
+            <p class="campo__ayuda" id="nota-ayuda">Opcional. Por ejemplo: entregar en la tarde. Máximo 300 caracteres.</p>
+            <textarea id="nota" name="nota" maxlength="300" aria-describedby="nota-ayuda nota-error"></textarea>
+            <p class="campo__error" id="nota-error"></p>
+          </div>
+        </fieldset>
+
+        <div class="formulario__acciones">
+          <button type="submit" class="boton" id="boton-registrar">Registrar pedido</button>
+        </div>
+      </form>
+      <div id="resultado-pedido"></div>
+    </section>
+
+    <section id="seccion-lista" aria-labelledby="lista-titulo">
+      <h2 id="lista-titulo" tabindex="-1">Pedidos registrados</h2>
+      <div class="barra-filtros">
+        <div class="campo">
+          <label for="filtro-estado">Mostrar</label>
+          <select id="filtro-estado">
+            <option value="">Todos los pedidos</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="confirmado">Confirmados</option>
+            <option value="entregado">Entregados</option>
+            <option value="cancelado">Cancelados</option>
+          </select>
+        </div>
+      </div>
+      <p class="campo__error" id="error-lista" role="alert"></p>
+      <div id="zona-pedidos" aria-busy="true" aria-live="polite">
+        <div class="estado" role="status">
+          <div class="cargador" aria-hidden="true"></div>
+          <h3>Cargando los pedidos</h3>
+          <p>Un momento, por favor.</p>
+        </div>
+      </div>
+    </section>
+
+    <p class="visualmente-oculto" id="anuncios" aria-live="polite"></p>
+  </main>
+
+  <footer class="pie">
+    <div class="contenedor">
+      <div class="pie__columnas">
+        <div>
+          <h2>Panel del vivero</h2>
+          <p>Existencias, pedidos, alertas de reabastecimiento y registro de productos del Vivero Las Acacias.</p>
+        </div>
+        <nav aria-labelledby="pie-navegacion">
+          <h2 id="pie-navegacion">Páginas</h2>
+          <ul>
+            <li><a href="inventario.html">Inventario</a></li>
+            <li><a href="pedidos.html">Pedidos</a></li>
+            <li><a href="producto-form.html">Nuevo producto</a></li>
+            <li><a href="index.html">Catálogo público</a></li>
+          </ul>
+        </nav>
+      </div>
+      <p class="pie__creditos">Natutech, equipo 4 de Tecnologías Web, Unitrópico. Entrega 3. Los clientes y teléfonos de los datos de ejemplo son inventados.</p>
+    </div>
+  </footer>
+</body>
+</html>

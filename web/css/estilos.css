@@ -1,5 +1,5 @@
 /* =========================================================================
-   Natutech · Vivero Las Acacias · Estilos del prototipo (Entrega 2)
+   Natutech · Vivero Las Acacias · Estilos del sitio (Entregas 2 y 3)
    Un solo archivo. Todos los colores, tamaños y espacios están en :root.
    ========================================================================= */
 
@@ -541,6 +541,10 @@ a:hover {
 .campo input[type="search"],
 .campo input[type="number"],
 .campo input[type="url"],
+.campo input[type="email"],
+.campo input[type="password"],
+.campo input[type="tel"],
+.campo input[type="date"],
 .campo select,
 .campo textarea {
   width: 100%;
@@ -1102,4 +1106,114 @@ summary {
     display: inline;
     margin-left: 0.25em;
   }
+}
+
+/* =========================================================================
+   Entrega 3: sesión, pedidos y conexión con la API
+   ========================================================================= */
+
+/* Botón "Cerrar sesión" en la barra del panel: se ve como los enlaces de la barra */
+.navegacion__salir {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--alto-control);
+  padding: 0;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.encabezado--panel .navegacion__salir {
+  color: #ffffff;
+}
+
+.navegacion__salir:hover {
+  border-bottom-color: var(--color-hoja-clara);
+}
+
+.navegacion__usuario {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--alto-control);
+  color: var(--color-hoja-clara);
+  font-size: var(--texto-s);
+}
+
+/* Formulario de ingreso: angosto y centrado */
+.formulario--angosto {
+  max-width: 28rem;
+}
+
+/* Líneas de un pedido: producto, cantidad y botón para quitar */
+.linea-pedido {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 var(--espacio-3);
+  margin-bottom: var(--espacio-4);
+  padding: var(--espacio-3) var(--espacio-4) 0;
+  border: 1px solid var(--color-linea);
+  border-radius: var(--radio);
+}
+
+.linea-pedido .boton {
+  align-self: end;
+  margin-bottom: var(--espacio-4);
+}
+
+.linea-pedido > .campo__error {
+  grid-column: 1 / -1;
+  margin: calc(-1 * var(--espacio-2)) 0 var(--espacio-3);
+}
+
+.total-pedido {
+  margin: 0 0 var(--espacio-4);
+  font-size: var(--texto-l);
+  font-weight: 700;
+}
+
+/* Botones de acción dentro de la tabla de pedidos */
+.acciones-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+  justify-content: flex-end;
+}
+
+.acciones-fila .boton {
+  min-height: var(--alto-control);
+  padding-block: var(--espacio-1);
+  font-size: var(--texto-s);
+}
+
+/* Paginación de la lista de pedidos */
+.paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-3);
+  margin-top: var(--espacio-4);
+}
+
+.paginacion p {
+  margin: 0;
+}
+
+@media (min-width: 36rem) {
+  .linea-pedido {
+    grid-template-columns: 1fr 8rem auto;
+    align-items: end;
+  }
+}
+
+/* Un elemento con el atributo hidden nunca se muestra, aunque su clase le dé display */
+[hidden] {
+  display: none !important;
+}
+
+#resultado-pedido:not(:empty) {
+  margin: var(--espacio-5) 0 var(--espacio-6);
 }

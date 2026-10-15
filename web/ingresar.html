@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ingresar | Panel del Vivero Las Acacias</title>
+  <meta name="description" content="Ingreso del personal al panel de inventario, pedidos y alertas del Vivero Las Acacias.">
+  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fuentes/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/estilos.css">
+  <script src="js/api.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body data-pagina="ingresar">
+  <a class="saltar-enlace" href="#contenido">Saltar al contenido</a>
+
+  <header class="encabezado encabezado--panel">
+    <div class="contenedor encabezado__fila">
+      <a class="marca" href="index.html">
+        <img class="marca__logo" src="img/logo-claro.svg" alt="" width="40" height="40">
+        <span>
+          <span class="marca__nombre">Vivero Las Acacias</span>
+          <span class="marca__lugar">Panel del vivero</span>
+        </span>
+      </a>
+      <nav class="navegacion" aria-label="Principal">
+        <ul>
+          <li><a href="index.html">Ver catálogo público</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido" class="contenedor pagina">
+    <h1>Ingresar al panel</h1>
+    <p>Solo para el personal del vivero. Si no tiene usuario, pídaselo a la administración.</p>
+
+    <div id="zona-ingresar"></div>
+
+    <div class="resumen-errores" id="resumen-errores" role="alert" tabindex="-1" hidden>
+      <h2>Revise los datos para ingresar</h2>
+      <ul></ul>
+    </div>
+
+    <form class="formulario formulario--angosto" id="form-ingresar" method="post" novalidate>
+      <div class="campo">
+        <label for="correo">Correo <span class="obligatorio" aria-hidden="true">*</span></label>
+        <input type="email" id="correo" name="correo" required maxlength="120" autocomplete="username" aria-describedby="correo-error">
+        <p class="campo__error" id="correo-error"></p>
+      </div>
+
+      <div class="campo">
+        <label for="contrasena">Contraseña <span class="obligatorio" aria-hidden="true">*</span></label>
+        <input type="password" id="contrasena" name="contrasena" required maxlength="72" autocomplete="current-password" aria-describedby="contrasena-error">
+        <p class="campo__error" id="contrasena-error"></p>
+      </div>
+
+      <div class="formulario__acciones">
+        <button type="submit" class="boton" id="boton-ingresar">Ingresar</button>
+      </div>
+    </form>
+
+    <p class="visualmente-oculto" id="anuncios" aria-live="polite"></p>
+  </main>
+
+  <footer class="pie">
+    <div class="contenedor">
+      <div class="pie__columnas">
+        <div>
+          <h2>Panel del vivero</h2>
+          <p>Existencias, pedidos, alertas de reabastecimiento y registro de productos del Vivero Las Acacias.</p>
+        </div>
+        <nav aria-labelledby="pie-navegacion">
+          <h2 id="pie-navegacion">Páginas</h2>
+          <ul>
+            <li><a href="index.html">Catálogo público</a></li>
+            <li><a href="inventario.html">Inventario</a></li>
+          </ul>
+        </nav>
+      </div>
+      <p class="pie__creditos">Natutech, equipo 4 de Tecnologías Web, Unitrópico. Entrega 3. La sesión dura una jornada y se cierra al cerrar la pestaña.</p>
+    </div>
+  </footer>
+</body>
+</html>
