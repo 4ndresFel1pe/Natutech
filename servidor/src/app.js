@@ -4,7 +4,10 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import { manejarErrores } from "./errores.js";
+import { crearContrato, traducirValidacion } from "./contrato.js";
+import autenticacion from "./plugins/autenticacion.js";
 import rutasSalud from "./rutas/salud.js";
+import rutasSesiones from "./rutas/sesiones.js";
 
 export async function construirApp({ config, db, contratoDoc, registro = true }) {
   const app = Fastify({
@@ -13,7 +16,11 @@ export async function construirApp({ config, db, contratoDoc, registro = true })
     trustProxy: true, // detrás de nginx, para registrar la IP real
   });
 
-  manejarErrores(app);
+  // Validación con los esquemas del contrato (api/openapi.yaml).
+  const contrato = crearContrato(contratoDoc);
+  app.decorate("contrato", contrato); // las pruebas lo usan para validar respuestas
+  app.setValidatorCompiler(contrato.compilador);
+  manejarErrores(app, traducirValidacion);
 
   await app.register(helmet);
   await app.register(cors, {
@@ -21,8 +28,10 @@ export async function construirApp({ config, db, contratoDoc, registro = true })
     methods: ["GET", "POST", "PATCH", "DELETE"],
     exposedHeaders: ["Location"],
   });
+  await app.register(autenticacion, { secreto: config.jwtSecreto, expiraEn: config.jwtExpiraEn });
 
-  const opciones = { db, version: contratoDoc.info.version };
+  const opciones = { db, contrato, version: contrato.version };
   await app.register(rutasSalud, opciones);
+  await app.register(rutasSesiones, opciones);
   return app;
 }

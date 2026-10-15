@@ -1,12 +1,13 @@
 // Punto de entrada: lee la configuración, prepara la base de datos y abre el puerto.
-// Al arrancar se aplican las migraciones y, si se pide, se cargan los datos de ejemplo.
+// Con Docker Compose basta "docker compose up": las migraciones, los datos de
+// ejemplo y el administrador inicial se crean solos al arrancar.
 import { leerConfiguracion } from "./config.js";
 import { crearPool } from "./db.js";
 import { migrar } from "./migraciones.js";
-import { readFileSync } from "node:fs";
-import { parse } from "yaml";
+import { cargarContrato } from "./contrato.js";
 import { construirApp } from "./app.js";
 import { sembrarDatosEjemplo } from "./semillas.js";
+import { crearAdministradorInicial } from "./servicios/usuarios.js";
 import { revisarTodo } from "./servicios/alertas.js";
 
 let config;
@@ -36,8 +37,9 @@ async function esperarBaseDeDatos(intentos = 15) {
 await esperarBaseDeDatos();
 await migrar(db);
 if (config.sembrarDatosEjemplo) await sembrarDatosEjemplo(db, config.datosEjemplo);
+await crearAdministradorInicial(db, config.administradorInicial);
 
-const app = await construirApp({ config, db, contratoDoc: parse(readFileSync(config.contrato, "utf8")) });
+const app = await construirApp({ config, db, contratoDoc: cargarContrato(config.contrato) });
 
 // Revisión de alertas al arrancar y luego cada HORAS_ENTRE_ALERTAS horas.
 async function revisarAlertas() {
