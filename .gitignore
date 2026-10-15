@@ -25,3 +25,6 @@ build/
 respaldos/
 *.dump
 *.sql.gz
+
+# Documentación de la API: la genera el flujo de GitHub Pages desde api/openapi.yaml
+web/documentacion-api.html
