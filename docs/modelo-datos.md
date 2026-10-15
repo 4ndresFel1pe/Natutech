@@ -129,7 +129,7 @@ Fechas de alta demanda. Se registran por año porque el Día de la Madre y Amor 
 | `creado_en` | `timestamptz` | No | `now()` | |
 | `actualizado_en` | `timestamptz` | No | `now()` | |
 
-Restricción adicional: `UNIQUE (nombre, fecha)`.
+Restricción adicional: `UNIQUE (lower(nombre), fecha)`: el mismo nombre en la misma fecha no se repite, aunque cambien las mayúsculas.
 
 ### alerta
 
@@ -199,7 +199,7 @@ Además de las llaves primarias (que PostgreSQL indexa solo), se crean estos:
 | `uq_detalle_pedido` | `UNIQUE (pedido_id, producto_id)` en `detalle_pedido` | Una línea por producto en cada pedido; además sirve para traer las líneas de un pedido |
 | `idx_detalle_producto` | `producto_id` en `detalle_pedido` | Cálculo de `demanda_estimada` (ventas de un producto en una ventana de fechas) y verificación de si un producto ya se vendió antes de borrarlo |
 | `idx_pedido_creado_en` | `creado_en DESC` en `pedido` | El listado de pedidos se ordena del más reciente al más antiguo y se filtra por `desde`/`hasta` |
-| `uq_temporada` | `UNIQUE (nombre, fecha)` en `temporada` | No registrar dos veces la misma fecha |
+| `uq_temporada` | `UNIQUE (lower(nombre), fecha)` en `temporada` | No registrar dos veces la misma fecha, aunque cambien las mayúsculas |
 | `idx_temporada_fecha` | `fecha` en `temporada` | El proceso de alertas busca las temporadas que se acercan |
 | `uq_alerta_activa` | `UNIQUE NULLS NOT DISTINCT (producto_id, tipo, temporada_id) WHERE estado = 'activa'` en `alerta` | El proceso de alertas corre todos los días; esto impide que cree la misma alerta activa dos veces |
 | `idx_alerta_estado` | `(estado, creado_en DESC)` en `alerta` | El panel lista las alertas activas, las más recientes primero |
