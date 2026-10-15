@@ -12,7 +12,8 @@
     "dev": "node --watch --env-file-if-exists=../.env src/servidor.js",
     "migrar": "node --env-file-if-exists=../.env scripts/migrar.js",
     "sembrar": "node --env-file-if-exists=../.env scripts/sembrar.js",
-    "crear-usuario": "node --env-file-if-exists=../.env scripts/crear-usuario.js"
+    "crear-usuario": "node --env-file-if-exists=../.env scripts/crear-usuario.js",
+    "test": "node --env-file-if-exists=../.env --test --test-concurrency=1 \"test/**/*.test.js\""
   },
   "license": "MIT",
   "dependencies": {

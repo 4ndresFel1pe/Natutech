@@ -1,0 +1,74 @@
+# Pruebas automáticas de la API (servidor/test) en cada pull request y en main.
+# Cada prueba compara la respuesta con lo que declara api/openapi.yaml.
+# Corren dos veces: con el reloj en UTC (como un servidor en la nube) y en hora de
+# Colombia. Si una fecha depende de la zona horaria del proceso, una de las dos falla.
+name: Pruebas de la API
+
+on:
+  pull_request:
+    paths:
+      - "servidor/**"
+      - "api/**"
+      - "web/datos/**"
+      - ".github/workflows/pruebas-api.yml"
+  push:
+    branches: [main]
+    paths:
+      - "servidor/**"
+      - "api/**"
+      - "web/datos/**"
+      - ".github/workflows/pruebas-api.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    name: Pruebas (TZ=${{ matrix.zona }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        zona: [UTC, America/Bogota]
+
+    # PostgreSQL temporal: existe solo mientras corre este trabajo y no se publica
+    # fuera de la máquina de GitHub. Por eso entra sin contraseña (trust) y no hay
+    # ninguna credencial escrita en este archivo.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: natutech
+          POSTGRES_DB: natutech
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U natutech"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: servidor
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v7
+
+      - name: Instalar Node.js 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: servidor/package-lock.json
+
+      - name: Instalar dependencias (exactamente las de package-lock.json)
+        run: npm ci
+
+      - name: Correr las pruebas
+        env:
+          TZ: ${{ matrix.zona }}
+          DATABASE_URL: postgres://natutech@localhost:5432/natutech
+        run: npm test
