@@ -8,6 +8,8 @@ import { crearContrato, traducirValidacion } from "./contrato.js";
 import autenticacion from "./plugins/autenticacion.js";
 import rutasSalud from "./rutas/salud.js";
 import rutasSesiones from "./rutas/sesiones.js";
+import rutasCatalogo from "./rutas/catalogo.js";
+import rutasGestion from "./rutas/gestion.js";
 
 export async function construirApp({ config, db, contratoDoc, registro = true }) {
   const app = Fastify({
@@ -33,5 +35,7 @@ export async function construirApp({ config, db, contratoDoc, registro = true })
   const opciones = { db, contrato, version: contrato.version };
   await app.register(rutasSalud, opciones);
   await app.register(rutasSesiones, opciones);
+  await app.register(rutasCatalogo, opciones);
+  await app.register(rutasGestion, opciones);
   return app;
 }
