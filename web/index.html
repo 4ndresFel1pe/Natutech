@@ -5,11 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Catálogo de plantas e insumos | Vivero Las Acacias, Yopal</title>
   <meta name="description" content="Plantas de interior y exterior, frutales, materas e insumos del Vivero Las Acacias en Yopal, Casanare. Consulte disponibilidad y compre por WhatsApp.">
+  <meta name="theme-color" content="#133b21">
   <link rel="icon" href="img/logo.svg" type="image/svg+xml">
   <link rel="preload" href="fuentes/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/estilos.css">
+  <link rel="stylesheet" href="css/mejoras.css">
   <script src="js/api.js" defer></script>
   <script src="js/app.js" defer></script>
+  <script src="js/escena.js" defer></script>
 </head>
 <body data-pagina="catalogo">
   <a class="saltar-enlace" href="#contenido">Saltar al contenido</a>
@@ -33,10 +36,22 @@
   </header>
 
   <main id="contenido" class="pagina">
-    <div class="contenedor">
-      <h1>Plantas e insumos del vivero</h1>
-      <p class="pagina__intro">Precios en pesos colombianos. Para comprar o encargar, escríbanos por WhatsApp desde cada producto y le confirmamos disponibilidad.</p>
-    </div>
+    <section class="hero" aria-labelledby="hero-titulo">
+      <div class="contenedor hero__fila">
+        <div class="hero__texto">
+          <h1 id="hero-titulo">Plantas e insumos del vivero</h1>
+          <p class="pagina__intro">Precios en pesos colombianos. Para comprar o encargar, escríbanos por WhatsApp desde cada producto y le confirmamos disponibilidad.</p>
+          <div class="hero__acciones">
+            <a class="boton boton--claro" href="#resultados-titulo">Ver el catálogo</a>
+            <button type="button" class="boton boton--fantasma" id="florecer">Cerrar la flor</button>
+          </div>
+        </div>
+        <div class="hero__escena">
+          <canvas id="flor3d" width="560" height="560" aria-hidden="true"></canvas>
+          <p class="hero__pista" aria-hidden="true">Arrástrela para girarla</p>
+        </div>
+      </div>
+    </section>
 
     <section class="temporada" id="temporada" aria-labelledby="temporada-titulo">
       <div class="contenedor temporada__fila">
