@@ -30,7 +30,7 @@
    return function(cb){go=false;var s=p,b=performance.now();(function g(now){var k=Math.min(1,(now-b)/220);set(s+(1-s)*k);if(k<1)requestAnimationFrame(g);else if(cb)cb()})(b)}}
   window.__ldRun=run;
   try{first=!sessionStorage.getItem('vla');nav=sessionStorage.getItem('vla-nav')==='1';pp=nav?(parseFloat(sessionStorage.getItem('vla-p'))||0):0;sessionStorage.setItem('vla','1');sessionStorage.removeItem('vla-nav');sessionStorage.removeItem('vla-p')}catch(e){}
-  var MIN=rm?300:first?1200:nav?400:500,loaded=false,done=false,end=run(ld,pp);h.classList.add('loading');
+  var MIN=rm?300:first?1200:nav?260:500,loaded=false,done=false,end=run(ld,pp);h.classList.add('loading');
   function finish(){if(done)return;done=true;end(function(){setTimeout(function(){ld.classList.add('out');h.classList.remove('loading');setTimeout(function(){ld.remove();window.__ldDone=true;document.dispatchEvent(new Event('loader-done'))},rm?200:560)},60)})}
   function check(){if(done)return;var t=performance.now()-t0;if((loaded&&!document.querySelector('[aria-busy="true"]')&&t>=MIN)||t>=3000)finish();else setTimeout(check,100)}
   document.addEventListener('DOMContentLoaded',function(){loaded=true});if(document.readyState!=='loading')loaded=true;check();})();
