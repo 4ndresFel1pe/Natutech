@@ -1,0 +1,113 @@
+/* ==========================================================================
+   Portada v2 · Vivero Las Acacias
+   Se carga DESPUÉS de estilos.css, mejoras.css y movil.css
+   ========================================================================== */
+
+html body .hero.hero--v2{
+  --pv-oro:#ffd75e; --pv-rosa:#ff7ab0; --pv-verde:#0a2216;
+  position:relative; isolation:isolate; overflow:hidden;
+  min-height:clamp(600px, 94svh, 880px);
+  display:flex; align-items:center;
+  padding:clamp(4rem,6.5vw,6rem) 0 clamp(4.5rem,7vw,5.5rem);
+  color:#fff;
+  background:
+    radial-gradient(70% 80% at 74% 42%, rgba(45,150,95,.55) 0%, rgba(45,150,95,0) 62%),
+    radial-gradient(120% 90% at 20% 100%, #0d3a22 0%, rgba(13,58,34,0) 60%),
+    linear-gradient(160deg,#0f3b25 0%,#0a2418 55%,#06150d 100%) !important;
+  border-radius:0 0 clamp(28px,5vw,72px) clamp(28px,5vw,72px);
+}
+
+/* ---------- Fondo: auroras, grano y viñeta ---------- */
+.hero--v2 .hero__fondo{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.hero--v2 .hero__aurora{position:absolute;border-radius:50%;filter:blur(70px);mix-blend-mode:screen;will-change:transform;animation:pv-aurora 22s ease-in-out infinite alternate}
+.hero--v2 .hero__aurora--1{width:min(48vw,700px);height:min(48vw,700px);right:-8%;top:-14%;background:radial-gradient(circle,rgba(255,176,92,.34),transparent 62%)}
+.hero--v2 .hero__aurora--2{width:min(44vw,640px);height:min(44vw,640px);left:-12%;bottom:-26%;background:radial-gradient(circle,rgba(247,198,26,.34),transparent 66%);animation-duration:27s;animation-delay:-8s}
+.hero--v2 .hero__aurora--3{width:min(40vw,560px);height:min(40vw,560px);left:34%;top:-24%;background:radial-gradient(circle,rgba(56,193,114,.38),transparent 66%);animation-duration:31s;animation-delay:-14s}
+.hero--v2 .hero__grano{position:absolute;inset:0;opacity:.09;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.hero--v2 .hero__vineta{position:absolute;inset:0;background:radial-gradient(120% 100% at 50% 40%,transparent 55%,rgba(3,12,7,.55) 100%)}
+
+/* ---------- Layout ---------- */
+.hero--v2 .hero__fila{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);align-items:center;gap:clamp(1rem,4vw,4rem);width:100%}
+.hero--v2 .hero__texto{position:relative;z-index:2;max-width:40rem}
+
+/* ---------- Texto ---------- */
+.hero--v2 .hero__etiqueta{display:inline-flex;align-items:center;gap:.6rem;margin:0 0 1.4rem;padding:.5rem 1rem .5rem .85rem;border-radius:999px;
+  font-size:.86rem;font-weight:600;letter-spacing:.03em;color:#eaf7ea;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.hero--v2 .hero__punto{width:.55rem;height:.55rem;border-radius:50%;background:var(--pv-oro);box-shadow:0 0 0 0 rgba(255,215,94,.6);animation:pv-pulso 2.4s ease-out infinite}
+
+html body .hero--v2 h1{margin:0 0 1.2rem;color:#fff;font-size:clamp(2.7rem,5.6vw,5rem);line-height:1.02;letter-spacing:-.025em;text-wrap:balance;text-shadow:0 4px 30px rgba(0,0,0,.28)}
+html body .hero--v2 h1 em{font-style:normal;background:linear-gradient(95deg,var(--pv-oro) 0%,#ffb25e 40%,var(--pv-rosa) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:none;padding-right:.06em}
+html body .hero--v2 .pagina__intro{margin:0 0 2rem;max-width:34rem;font-size:clamp(1.02rem,1.45vw,1.2rem);line-height:1.65;color:rgba(234,247,234,.88)}
+
+.hero--v2 .hero__acciones{display:flex;flex-wrap:wrap;gap:.8rem}
+html body .hero--v2 .hero__acciones .boton{padding:.95rem 1.7rem;font-weight:700;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,background .25s}
+html body .hero--v2 .hero__acciones .boton--claro{color:#1c2a10;background:linear-gradient(180deg,#ffd84a,#f7c61a);box-shadow:0 10px 30px -8px rgba(247,198,26,.65),inset 0 1px 0 rgba(255,255,255,.55)}
+html body .hero--v2 .hero__acciones .boton--claro:hover{transform:translateY(-3px);box-shadow:0 16px 38px -8px rgba(247,198,26,.8),inset 0 1px 0 rgba(255,255,255,.55)}
+html body .hero--v2 .hero__acciones .boton--fantasma{color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.28);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+html body .hero--v2 .hero__acciones .boton--fantasma:hover{transform:translateY(-3px);background:rgba(255,255,255,.16)}
+
+.hero--v2 .hero__datos{list-style:none;margin:2rem 0 0;padding:1.2rem 0 0;display:flex;flex-wrap:wrap;gap:1.1rem 2.6rem;border-top:1px solid rgba(255,255,255,.15)}
+.hero--v2 .hero__datos li{display:flex;flex-direction:column;gap:.1rem}
+.hero--v2 .hero__datos strong{font-size:1.3rem;line-height:1.2;color:var(--pv-oro);letter-spacing:-.01em}
+.hero--v2 .hero__datos span{font-size:.86rem;color:rgba(230,244,230,.72)}
+
+/* ---------- Escena 3D ---------- */
+.hero--v2 .hero__escena{position:relative;z-index:1;width:min(100%,660px);aspect-ratio:1/1;margin-inline:auto}
+.hero--v2 .hero__escena::before{content:"";position:absolute;inset:-16%;border-radius:50%;pointer-events:none;
+  background:conic-gradient(from 0deg,transparent 0 8%,rgba(255,226,150,.17) 11%,transparent 15% 33%,rgba(255,150,200,.15) 36%,transparent 40% 58%,rgba(255,226,150,.13) 61%,transparent 65% 83%,rgba(255,150,200,.13) 86%,transparent 90%);
+  -webkit-mask:radial-gradient(circle,#000 14%,transparent 66%);mask:radial-gradient(circle,#000 14%,transparent 66%);
+  animation:pv-rayos 70s linear infinite}
+.hero--v2 .hero__escena::after{content:"";position:absolute;left:50%;bottom:4%;width:56%;height:9%;transform:translateX(-50%);border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(0,0,0,.38),transparent);filter:blur(8px);opacity:.7}
+.hero--v2 .hero__escena canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;cursor:grab;touch-action:pan-y;outline:none}
+.hero--v2 .hero__escena.arrastrando canvas{cursor:grabbing}
+.hero--v2 .hero__escena.sin-webgl canvas{display:none}
+.hero--v2 .hero__escena.sin-webgl{background:radial-gradient(closest-side,rgba(255,95,162,.55),rgba(247,198,26,.18) 55%,transparent 72%)}
+.hero--v2 .hero__pista{position:absolute;z-index:2;left:50%;bottom:1%;transform:translateX(-50%);margin:0;padding:.4rem .9rem;border-radius:999px;font-size:.8rem;letter-spacing:.04em;color:rgba(255,255,255,.85);
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);white-space:nowrap;pointer-events:none;
+  animation:pv-pista 3.2s ease-in-out infinite;transition:opacity .5s}
+.hero--v2 .hero__escena.ya-giro .hero__pista{opacity:0}
+
+/* ---------- Indicador de scroll ---------- */
+.hero--v2 .hero__bajar{position:absolute;left:50%;bottom:1.4rem;transform:translateX(-50%);width:26px;height:42px;border:2px solid rgba(255,255,255,.4);border-radius:14px;z-index:3}
+.hero--v2 .hero__bajar::after{content:"";position:absolute;left:50%;top:8px;width:4px;height:8px;margin-left:-2px;border-radius:2px;background:var(--pv-oro);animation:pv-rueda 1.8s ease-in-out infinite}
+
+/* ---------- Entrada escalonada (espera a que termine el loader) ---------- */
+.hero--v2 .hero__texto>*{animation:pv-subir .9s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*.1s + .1s)}
+.hero--v2 .hero__texto>*:nth-child(1){--i:0}.hero--v2 .hero__texto>*:nth-child(2){--i:1}.hero--v2 .hero__texto>*:nth-child(3){--i:2}.hero--v2 .hero__texto>*:nth-child(4){--i:3}.hero--v2 .hero__texto>*:nth-child(5){--i:4}
+.hero--v2 .hero__escena{animation:pv-aparece 1.4s ease-out both;animation-delay:.2s}
+html.loading .hero--v2 .hero__texto>*,html.loading .hero--v2 .hero__escena{animation-play-state:paused}
+html.loading .hero--v2.pv-listo .hero__texto>*,html.loading .hero--v2.pv-listo .hero__escena{animation-play-state:running}
+
+@keyframes pv-subir{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+@keyframes pv-aparece{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+@keyframes pv-aurora{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(5%,7%,0) scale(1.18)}}
+@keyframes pv-pulso{0%{box-shadow:0 0 0 0 rgba(255,215,94,.55)}70%,100%{box-shadow:0 0 0 .7rem rgba(255,215,94,0)}}
+@keyframes pv-rayos{to{transform:rotate(360deg)}}
+@keyframes pv-pista{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-4px)}}
+@keyframes pv-rueda{0%{opacity:0;transform:translateY(0)}30%{opacity:1}100%{opacity:0;transform:translateY(14px)}}
+
+/* ---------- Tablet y celular ---------- */
+@media (max-width:900px){
+  html body .hero.hero--v2{min-height:0;padding:4.5rem 0 4.5rem}
+  .hero--v2 .hero__fila{grid-template-columns:1fr;gap:.4rem;text-align:center}
+  .hero--v2 .hero__escena{order:-1;width:min(86vw,440px);margin-bottom:-.5rem}
+  .hero--v2 .hero__texto{margin-inline:auto}
+  .hero--v2 .hero__etiqueta{width:fit-content;margin-inline:auto}
+  html body .hero--v2 .pagina__intro{margin-inline:auto}
+  .hero--v2 .hero__acciones,.hero--v2 .hero__datos{justify-content:center}
+  .hero--v2 .hero__datos{gap:1rem 1.8rem}
+  .hero--v2 .hero__bajar{display:none}
+}
+@media (max-width:480px){
+  .hero--v2 .hero__etiqueta{width:fit-content;max-width:100%;margin-inline:auto;font-size:.78rem;text-align:left}
+  html body .hero--v2 h1{font-size:clamp(2.3rem,11vw,3rem)}
+  html body .hero--v2 .hero__acciones .boton{flex:1 1 100%;justify-content:center;text-align:center}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .hero--v2 *,.hero--v2 *::before,.hero--v2 *::after{animation:none !important}
+}
