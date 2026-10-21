@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/estilos.css">
   <link rel="stylesheet" href="css/mejoras.css">
   <link rel="stylesheet" href="css/movil.css">
+  <link rel="stylesheet" href="css/portada.css">
   <style>
     /* Fondo ilustrado "encantado" en la sección de contacto (imagen original, sin filtros ni recompresión) */
     .sec.contacto{
@@ -33,7 +34,7 @@
   </style>
   <script src="js/api.js" defer></script>
   <script src="js/app.js" defer></script>
-  <script src="js/escena.js" defer></script>
+  <script src="js/flor3d.js" defer></script>
   <script src="js/ambiente.js?v=3" defer></script>
   <script src="js/cargas.js" defer></script>
   <script src="js/movil.js" defer></script>
@@ -82,21 +83,35 @@
   </header>
 
   <main id="contenido" class="pagina">
-    <section class="hero" id="inicio" aria-labelledby="hero-titulo">
+    <section class="hero hero--v2" id="inicio" aria-labelledby="hero-titulo">
+      <div class="hero__fondo" aria-hidden="true">
+        <span class="hero__aurora hero__aurora--1"></span>
+        <span class="hero__aurora hero__aurora--2"></span>
+        <span class="hero__aurora hero__aurora--3"></span>
+        <span class="hero__grano"></span>
+        <span class="hero__vineta"></span>
+      </div>
       <div class="contenedor hero__fila">
         <div class="hero__texto">
-          <h1 id="hero-titulo">Plantas e insumos del vivero</h1>
+          <p class="hero__etiqueta"><span class="hero__punto" aria-hidden="true"></span>Vivero Las Acacias · Yopal, Casanare</p>
+          <h1 id="hero-titulo">Plantas e insumos del <em>vivero</em></h1>
           <p class="pagina__intro">Precios en pesos colombianos. Para comprar o encargar, escríbanos por WhatsApp desde cada producto y le confirmamos disponibilidad.</p>
           <div class="hero__acciones">
             <a class="boton boton--claro" href="#resultados-titulo">Ver el catálogo</a>
             <button type="button" class="boton boton--fantasma" id="florecer">Cerrar la flor</button>
           </div>
+          <ul class="hero__datos">
+            <li><strong>+9 años</strong><span>atendiendo el Llano</span></li>
+            <li><strong>Precios en COP</strong><span>claros desde el inicio</span></li>
+            <li><strong>WhatsApp</strong><span>disponibilidad al día</span></li>
+          </ul>
         </div>
         <div class="hero__escena">
-          <canvas id="flor3d" width="560" height="560" aria-hidden="true"></canvas>
+          <canvas id="flor3d" aria-hidden="true"></canvas>
           <p class="hero__pista" aria-hidden="true">Arrástrela para girarla</p>
         </div>
       </div>
+      <a class="hero__bajar" href="#temporada" aria-label="Seguir bajando"></a>
     </section>
 
     <section class="temporada" id="temporada" aria-labelledby="temporada-titulo">
