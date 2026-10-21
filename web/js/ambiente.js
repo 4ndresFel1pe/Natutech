@@ -81,10 +81,10 @@ let W = 0, H = 0, D = 1, ps = [], ms = [], viento = 0, on = true, last = 0, runn
 let rafaFin = 0, rafaFuerza = 0, proxRafa = 1500, sdy = 0, pasoMouse = 0;
 const mouse = { x: -999, y: -999, vx: 0, vy: 0, on: false };
 const FA = panel ? .65 : 1;                                   // en paneles, un poco más suave para no estorbar formularios
-const MAXP = Math.round((panel ? 90 : 220) * .92);
+const MAXP = Math.round((panel ? 90 : 220) * .78);
 
 const nueva = inicio => {
-  const r = Math.random(), tipo = r < .34 ? 'petalo' : r < .44 ? 'hoja' : r < .70 ? 'trebol' : 'otono', z = rnd(.4, 1.3);
+  const r = Math.random(), tipo = r < .40 ? 'petalo' : r < .48 ? 'hoja' : r < .78 ? 'trebol' : 'otono', z = rnd(.4, 1.3);
   const base = tipo === 'otono' ? rnd(34, 58) : tipo === 'trebol' ? rnd(28, 46) : tipo === 'hoja' ? rnd(26, 42) : rnd(22, 38);
   return { tipo, img: pick(SP[tipo]), z, size: base * z * (panel ? .85 : 1),
     x: rnd(-30, W + 30), y: inicio ? rnd(-40, H) : rnd(-100, -30),
@@ -101,8 +101,8 @@ const chispa = (x, y, vx, vy) => {                            // pétalos que na
 const fit = () => {
   D = Math.min(devicePixelRatio || 1, 1.5);
   W = innerWidth; H = innerHeight; cv.width = W * D; cv.height = H * D;
-  const n = Math.round(clamp(W * H / 9000, 40, 130) * (W < 700 ? .7 : 1) * (panel ? .5 : 1) * .92);
-  const m = Math.round(clamp(W * H / 25000, 14, 46) * (panel ? .5 : 1) * .92);
+  const n = Math.round(clamp(W * H / 9000, 40, 130) * (W < 700 ? .7 : 1) * (panel ? .5 : 1) * .78);
+  const m = Math.round(clamp(W * H / 25000, 14, 46) * (panel ? .5 : 1) * .8);
   while (ps.length < n) ps.push(nueva(true));
   ps = ps.filter((p, i) => p.vida !== undefined || i < n);
   while (ms.length < m) ms.push(nuevaMota(true)); ms.length = m;
