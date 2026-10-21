@@ -159,3 +159,10 @@ html{scrollbar-gutter:stable}
 html.saliendo{background:#0b2416}
 html.saliendo body{opacity:0;transition:opacity .16s ease-out}
 @media (prefers-reduced-motion:reduce){html.saliendo body{transition:none}}
+
+/* Regadera de la carga "siembra": ahora avanza con el mismo progreso (--p) que la barra, a la misma velocidad */
+.ld-vac{animation:none;transform:translateX(calc(60px + var(--p)*232px));opacity:min(clamp(0,calc(var(--p)*14),1),clamp(0,calc((1 - var(--p))*14),1))}
+.ld-clean{animation:none;opacity:1;transform:scaleX(calc(.125 + .875*var(--p)))}
+.ld-s{animation:none;transform:scale(clamp(0,calc((var(--p) - var(--t,.08))*9),1))}
+.ld-s[style*="ldS0"]{--t:.08}.ld-s[style*="ldS1"]{--t:.21}.ld-s[style*="ldS2"]{--t:.34}
+.ld-s[style*="ldS3"]{--t:.47}.ld-s[style*="ldS4"]{--t:.6}.ld-s[style*="ldS5"]{--t:.73}
