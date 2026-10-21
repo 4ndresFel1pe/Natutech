@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Catálogo de plantas e insumos | Vivero Las Acacias, Yopal</title>
   <meta name="description" content="Plantas de interior y exterior, frutales, materas e insumos del Vivero Las Acacias en Yopal, Casanare. Consulte disponibilidad y compre por WhatsApp.">
   <meta name="theme-color" content="#133b21">
@@ -11,30 +11,44 @@
   <script>try{if(sessionStorage.getItem('vla'))document.documentElement.classList.add('rapida')}catch(e){}</script>
   <link rel="stylesheet" href="css/estilos.css">
   <link rel="stylesheet" href="css/mejoras.css">
+  <link rel="stylesheet" href="css/movil.css">
   <script src="js/api.js" defer></script>
   <script src="js/app.js" defer></script>
   <script src="js/escena.js" defer></script>
   <script src="js/ambiente.js" defer></script>
-  <script src="js/whatsapp.js" defer></script>
+  <script src="js/movil.js" defer></script>
 </head>
 <body data-pagina="catalogo">
-  <div id="carga" role="status" aria-live="polite">
-    <div class="carga__luciernagas" aria-hidden="true"><i style="left:47%;top:37%;--d:8s;--w:2.0s;--x:-44px;--y:-66px"></i><i style="left:74%;top:30%;--d:7s;--w:1.8s;--x:-43px;--y:-12px"></i><i style="left:70%;top:45%;--d:5s;--w:0.2s;--x:5px;--y:-44px"></i><i style="left:14%;top:48%;--d:5s;--w:1.7s;--x:4px;--y:-67px"></i><i style="left:78%;top:33%;--d:6s;--w:2.0s;--x:30px;--y:-33px"></i><i style="left:13%;top:91%;--d:9s;--w:1.2s;--x:-44px;--y:-56px"></i><i style="left:11%;top:89%;--d:6s;--w:0.9s;--x:3px;--y:-61px"></i><i style="left:75%;top:33%;--d:9s;--w:0.9s;--x:21px;--y:-18px"></i><i style="left:93%;top:41%;--d:5s;--w:1.8s;--x:23px;--y:-30px"></i><i style="left:30%;top:65%;--d:5s;--w:1.7s;--x:41px;--y:-66px"></i><i style="left:78%;top:25%;--d:9s;--w:0.6s;--x:13px;--y:-27px"></i><i style="left:74%;top:72%;--d:7s;--w:1.4s;--x:24px;--y:-11px"></i><i style="left:64%;top:64%;--d:7s;--w:0.7s;--x:-27px;--y:-26px"></i><i style="left:37%;top:28%;--d:9s;--w:0.9s;--x:17px;--y:-39px"></i><i style="left:49%;top:75%;--d:7s;--w:1.9s;--x:-41px;--y:-63px"></i><i style="left:71%;top:71%;--d:6s;--w:2.4s;--x:-7px;--y:-61px"></i></div>
-    <div class="carga__centro">
-      <svg class="carga__planta" viewBox="0 0 200 260" aria-hidden="true" focusable="false">
-        <ellipse cx="100" cy="238" rx="64" ry="9" fill="#06180d" opacity=".55"/>
-        <path d="M44 240c10-26 34-34 56-34s46 8 56 34z" fill="#3b2a1c"/>
-        <g class="c-planta">
-          <path class="c-tallo" pathLength="1" d="M100 210C100 172 94 140 100 96" fill="none" stroke="#4fa86a" stroke-width="5" stroke-linecap="round"/>
-          <path class="c-hoja c-hoja--i" d="M98 172C70 172 52 154 50 132c26 0 46 12 48 40z" fill="#3f9a5d"/>
-          <path class="c-hoja c-hoja--d" d="M99 152c26 0 46-14 50-38-26 0-48 12-50 38z" fill="#2f7d46"/>
-          <g transform="translate(100 88)"><g class="c-flor-in"><g transform="rotate(0)"><ellipse class="c-petalo" style="--k:0" cx="0" cy="-19" rx="9" ry="20" fill="#f5c518"/></g><g transform="rotate(45)"><ellipse class="c-petalo" style="--k:1" cx="0" cy="-19" rx="9" ry="20" fill="#ffd84a"/></g><g transform="rotate(90)"><ellipse class="c-petalo" style="--k:2" cx="0" cy="-19" rx="9" ry="20" fill="#f5c518"/></g><g transform="rotate(135)"><ellipse class="c-petalo" style="--k:3" cx="0" cy="-19" rx="9" ry="20" fill="#ffd84a"/></g><g transform="rotate(180)"><ellipse class="c-petalo" style="--k:4" cx="0" cy="-19" rx="9" ry="20" fill="#f5c518"/></g><g transform="rotate(225)"><ellipse class="c-petalo" style="--k:5" cx="0" cy="-19" rx="9" ry="20" fill="#ffd84a"/></g><g transform="rotate(270)"><ellipse class="c-petalo" style="--k:6" cx="0" cy="-19" rx="9" ry="20" fill="#f5c518"/></g><g transform="rotate(315)"><ellipse class="c-petalo" style="--k:7" cx="0" cy="-19" rx="9" ry="20" fill="#ffd84a"/></g><circle r="8" fill="#a3170e"/></g></g>
-        </g>
-      </svg>
-      <p class="carga__marca">Vivero Las Acacias</p>
-      <p class="carga__msg">Regando las plantas…</p>
-    </div>
+  <div id="loader" role="status" aria-live="polite">
+    <div class="carga__luciernagas" aria-hidden="true"><i style="left:36%;top:31%;--d:7s;--w:2.9s;--x:27px;--y:-40px"></i><i style="left:86%;top:23%;--d:9s;--w:0.0s;--x:10px;--y:-54px"></i><i style="left:76%;top:44%;--d:6s;--w:2.2s;--x:10px;--y:-36px"></i><i style="left:76%;top:75%;--d:8s;--w:2.0s;--x:-31px;--y:-56px"></i><i style="left:87%;top:34%;--d:9s;--w:1.2s;--x:44px;--y:-70px"></i><i style="left:91%;top:23%;--d:6s;--w:2.4s;--x:25px;--y:-68px"></i><i style="left:44%;top:18%;--d:7s;--w:1.5s;--x:26px;--y:-24px"></i><i style="left:55%;top:69%;--d:8s;--w:2.3s;--x:23px;--y:-42px"></i><i style="left:23%;top:61%;--d:5s;--w:0.1s;--x:-33px;--y:-39px"></i><i style="left:33%;top:48%;--d:8s;--w:2.4s;--x:30px;--y:-16px"></i><i style="left:44%;top:68%;--d:9s;--w:2.6s;--x:-1px;--y:-34px"></i><i style="left:50%;top:67%;--d:9s;--w:0.7s;--x:-7px;--y:-27px"></i></div>
+    <svg class="ld-art" viewBox="0 0 360 230" aria-hidden="true">
+      <rect x="20" y="178" width="320" height="16" rx="8" fill="#2a1f14"/>
+      <g fill="#6b5237"><ellipse cx="48" cy="184" rx="3" ry="1.8"/><ellipse cx="74" cy="186" rx="4" ry="1.8"/><ellipse cx="100" cy="188" rx="5" ry="1.8"/><ellipse cx="126" cy="184" rx="3" ry="1.8"/><ellipse cx="152" cy="186" rx="4" ry="1.8"/><ellipse cx="178" cy="188" rx="5" ry="1.8"/><ellipse cx="204" cy="184" rx="3" ry="1.8"/><ellipse cx="230" cy="186" rx="4" ry="1.8"/><ellipse cx="256" cy="188" rx="5" ry="1.8"/><ellipse cx="282" cy="184" rx="3" ry="1.8"/><ellipse cx="308" cy="186" rx="4" ry="1.8"/></g>
+      <rect class="ld-clean" x="20" y="178" width="320" height="16" rx="8" fill="#2f8450"/>
+      <g class="ld-s" style="--k:ldS0" transform="translate(80 178)"><path d="M0 0V-22" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M0-8C-9-8-13-14-13-20c8 0 12 5 13 12z" fill="#3f9a5d"/><path d="M0-12C8-12 12-18 12-24c-8 0-12 5-12 12z" fill="#2f7d46"/><circle cy="-25" r="5" fill="#e2525f"/></g><g class="ld-s" style="--k:ldS1" transform="translate(120 178)"><path d="M0 0V-22" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M0-8C-9-8-13-14-13-20c8 0 12 5 13 12z" fill="#3f9a5d"/><path d="M0-12C8-12 12-18 12-24c-8 0-12 5-12 12z" fill="#2f7d46"/><circle cy="-25" r="5" fill="#f4a9c6"/></g><g class="ld-s" style="--k:ldS2" transform="translate(160 178)"><path d="M0 0V-22" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M0-8C-9-8-13-14-13-20c8 0 12 5 13 12z" fill="#3f9a5d"/><path d="M0-12C8-12 12-18 12-24c-8 0-12 5-12 12z" fill="#2f7d46"/><circle cy="-25" r="5" fill="#f5c518"/></g><g class="ld-s" style="--k:ldS3" transform="translate(200 178)"><path d="M0 0V-22" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M0-8C-9-8-13-14-13-20c8 0 12 5 13 12z" fill="#3f9a5d"/><path d="M0-12C8-12 12-18 12-24c-8 0-12 5-12 12z" fill="#2f7d46"/><circle cy="-25" r="5" fill="#e2525f"/></g><g class="ld-s" style="--k:ldS4" transform="translate(240 178)"><path d="M0 0V-22" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M0-8C-9-8-13-14-13-20c8 0 12 5 13 12z" fill="#3f9a5d"/><path d="M0-12C8-12 12-18 12-24c-8 0-12 5-12 12z" fill="#2f7d46"/><circle cy="-25" r="5" fill="#f4a9c6"/></g><g class="ld-s" style="--k:ldS5" transform="translate(280 178)"><path d="M0 0V-22" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M0-8C-9-8-13-14-13-20c8 0 12 5 13 12z" fill="#3f9a5d"/><path d="M0-12C8-12 12-18 12-24c-8 0-12 5-12 12z" fill="#2f7d46"/><circle cy="-25" r="5" fill="#f5c518"/></g>
+      <g transform="translate(0 178)"><g class="ld-vac">
+        <g fill="#f5c518" opacity=".0"></g>
+        <g transform="rotate(14 0 -40)"><rect x="-30" y="-64" width="54" height="40" rx="10" fill="#5fb0d6"/><rect x="-30" y="-64" width="54" height="9" rx="4" fill="#fff" opacity=".25"/>
+        <path d="M22-48L58-72L66-64L28-36z" fill="#4a9cc2"/><path d="M-30-52C-52-66-44-78-30-72" stroke="#4a9cc2" stroke-width="6" fill="none" stroke-linecap="round"/></g>
+        <g fill="#6ec3f0"><circle class="ld-b" style="--d:0s" cx="62" cy="-52" r="3.2"/><circle class="ld-b" style="--d:.3s" cx="66" cy="-54" r="2.6"/><circle class="ld-b" style="--d:.6s" cx="60" cy="-50" r="3"/></g>
+      </g></g>
+    </svg>
+    <p class="ld-t"><span class="ld-msg">Preparando el vivero</span><span class="ld-dots"><i>.</i><i>.</i><i>.</i></span></p>
+    <div class="ld-bar" aria-hidden="true"><span></span></div>
+    <div class="ld-wave" aria-hidden="true"><svg viewBox="0 0 2880 80" preserveAspectRatio="none"><path fill="currentColor" d="M0 40 C120 0 240 0 360 40 S600 80 720 40 S960 0 1080 40 S1320 80 1440 40 S1680 0 1800 40 S2040 80 2160 40 S2400 0 2520 40 S2760 80 2880 40 L2880 80 L0 80 Z"/></svg></div>
   </div>
+  <script>
+  (function(){var ld=document.getElementById('loader');if(!ld)return;var h=document.documentElement,bar=ld.querySelector('.ld-bar span'),rm=matchMedia('(prefers-reduced-motion: reduce)').matches,t0=performance.now(),first=true,nav=false;
+  try{first=!sessionStorage.getItem('vla');nav=sessionStorage.getItem('vla-nav')==='1';sessionStorage.setItem('vla','1');sessionStorage.removeItem('vla-nav')}catch(e){}
+  var MIN=rm?400:first?1900:nav?650:900,loaded=false,done=false;window.__ldTpl=ld.cloneNode(true);
+  h.classList.add('loading');requestAnimationFrame(function(){bar.style.transform='scaleX(.9)'});
+  function finish(){if(done)return;done=true;bar.style.transition='transform .3s ease-out';bar.style.transform='scaleX(1)';
+   setTimeout(function(){ld.classList.add('out');h.classList.remove('loading');setTimeout(function(){ld.remove();window.__ldDone=true;document.dispatchEvent(new Event('loader-done'))},rm?300:1000)},320)}
+  function check(){if(done)return;var t=performance.now()-t0;if((loaded&&!document.querySelector('[aria-busy="true"]')&&t>=MIN)||t>=4500)finish();else setTimeout(check,100)}
+  addEventListener('load',function(){loaded=true});if(document.readyState==='complete')loaded=true;check();})();
+  </script>
+
+  
 
   <a class="saltar-enlace" href="#contenido">Saltar al contenido</a>
 
@@ -47,9 +61,13 @@
           <span class="marca__lugar">Yopal, Casanare</span>
         </span>
       </a>
-      <nav class="navegacion" aria-label="Principal">
+      <nav class="navegacion navegacion--pills" aria-label="Secciones de la página">
         <ul>
-          <li><a href="index.html" aria-current="page">Catálogo</a></li>
+          <li><a href="#inicio" data-s="inicio" aria-current="true">Inicio</a></li>
+          <li><a href="#temporada" data-s="temporada">Temporada</a></li>
+          <li><a href="#catalogo" data-s="catalogo">Catálogo</a></li>
+          <li><a href="#nosotros" data-s="nosotros">Nosotros</a></li>
+          <li><a href="#contacto" data-s="contacto">Contacto</a></li>
           <li><a href="inventario.html">Panel del vivero</a></li>
         </ul>
       </nav>
@@ -57,7 +75,7 @@
   </header>
 
   <main id="contenido" class="pagina">
-    <section class="hero" aria-labelledby="hero-titulo">
+    <section class="hero" id="inicio" aria-labelledby="hero-titulo">
       <div class="contenedor hero__fila">
         <div class="hero__texto">
           <h1 id="hero-titulo">Plantas e insumos del vivero</h1>
@@ -85,7 +103,7 @@
     </section>
 
 
-    <div class="contenedor catalogo">
+    <div class="contenedor catalogo" id="catalogo">
       <section class="filtros" aria-labelledby="filtros-titulo">
         <h2 id="filtros-titulo">Buscar y filtrar</h2>
         <form id="form-filtros" role="search" aria-label="Buscar en el catálogo">
@@ -134,6 +152,29 @@
         </div>
       </section>
     </div>
+
+    <section class="sec nosotros" id="nosotros" aria-labelledby="nos-t">
+      <div class="contenedor">
+        <h2 class="sec-title" id="nos-t">Un vivero que acompaña tu jardín</h2>
+        <p class="sec-lead">Plantas, flores e insumos para patios, casas y fincas del Llano.</p>
+        <div class="vals">
+        <article class="val"><div class="val-art"><video class="val-vid" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture tabindex="-1" role="img" aria-label="Brotes que crecen y florecen en una matera" poster="img/cuidado-cada-planta.jpg" data-src="videos/cuidado-cada-planta.mp4|videos/cuidado-cada-planta.webm" data-anim="img/cuidado-cada-planta.webp"></video><img class="val-img" hidden alt="Brotes que crecen y florecen en una matera" draggable="false"></div>
+          <h3>Cuidado en cada planta</h3><p>Te contamos cuánta luz y riego necesita cada una para que se dé bien en tu casa.</p></article>
+        <article class="val"><div class="val-art"><video class="val-vid" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture tabindex="-1" role="img" aria-label="Una conversación en la que se elige una orquídea rosada" poster="img/asesoria-cercana.jpg" data-src="videos/asesoria-cercana.mp4|videos/asesoria-cercana.webm" data-anim="img/asesoria-cercana.webp"></video><img class="val-img" hidden alt="Una conversación en la que se elige una orquídea rosada" draggable="false"></div>
+          <h3>Asesoría cercana</h3><p>Dinos qué buscas por WhatsApp y te ayudamos a elegir la planta o flor ideal.</p></article>
+        <article class="val"><div class="val-art"><video class="val-vid" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture tabindex="-1" role="img" aria-label="Una caja con plantas que llega lista para entregar" poster="img/pedidos-faciles.jpg" data-src="videos/pedidos-faciles.mp4|videos/pedidos-faciles.webm" data-anim="img/pedidos-faciles.webp"></video><img class="val-img" hidden alt="Una caja con plantas que llega lista para entregar" draggable="false"></div>
+          <h3>Pedidos fáciles</h3><p>Separa tu pedido, indícanos la fecha de entrega y lo dejamos listo.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec contacto" id="contacto" aria-labelledby="con-t">
+      <div class="contenedor">
+        <h2 class="sec-title" id="con-t">¿Qué planta o flor buscas?</h2>
+        <p class="sec-lead">Escríbenos y te decimos qué tenemos hoy, con precio y disponibilidad.</p>
+        <button type="button" class="boton boton--claro" data-wa>Escribir por WhatsApp</button>
+      </div>
+    </section>
   </main>
 
   <footer class="pie">
