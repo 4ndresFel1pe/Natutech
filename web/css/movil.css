@@ -154,3 +154,8 @@ html{scrollbar-gutter:stable}
 
 /* Rosas que caen en cada clic */
 .rosa{position:fixed;z-index:300;pointer-events:none;background:center/contain no-repeat;will-change:transform,opacity}
+
+/* Salida de página: se oscurece al color de la pantalla de carga que sigue, sin destello blanco */
+html.saliendo{background:#0b2416}
+html.saliendo body{opacity:0;transition:opacity .16s ease-out}
+@media (prefers-reduced-motion:reduce){html.saliendo body{transition:none}}
