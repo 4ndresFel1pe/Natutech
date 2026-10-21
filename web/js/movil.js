@@ -31,18 +31,14 @@ document.addEventListener('click', e => {
     } else window.scrollTo({ top: 0, behavior: RM ? 'auto' : 'smooth' });
     return;
   }
-  if (u.origin !== location.origin || (u.pathname === location.pathname && u.search === location.search) || !window.__ldCrear || !window.__ldRun) return;
+  if (u.origin !== location.origin || (u.pathname === location.pathname && u.search === location.search)) return;
+  /* Una sola animación por cambio de página: aquí solo se oscurece la actual y la animación la muestra la página que se abre */
   e.preventDefault(); yendo = true; buzz(6);
-  const t = TEMA.find(m => m[0].test(u.pathname)), ld = window.__ldCrear(t[1], t[2]);
-  ld.style.transition = 'none'; ld.style.transform = 'translateY(-105%)';
-  document.body.appendChild(ld); html.classList.add('loading');
-  void ld.offsetHeight;
-  ld.style.transition = 'transform .4s cubic-bezier(.77,0,.175,1)'; ld.style.transform = 'none';
-  window.__ldRun(ld);
   try { sessionStorage.setItem('vla-nav', '1'); } catch (x) {}
-  setTimeout(() => { try { sessionStorage.setItem('vla-p', ld.style.getPropertyValue('--p') || '0'); } catch (x) {} location.href = u.href; }, RM ? 80 : 450);
+  html.classList.add('saliendo');
+  setTimeout(() => { location.href = u.href; }, RM ? 0 : 160);
 }, true);
-addEventListener('pageshow', e => { if (e.persisted) { yendo = false; document.querySelectorAll('#loader').forEach(l => l.remove()); html.classList.remove('loading'); } });
+addEventListener('pageshow', e => { if (e.persisted) { yendo = false; html.classList.remove('saliendo', 'loading'); document.querySelectorAll('#loader').forEach(l => l.remove()); } });
 
 /* ---------- Ondas al tocar y rosas que caen en cada clic ---------- */
 const ROSAS = [['#d4213d', '#8e1228', '#ff7d8f'], ['#e8789a', '#b0386a', '#ffc1d4'], ['#b3122e', '#6e0a1d', '#ee5a70']].map(([a, b, c]) => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path d="M24 44c-1-6 0-10 2-14" stroke="#2f7d46" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M26 38c6-1 10-5 11-10-6 0-10 4-11 10z" fill="#3f9a5d"/><circle cx="24" cy="21" r="17" fill="${a}"/><path d="M24 7c8 1 14 7 13 15-1 8-9 13-16 10-7-3-8-12-3-16 4-3 10-2 11 3 1 4-3 7-6 5" fill="none" stroke="${b}" stroke-width="2.4" stroke-linecap="round"/><path d="M11 15c3-5 8-8 14-8" stroke="${c}" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".85"/></svg>`));
