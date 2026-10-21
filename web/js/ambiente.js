@@ -1,7 +1,4 @@
-/* Vivero Las Acacias · fondo vivo v2
-   Pétalos de orquídea y tulipán, tréboles, hojas verdes, hojas de otoño y polen luminoso.
-   Todo se mueve: viento que respira, ráfagas, giro 3D, scroll con paralaje y puntero que las aparta.
-   Reemplaza al ambiente.js anterior (mismo nombre, misma carga). */
+
 (() => {
 'use strict';
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -76,30 +73,51 @@ const SP = {
   otono: [otono('#e8731a', '#a8400a'), otono('#d2391e', '#8a1d10'), otono('#f0a81c', '#b56a08'), otono('#b5651d', '#6e3a0f'), otono('#c9561a', '#7d2a0b')]
 };
 
+/* Mariposa: un ala pre-dibujada; se bate escalando en X */
+const ala = (a, b) => sprite(g => {
+  g.fillStyle = a; g.beginPath(); g.moveTo(0, 0); g.bezierCurveTo(10, -40, 44, -34, 40, -6); g.bezierCurveTo(38, 8, 14, 10, 0, 0); g.fill();
+  g.fillStyle = b; g.beginPath(); g.moveTo(0, 2); g.bezierCurveTo(26, 6, 34, 30, 14, 34); g.bezierCurveTo(2, 32, 0, 16, 0, 2); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.arc(28, -16, 4, 0, TAU); g.fill();
+});
+const ALAS = [ala('#f5a623', '#e8731a'), ala('#ffe27a', '#f5c518'), ala('#9ad0f5', '#5b9bd5'), ala('#f4a9c6', '#d670a2')];
+
 /* ---------- Estado ---------- */
-let W = 0, H = 0, D = 1, ps = [], ms = [], viento = 0, on = true, last = 0, running = false, tAcc = 0;
-let rafaFin = 0, rafaFuerza = 0, proxRafa = 3000, sdy = 0;
+let W = 0, H = 0, D = 1, ps = [], ms = [], bs = [], viento = 0, on = true, last = 0, running = false, tAcc = 0;
+let rafaFin = 0, rafaFuerza = 0, proxRafa = 1500, sdy = 0, pasoMouse = 0;
 const mouse = { x: -999, y: -999, vx: 0, vy: 0, on: false };
-const FA = panel ? .6 : 1;                                    // en paneles, más suave para no estorbar formularios
+const FA = panel ? .65 : 1;                                   // en paneles, un poco más suave para no estorbar formularios
+const MAXP = panel ? 90 : 220;
 
 const nueva = inicio => {
-  const r = Math.random(), tipo = r < .32 ? 'petalo' : r < .44 ? 'hoja' : r < .70 ? 'trebol' : 'otono', z = rnd(.35, 1.25);
-  const base = tipo === 'otono' ? rnd(30, 50) : tipo === 'trebol' ? rnd(24, 40) : tipo === 'hoja' ? rnd(24, 38) : rnd(18, 32);
+  const r = Math.random(), tipo = r < .34 ? 'petalo' : r < .44 ? 'hoja' : r < .70 ? 'trebol' : 'otono', z = rnd(.4, 1.3);
+  const base = tipo === 'otono' ? rnd(34, 58) : tipo === 'trebol' ? rnd(28, 46) : tipo === 'hoja' ? rnd(26, 42) : rnd(22, 38);
   return { tipo, img: pick(SP[tipo]), z, size: base * z * (panel ? .85 : 1),
     x: rnd(-30, W + 30), y: inicio ? rnd(-40, H) : rnd(-100, -30),
-    vy: rnd(22, 56) * z * (tipo === 'otono' ? 1.15 : 1), amp: rnd(18, 52) * z, fr: rnd(.5, 1.3), ph: rnd(0, TAU),
-    rot: rnd(0, TAU), vr: rnd(-1.1, 1.1), flip: rnd(0, TAU), vf: rnd(.8, 2.5), ox: 0, oy: 0,
-    a: clamp(.3 + z * .42, 0, .85) * FA };
+    vy: rnd(34, 82) * z * (tipo === 'otono' ? 1.15 : 1), amp: rnd(30, 80) * z, fr: rnd(.7, 1.8), ph: rnd(0, TAU),
+    rot: rnd(0, TAU), vr: rnd(-1.8, 1.8), flip: rnd(0, TAU), vf: rnd(1.4, 3.6), ox: 0, oy: 0,
+    a: clamp(.55 + z * .38, 0, .97) * FA };
 };
-const nuevaMota = inicio => ({ x: rnd(0, W), y: inicio ? rnd(0, H) : H + 20, vy: -rnd(8, 26), r: rnd(6, 16), ph: rnd(0, TAU), fr: rnd(.4, 1.1), amp: rnd(10, 36), tw: rnd(.8, 2.2), a: rnd(.35, .9) * FA });
+const nuevaMota = inicio => ({ x: rnd(0, W), y: inicio ? rnd(0, H) : H + 20, vy: -rnd(14, 38), r: rnd(8, 20), ph: rnd(0, TAU), fr: rnd(.5, 1.4), amp: rnd(20, 60), tw: rnd(1, 2.8), a: rnd(.5, 1) * FA });
+const nuevaMariposa = inicio => {
+  const dir = Math.random() < .5 ? 1 : -1;
+  return { dir, img: pick(ALAS), s: rnd(.45, .8), x: inicio ? rnd(0, W) : (dir > 0 ? -60 : W + 60), y0: rnd(H * .15, H * .85),
+    v: rnd(50, 95), ph: rnd(0, TAU), onda: rnd(.6, 1.3), amp: rnd(40, 110), aleteo: rnd(11, 16) };
+};
+const chispa = (x, y, vx, vy) => {                            // pétalos que nacen donde pasa el puntero
+  const p = nueva(false); p.x = x; p.y = y; p.z = rnd(.5, 1); p.size = rnd(18, 32); p.a = .9 * FA;
+  p.ox = vx * .5 + rnd(-30, 30); p.oy = vy * .5 + rnd(-30, 30); p.vida = rnd(2.5, 4); p.vida0 = p.vida; return p;
+};
 
 const fit = () => {
   D = Math.min(devicePixelRatio || 1, 1.5);
   W = innerWidth; H = innerHeight; cv.width = W * D; cv.height = H * D;
-  const n = Math.round(clamp(W * H / 14000, 26, 100) * (W < 700 ? .7 : 1) * (panel ? .45 : 1));
-  const m = Math.round(clamp(W * H / 40000, 10, 36) * (panel ? .4 : 1));
-  while (ps.length < n) ps.push(nueva(true)); ps.length = n;
+  const n = Math.round(clamp(W * H / 9000, 40, 130) * (W < 700 ? .7 : 1) * (panel ? .5 : 1));
+  const m = Math.round(clamp(W * H / 25000, 14, 46) * (panel ? .5 : 1));
+  const b = panel ? 2 : W < 700 ? 3 : 6;
+  while (ps.length < n) ps.push(nueva(true));
+  ps = ps.filter((p, i) => p.vida !== undefined || i < n);
   while (ms.length < m) ms.push(nuevaMota(true)); ms.length = m;
+  while (bs.length < b) bs.push(nuevaMariposa(true)); bs.length = b;
 };
 
 /* ---------- Dibujo ---------- */
@@ -108,17 +126,24 @@ const dibujar = t => {
   ctx.globalCompositeOperation = 'lighter';
   for (const m of ms) {
     const tw = .5 + .5 * Math.sin(t * m.tw + m.ph), s = m.r * (.8 + .4 * tw);
-    ctx.globalAlpha = m.a * (.25 + .75 * tw) * .55;
-    ctx.drawImage(brillo, m.x + Math.sin(t * m.fr + m.ph) * m.amp * .3 - s, m.y - s, s * 2, s * 2);
+    ctx.globalAlpha = m.a * (.3 + .7 * tw) * .7;
+    ctx.drawImage(brillo, m.x - s, m.y - s, s * 2, s * 2);
   }
   ctx.globalCompositeOperation = 'source-over';
   for (const p of ps) {
-    const fade = clamp(p.y / 90, 0, 1) * clamp((H - p.y) / 140, 0, 1);
+    const fade = clamp(p.y / 90, 0, 1) * clamp((H - p.y) / 140, 0, 1) * (p.vida !== undefined ? clamp(p.vida / .8, 0, 1) : 1);
     if (fade <= 0) continue;
     const sx = p.size, sy = p.size * (.28 + .72 * Math.abs(Math.cos(p.flip)));
     ctx.globalAlpha = p.a * fade;
     ctx.setTransform(D, 0, 0, D, p.x * D, p.y * D); ctx.rotate(p.rot);
     ctx.drawImage(p.img, -sx / 2, -sy / 2, sx, sy);
+  }
+  for (const b of bs) {                                       // mariposas: dos alas que baten
+    const bat = Math.abs(Math.cos(t * b.aleteo + b.ph)), k = b.s * 1.1;
+    const y = b.y0 + Math.sin(t * b.onda + b.ph) * b.amp, ang = Math.cos(t * b.onda + b.ph) * .5 * b.dir;
+    ctx.globalAlpha = .92 * FA;
+    ctx.setTransform(D, 0, 0, D, b.x * D, y * D); ctx.rotate(ang);
+    for (const lado of [1, -1]) { ctx.save(); ctx.scale(lado * (.15 + .85 * bat) * k, k); ctx.drawImage(b.img, 0, -C, S, S); ctx.restore(); }
   }
   ctx.setTransform(D, 0, 0, D, 0, 0); ctx.globalAlpha = 1;
 };
@@ -128,34 +153,40 @@ const frame = now => {
   if (!on) { running = false; return; }
   const dms = Math.min(now - last, 50), dt = dms / 1000; last = now; tAcc += dms;
   const t = tAcc / 1000;
-  viento *= Math.exp(-2 * dt);                                // el scroll aporta viento extra y se apaga solo
-  if (tAcc > proxRafa) { rafaFuerza = rnd(80, 190) * (Math.random() < .5 ? -1 : 1); rafaFin = tAcc + rnd(1800, 3200); proxRafa = tAcc + rnd(6000, 12000); }
-  const rafa = tAcc < rafaFin ? rafaFuerza * Math.sin(Math.PI * clamp(1 - (rafaFin - tAcc) / 3200, 0, 1)) : 0;
-  const w = Math.sin(t * .25) * 26 + Math.sin(t * .9 + 1.3) * 12 + rafa + viento;
+  viento *= Math.exp(-1.6 * dt);                              // el scroll aporta viento extra y se apaga solo
+  if (tAcc > proxRafa) { rafaFuerza = rnd(120, 260) * (Math.random() < .5 ? -1 : 1); rafaFin = tAcc + rnd(2000, 3600); proxRafa = tAcc + rnd(3500, 7000); }
+  const rafa = tAcc < rafaFin ? rafaFuerza * Math.sin(Math.PI * clamp(1 - (rafaFin - tAcc) / 3600, 0, 1)) : 0;
+  const w = 16 + Math.sin(t * .3) * 44 + Math.sin(t * 1.1 + 1.3) * 22 + rafa + viento;
   const dy = sdy; sdy = 0;
 
   ms.forEach((m, i) => {
-    m.y += m.vy * dt - dy * .12; m.x += (Math.sin(t * m.fr + m.ph) * m.amp + w * .4) * dt;
+    m.y += m.vy * dt - dy * .12; m.x += (Math.sin(t * m.fr + m.ph) * m.amp + w * .5) * dt;
     if (m.y < -30 || m.x < -40 || m.x > W + 40 || m.y > H + 40) ms[i] = nuevaMota(false);
   });
+  bs.forEach((b, i) => {
+    b.x += b.dir * b.v * dt + w * .25 * dt - dy * .05;
+    if (b.x < -90 || b.x > W + 90) bs[i] = nuevaMariposa(false);
+  });
 
-  const R = 150;
+  const R = 170;
+  ps = ps.filter(p => { if (p.vida === undefined) return true; p.vida -= dt; return p.vida > 0; });
   ps.forEach((p, i) => {
     if (mouse.on) {
       const dx = p.x - mouse.x, dyy = p.y - mouse.y, d2 = dx * dx + dyy * dyy;
       if (d2 < R * R && d2 > 1) {
         const d = Math.sqrt(d2), f = 1 - d / R;
-        p.ox += dx / d * f * 320 * dt + mouse.vx * f * .06; p.oy += dyy / d * f * 320 * dt + mouse.vy * f * .06;
-        p.vr += f * (dx > 0 ? 1 : -1) * .5;
+        p.ox += dx / d * f * 380 * dt + mouse.vx * f * .08; p.oy += dyy / d * f * 380 * dt + mouse.vy * f * .08;
+        p.vr += f * (dx > 0 ? 1 : -1) * .7;
       }
     }
-    p.ox *= .94; p.oy *= .94;
-    p.vr += (Math.sign(p.vr || 1) * .8 - p.vr) * .01;
-    p.y += (p.vy - dy * .25 * p.z) * dt + p.oy * dt * 6;
-    p.x += (w * p.z + Math.cos(t * p.fr + p.ph) * p.amp) * dt + p.ox * dt * 6;
+    p.ox *= .95; p.oy *= .95;
+    p.vr += (Math.sign(p.vr || 1) * 1.1 - p.vr) * .012;
+    const aleteo = 1 + .45 * Math.sin(t * p.fr * 1.7 + p.ph);  // caen a rachas: aceleran y frenan
+    p.y += (p.vy * aleteo - dy * .3 * p.z) * dt + p.oy * dt * 6;
+    p.x += (w * p.z + Math.cos(t * p.fr + p.ph) * p.amp + Math.sin(t * .6 + p.y * .012) * 26 * p.z) * dt + p.ox * dt * 6;
     p.rot += p.vr * dt; p.flip += p.vf * dt;
     if (p.x > W + 70) p.x = -60; else if (p.x < -70) p.x = W + 60;
-    if (p.y > H + 40 || p.y < -200) ps[i] = nueva(false);
+    if (p.vida === undefined && (p.y > H + 40 || p.y < -200)) ps[i] = nueva(false);
   });
   mouse.vx *= .8; mouse.vy *= .8;
   dibujar(t);
@@ -165,9 +196,16 @@ const arrancar = () => { if (!running && !reduce) { running = true; last = perfo
 
 /* ---------- Eventos ---------- */
 let sy = scrollY;
-addEventListener('scroll', () => { const d = scrollY - sy; sy = scrollY; sdy += d; viento = clamp(viento + d * .5, -140, 140); }, { passive: true });
+addEventListener('scroll', () => { const d = scrollY - sy; sy = scrollY; sdy += d; viento = clamp(viento + d * .7, -200, 200); }, { passive: true });
 if (!reduce) {
-  const mover = e => { if (mouse.on) { mouse.vx = e.clientX - mouse.x; mouse.vy = e.clientY - mouse.y; } mouse.x = e.clientX; mouse.y = e.clientY; mouse.on = true; };
+  const mover = e => {
+    if (mouse.on) {
+      mouse.vx = e.clientX - mouse.x; mouse.vy = e.clientY - mouse.y;
+      pasoMouse += Math.hypot(mouse.vx, mouse.vy);
+      if (pasoMouse > 70 && ps.length < MAXP) { pasoMouse = 0; ps.push(chispa(e.clientX, e.clientY, mouse.vx, mouse.vy)); }
+    }
+    mouse.x = e.clientX; mouse.y = e.clientY; mouse.on = true;
+  };
   const fuera = () => { mouse.on = false; mouse.x = mouse.y = -999; };
   addEventListener('pointermove', mover, { passive: true });
   addEventListener('pointerdown', mover, { passive: true });
@@ -176,7 +214,7 @@ if (!reduce) {
   document.documentElement.addEventListener('pointerleave', fuera);
 }
 addEventListener('resize', () => { fit(); if (reduce) dibujar(0); });
-document.addEventListener('visibilitychange', () => { on = !document.hidden; if (on) arrancar(); });
+document.addEventListener('visibilitychange', () => { on = !document.hidden; if (on) { arrancar(); } });
 fit();
 if (reduce) dibujar(0); else arrancar();
 })();
