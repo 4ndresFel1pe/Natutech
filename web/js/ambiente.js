@@ -81,16 +81,16 @@ let W = 0, H = 0, D = 1, ps = [], ms = [], viento = 0, on = true, last = 0, runn
 let rafaFin = 0, rafaFuerza = 0, proxRafa = 1500, sdy = 0, pasoMouse = 0;
 const mouse = { x: -999, y: -999, vx: 0, vy: 0, on: false };
 const FA = panel ? .65 : 1;                                   // en paneles, un poco más suave para no estorbar formularios
-const MAXP = Math.round((panel ? 90 : 220) * .78);
+const MAXP = panel ? 30 : 60;
 
 const nueva = inicio => {
-  const r = Math.random(), tipo = r < .40 ? 'petalo' : r < .48 ? 'hoja' : r < .78 ? 'trebol' : 'otono', z = rnd(.4, 1.3);
-  const base = tipo === 'otono' ? rnd(34, 58) : tipo === 'trebol' ? rnd(28, 46) : tipo === 'hoja' ? rnd(26, 42) : rnd(22, 38);
+  const r = Math.random(), tipo = r < .46 ? 'petalo' : r < .54 ? 'hoja' : r < .88 ? 'trebol' : 'otono', z = rnd(.4, 1.3);
+  const base = tipo === 'otono' ? rnd(28, 46) : tipo === 'trebol' ? rnd(24, 38) : tipo === 'hoja' ? rnd(22, 34) : rnd(20, 32);
   return { tipo, img: pick(SP[tipo]), z, size: base * z * (panel ? .85 : 1),
     x: rnd(-30, W + 30), y: inicio ? rnd(-40, H) : rnd(-100, -30),
-    vy: rnd(34, 82) * z * (tipo === 'otono' ? 1.15 : 1), amp: rnd(30, 80) * z, fr: rnd(.7, 1.8), ph: rnd(0, TAU),
+    vy: rnd(26, 60) * z * (tipo === 'otono' ? 1.15 : 1), amp: rnd(30, 80) * z, fr: rnd(.7, 1.8), ph: rnd(0, TAU),
     rot: rnd(0, TAU), vr: rnd(-1.8, 1.8), flip: rnd(0, TAU), vf: rnd(1.4, 3.6), ox: 0, oy: 0,
-    a: clamp(.55 + z * .38, 0, .97) * FA };
+    a: clamp(.4 + z * .32, 0, .85) * FA };
 };
 const nuevaMota = inicio => ({ x: rnd(0, W), y: inicio ? rnd(0, H) : H + 20, vy: -rnd(14, 38), r: rnd(8, 20), ph: rnd(0, TAU), fr: rnd(.5, 1.4), amp: rnd(20, 60), tw: rnd(1, 2.8), a: rnd(.5, 1) * FA });
 const chispa = (x, y, vx, vy) => {                            // pétalos que nacen donde pasa el puntero
@@ -101,8 +101,8 @@ const chispa = (x, y, vx, vy) => {                            // pétalos que na
 const fit = () => {
   D = Math.min(devicePixelRatio || 1, 1.5);
   W = innerWidth; H = innerHeight; cv.width = W * D; cv.height = H * D;
-  const n = Math.round(clamp(W * H / 9000, 40, 130) * (W < 700 ? .7 : 1) * (panel ? .5 : 1) * .78);
-  const m = Math.round(clamp(W * H / 25000, 14, 46) * (panel ? .5 : 1) * .8);
+  const n = Math.round(clamp(W * H / 9000, 22, 64) * (W < 700 ? .7 : 1) * (panel ? .5 : 1) * .55);
+  const m = Math.round(clamp(W * H / 25000, 8, 22) * (panel ? .5 : 1) * .5);
   while (ps.length < n) ps.push(nueva(true));
   ps = ps.filter((p, i) => p.vida !== undefined || i < n);
   while (ms.length < m) ms.push(nuevaMota(true)); ms.length = m;
