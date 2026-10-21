@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Registrar producto | Panel del Vivero Las Acacias</title>
+  <meta name="description" content="Formulario para crear o editar un producto del inventario del Vivero Las Acacias.">
+  <meta name="theme-color" content="#133b21">
+  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fuentes/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <script>try{if(sessionStorage.getItem('vla'))document.documentElement.classList.add('rapida')}catch(e){}</script>
+  <link rel="stylesheet" href="css/estilos.css">
+  <link rel="stylesheet" href="css/mejoras.css">
+  <link rel="stylesheet" href="css/movil.css">
+  <script src="js/api.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/escena.js" defer></script>
+  <script src="js/ambiente.js" defer></script>
+  <script src="js/movil.js" defer></script>
+</head>
+<body data-pagina="formulario">
+  <div id="loader" role="status" aria-live="polite">
+    <div class="carga__luciernagas" aria-hidden="true"><i style="left:36%;top:31%;--d:7s;--w:2.9s;--x:27px;--y:-40px"></i><i style="left:86%;top:23%;--d:9s;--w:0.0s;--x:10px;--y:-54px"></i><i style="left:76%;top:44%;--d:6s;--w:2.2s;--x:10px;--y:-36px"></i><i style="left:76%;top:75%;--d:8s;--w:2.0s;--x:-31px;--y:-56px"></i><i style="left:87%;top:34%;--d:9s;--w:1.2s;--x:44px;--y:-70px"></i><i style="left:91%;top:23%;--d:6s;--w:2.4s;--x:25px;--y:-68px"></i><i style="left:44%;top:18%;--d:7s;--w:1.5s;--x:26px;--y:-24px"></i><i style="left:55%;top:69%;--d:8s;--w:2.3s;--x:23px;--y:-42px"></i><i style="left:23%;top:61%;--d:5s;--w:0.1s;--x:-33px;--y:-39px"></i><i style="left:33%;top:48%;--d:8s;--w:2.4s;--x:30px;--y:-16px"></i><i style="left:44%;top:68%;--d:9s;--w:2.6s;--x:-1px;--y:-34px"></i><i style="left:50%;top:67%;--d:9s;--w:0.7s;--x:-7px;--y:-27px"></i></div>
+    <svg class="ld-art" viewBox="0 0 360 230" aria-hidden="true">
+      <rect x="20" y="178" width="320" height="16" rx="8" fill="#2a1f14"/>
+      <g fill="#6b5237"><ellipse cx="48" cy="184" rx="3" ry="1.8"/><ellipse cx="74" cy="186" rx="4" ry="1.8"/><ellipse cx="100" cy="188" rx="5" ry="1.8"/><ellipse cx="126" cy="184" rx="3" ry="1.8"/><ellipse cx="152" cy="186" rx="4" ry="1.8"/><ellipse cx="178" cy="188" rx="5" ry="1.8"/><ellipse cx="204" cy="184" rx="3" ry="1.8"/><ellipse cx="230" cy="186" rx="4" ry="1.8"/><ellipse cx="256" cy="188" rx="5" ry="1.8"/><ellipse cx="282" cy="184" rx="3" ry="1.8"/><ellipse cx="308" cy="186" rx="4" ry="1.8"/></g>
+      <rect class="ld-clean" x="20" y="178" width="320" height="16" rx="8" fill="#2f8450"/>
+      <g class="ld-s" style="--k:ldS0" transform="translate(80 178)"><path d="M0 0V-22" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M0-8C-9-8-13-14-13-20c8 0 12 5 13 12z" fill="#3f9a5d"/><path d="M0-12C8-12 12-18 12-24c-8 0-12 5-12 12z" fill="#2f7d46"/><circle cy="-25" r="5" fill="#e2525f"/></g><g class="ld-s" style="--k:ldS1" transform="translate(120 178)"><path d="M0 0V-22" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M0-8C-9-8-13-14-13-20c8 0 12 5 13 12z" fill="#3f9a5d"/><path d="M0-12C8-12 12-18 12-24c-8 0-12 5-12 12z" fill="#2f7d46"/><circle cy="-25" r="5" fill="#f4a9c6"/></g><g class="ld-s" style="--k:ldS2" transform="translate(160 178)"><path d="M0 0V-22" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M0-8C-9-8-13-14-13-20c8 0 12 5 13 12z" fill="#3f9a5d"/><path d="M0-12C8-12 12-18 12-24c-8 0-12 5-12 12z" fill="#2f7d46"/><circle cy="-25" r="5" fill="#f5c518"/></g><g class="ld-s" style="--k:ldS3" transform="translate(200 178)"><path d="M0 0V-22" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M0-8C-9-8-13-14-13-20c8 0 12 5 13 12z" fill="#3f9a5d"/><path d="M0-12C8-12 12-18 12-24c-8 0-12 5-12 12z" fill="#2f7d46"/><circle cy="-25" r="5" fill="#e2525f"/></g><g class="ld-s" style="--k:ldS4" transform="translate(240 178)"><path d="M0 0V-22" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M0-8C-9-8-13-14-13-20c8 0 12 5 13 12z" fill="#3f9a5d"/><path d="M0-12C8-12 12-18 12-24c-8 0-12 5-12 12z" fill="#2f7d46"/><circle cy="-25" r="5" fill="#f4a9c6"/></g><g class="ld-s" style="--k:ldS5" transform="translate(280 178)"><path d="M0 0V-22" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M0-8C-9-8-13-14-13-20c8 0 12 5 13 12z" fill="#3f9a5d"/><path d="M0-12C8-12 12-18 12-24c-8 0-12 5-12 12z" fill="#2f7d46"/><circle cy="-25" r="5" fill="#f5c518"/></g>
+      <g transform="translate(0 178)"><g class="ld-vac">
+        <g fill="#f5c518" opacity=".0"></g>
+        <g transform="rotate(14 0 -40)"><rect x="-30" y="-64" width="54" height="40" rx="10" fill="#5fb0d6"/><rect x="-30" y="-64" width="54" height="9" rx="4" fill="#fff" opacity=".25"/>
+        <path d="M22-48L58-72L66-64L28-36z" fill="#4a9cc2"/><path d="M-30-52C-52-66-44-78-30-72" stroke="#4a9cc2" stroke-width="6" fill="none" stroke-linecap="round"/></g>
+        <g fill="#6ec3f0"><circle class="ld-b" style="--d:0s" cx="62" cy="-52" r="3.2"/><circle class="ld-b" style="--d:.3s" cx="66" cy="-54" r="2.6"/><circle class="ld-b" style="--d:.6s" cx="60" cy="-50" r="3"/></g>
+      </g></g>
+    </svg>
+    <p class="ld-t"><span class="ld-msg">Preparando el vivero</span><span class="ld-dots"><i>.</i><i>.</i><i>.</i></span></p>
+    <div class="ld-bar" aria-hidden="true"><span></span></div>
+    <div class="ld-wave" aria-hidden="true"><svg viewBox="0 0 2880 80" preserveAspectRatio="none"><path fill="currentColor" d="M0 40 C120 0 240 0 360 40 S600 80 720 40 S960 0 1080 40 S1320 80 1440 40 S1680 0 1800 40 S2040 80 2160 40 S2400 0 2520 40 S2760 80 2880 40 L2880 80 L0 80 Z"/></svg></div>
+  </div>
+  <script>
+  (function(){var ld=document.getElementById('loader');if(!ld)return;var h=document.documentElement,bar=ld.querySelector('.ld-bar span'),rm=matchMedia('(prefers-reduced-motion: reduce)').matches,t0=performance.now(),first=true,nav=false;
+  try{first=!sessionStorage.getItem('vla');nav=sessionStorage.getItem('vla-nav')==='1';sessionStorage.setItem('vla','1');sessionStorage.removeItem('vla-nav')}catch(e){}
+  var MIN=rm?400:first?1900:nav?650:900,loaded=false,done=false;window.__ldTpl=ld.cloneNode(true);
+  h.classList.add('loading');requestAnimationFrame(function(){bar.style.transform='scaleX(.9)'});
+  function finish(){if(done)return;done=true;bar.style.transition='transform .3s ease-out';bar.style.transform='scaleX(1)';
+   setTimeout(function(){ld.classList.add('out');h.classList.remove('loading');setTimeout(function(){ld.remove();window.__ldDone=true;document.dispatchEvent(new Event('loader-done'))},rm?300:1000)},320)}
+  function check(){if(done)return;var t=performance.now()-t0;if((loaded&&!document.querySelector('[aria-busy="true"]')&&t>=MIN)||t>=4500)finish();else setTimeout(check,100)}
+  addEventListener('load',function(){loaded=true});if(document.readyState==='complete')loaded=true;check();})();
+  </script>
+
+  
+
+  <a class="saltar-enlace" href="#contenido">Saltar al contenido</a>
+
+  <header class="encabezado encabezado--panel">
+    <div class="contenedor encabezado__fila">
+      <a class="marca" href="inventario.html">
+        <img class="marca__logo" src="img/logo-claro.svg" alt="" width="40" height="40">
+        <span>
+          <span class="marca__nombre">Vivero Las Acacias</span>
+          <span class="marca__lugar">Panel del vivero</span>
+        </span>
+      </a>
+      <nav class="navegacion" aria-label="Panel">
+        <ul>
+          <li><a href="inventario.html">Inventario</a></li>
+          <li><a href="pedidos.html">Pedidos</a></li>
+          <li><a href="producto-form.html" id="nav-nuevo">Nuevo producto</a></li>
+          <li><a href="index.html">Ver catálogo público</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido" class="contenedor pagina">
+    <nav class="migas" aria-label="Ruta de navegación">
+      <ol>
+        <li><a href="inventario.html">Inventario</a></li>
+        <li><span id="migas-actual" aria-current="page">Nuevo producto</span></li>
+      </ol>
+    </nav>
+
+    <h1 id="titulo-formulario">Nuevo producto</h1>
+    <p>Los campos marcados con <span class="obligatorio" aria-hidden="true">*</span> son obligatorios.</p>
+
+    <div id="zona-formulario" aria-busy="true">
+      <div class="estado" role="status">
+        <div class="cargador" aria-hidden="true"></div>
+        <h2>Preparando el formulario</h2>
+        <p>Estamos trayendo las categorías y los proveedores.</p>
+      </div>
+    </div>
+
+    <div class="resumen-errores" id="resumen-errores" role="alert" tabindex="-1" hidden>
+      <h2 id="resumen-errores-titulo">Revise los campos marcados</h2>
+      <ul id="resumen-errores-lista"></ul>
+    </div>
+
+    <form class="formulario" id="form-producto" novalidate hidden>
+      <fieldset>
+        <legend>Datos del producto</legend>
+
+        <div class="campo">
+          <label for="nombre">Nombre <span class="obligatorio" aria-hidden="true">*</span></label>
+          <p class="campo__ayuda" id="nombre-ayuda">El nombre con el que lo piden los clientes. Entre 2 y 80 caracteres.</p>
+          <input type="text" id="nombre" name="nombre" required maxlength="80" autocomplete="off" aria-describedby="nombre-ayuda nombre-error">
+          <p class="campo__error" id="nombre-error"></p>
+        </div>
+
+        <div class="campo">
+          <label for="nombre_cientifico">Nombre científico</label>
+          <p class="campo__ayuda" id="nombre_cientifico-ayuda">Opcional. Déjelo vacío en materas e insumos.</p>
+          <input type="text" id="nombre_cientifico" name="nombre_cientifico" maxlength="120" lang="la" autocomplete="off" aria-describedby="nombre_cientifico-ayuda nombre_cientifico-error">
+          <p class="campo__error" id="nombre_cientifico-error"></p>
+        </div>
+
+        <div class="formulario__columnas">
+          <div class="campo">
+            <label for="categoria_id">Categoría <span class="obligatorio" aria-hidden="true">*</span></label>
+            <select id="categoria_id" name="categoria_id" required aria-describedby="categoria_id-error">
+              <option value="">Elija una categoría</option>
+            </select>
+            <p class="campo__error" id="categoria_id-error"></p>
+          </div>
+
+          <div class="campo">
+            <label for="proveedor_id">Proveedor</label>
+            <select id="proveedor_id" name="proveedor_id" aria-describedby="proveedor_id-error">
+              <option value="">Sin proveedor fijo</option>
+            </select>
+            <p class="campo__error" id="proveedor_id-error"></p>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="presentacion">Presentación <span class="obligatorio" aria-hidden="true">*</span></label>
+          <p class="campo__ayuda" id="presentacion-ayuda">Tamaño o empaque en que se vende. Por ejemplo: Matera de 20 cm, Bulto de 25 kg.</p>
+          <input type="text" id="presentacion" name="presentacion" required maxlength="60" autocomplete="off" aria-describedby="presentacion-ayuda presentacion-error">
+          <p class="campo__error" id="presentacion-error"></p>
+        </div>
+
+        <div class="campo">
+          <label for="descripcion">Descripción</label>
+          <p class="campo__ayuda" id="descripcion-ayuda">Lo que le contaría a un cliente en el mostrador. Máximo 600 caracteres.</p>
+          <textarea id="descripcion" name="descripcion" maxlength="600" aria-describedby="descripcion-ayuda descripcion-contador descripcion-error"></textarea>
+          <p class="contador" id="descripcion-contador">0 de 600 caracteres</p>
+          <p class="campo__error" id="descripcion-error"></p>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Precio y existencias</legend>
+        <div class="formulario__columnas">
+          <div class="campo">
+            <label for="precio">Precio de venta en pesos <span class="obligatorio" aria-hidden="true">*</span></label>
+            <p class="campo__ayuda" id="precio-ayuda">Sin puntos ni signo. Por ejemplo: 45000.</p>
+            <input type="number" id="precio" name="precio" required min="0" max="5000000" step="100" inputmode="numeric" aria-describedby="precio-ayuda precio-error">
+            <p class="campo__error" id="precio-error"></p>
+          </div>
+
+          <div class="campo">
+            <label for="stock">Unidades en existencia <span class="obligatorio" aria-hidden="true">*</span></label>
+            <p class="campo__ayuda" id="stock-ayuda">Lo que hay hoy en el vivero.</p>
+            <input type="number" id="stock" name="stock" required min="0" max="100000" step="1" inputmode="numeric" aria-describedby="stock-ayuda stock-error">
+            <p class="campo__error" id="stock-error"></p>
+          </div>
+
+          <div class="campo">
+            <label for="stock_minimo">Existencia mínima <span class="obligatorio" aria-hidden="true">*</span></label>
+            <p class="campo__ayuda" id="stock_minimo-ayuda">Si las unidades bajan de este número, el panel muestra una alerta.</p>
+            <input type="number" id="stock_minimo" name="stock_minimo" required min="0" max="10000" step="1" inputmode="numeric" value="5" aria-describedby="stock_minimo-ayuda stock_minimo-error">
+            <p class="campo__error" id="stock_minimo-error"></p>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cuidados</legend>
+        <p class="campo__ayuda">Solo para plantas. En materas e insumos deje "No aplica".</p>
+        <div class="formulario__columnas">
+          <div class="campo">
+            <label for="luz">Luz que necesita</label>
+            <select id="luz" name="luz" aria-describedby="luz-error">
+              <option value="">No aplica</option>
+              <option value="baja">Poca luz</option>
+              <option value="media">Luz media o indirecta</option>
+              <option value="alta">Sol directo</option>
+            </select>
+            <p class="campo__error" id="luz-error"></p>
+          </div>
+
+          <div class="campo">
+            <label for="riego">Riego</label>
+            <p class="campo__ayuda" id="riego-ayuda">Por ejemplo: 2 veces por semana.</p>
+            <input type="text" id="riego" name="riego" maxlength="60" autocomplete="off" aria-describedby="riego-ayuda riego-error">
+            <p class="campo__error" id="riego-error"></p>
+          </div>
+        </div>
+
+        <div class="campo">
+          <fieldset>
+            <legend>Dificultad de cuidado</legend>
+            <div class="opciones-en-linea">
+              <div class="opcion"><input type="radio" id="cuidado-facil" name="cuidado" value="facil"><label for="cuidado-facil">Fácil</label></div>
+              <div class="opcion"><input type="radio" id="cuidado-intermedio" name="cuidado" value="intermedio"><label for="cuidado-intermedio">Intermedio</label></div>
+              <div class="opcion"><input type="radio" id="cuidado-avanzado" name="cuidado" value="avanzado"><label for="cuidado-avanzado">Avanzado</label></div>
+              <div class="opcion"><input type="radio" id="cuidado-no-aplica" name="cuidado" value="" checked><label for="cuidado-no-aplica">No aplica</label></div>
+            </div>
+          </fieldset>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Publicación</legend>
+        <div class="campo">
+          <label for="imagen_url">Dirección de la foto</label>
+          <p class="campo__ayuda" id="imagen_url-ayuda">Opcional. Una dirección que empiece por https:// o una ruta como img/interior.svg.</p>
+          <input type="text" inputmode="url" id="imagen_url" name="imagen_url" maxlength="300" autocomplete="off" aria-describedby="imagen_url-ayuda imagen_url-error">
+          <p class="campo__error" id="imagen_url-error"></p>
+        </div>
+        <div class="casilla">
+          <input type="checkbox" id="visible_en_catalogo" name="visible_en_catalogo" checked aria-describedby="visible_en_catalogo-ayuda">
+          <label for="visible_en_catalogo">Mostrar en el catálogo público</label>
+        </div>
+        <p class="campo__ayuda" id="visible_en_catalogo-ayuda">Desmárquelo para ocultar un producto sin borrarlo.</p>
+      </fieldset>
+
+      <div class="formulario__acciones">
+        <button type="submit" class="boton" id="boton-guardar">Guardar producto</button>
+        <a class="boton boton--secundario" href="inventario.html">Cancelar</a>
+      </div>
+    </form>
+
+    <div id="zona-resultado"></div>
+  </main>
+
+  <footer class="pie">
+    <div class="contenedor">
+      <div class="pie__columnas">
+        <div>
+          <h2>Panel del vivero</h2>
+          <p>Existencias, pedidos, alertas de reabastecimiento y registro de productos del Vivero Las Acacias.</p>
+        </div>
+        <nav aria-labelledby="pie-navegacion">
+          <h2 id="pie-navegacion">Páginas</h2>
+          <ul>
+            <li><a href="inventario.html">Inventario</a></li>
+            <li><a href="pedidos.html">Pedidos</a></li>
+            <li><a href="producto-form.html">Nuevo producto</a></li>
+            <li><a href="index.html">Catálogo público</a></li>
+          </ul>
+        </nav>
+        <nav aria-labelledby="pie-estados">
+          <h2 id="pie-estados">Estados de la pantalla</h2>
+          <ul>
+            <li><a href="producto-form.html?id=3da94211-90a8-48a3-b787-059be5559766">Editar un producto existente</a></li>
+            <li><a href="producto-form.html?id=00000000-0000-4000-8000-000000000000">Editar un producto que no existe</a></li>
+            <li><a href="producto-form.html?estado=error">Ver error de carga</a></li>
+          </ul>
+        </nav>
+      </div>
+      <p class="pie__creditos">Natutech, equipo 4 de Tecnologías Web, Unitrópico. Entrega 3. Precios, existencias y teléfonos de los datos de ejemplo son inventados.</p>
+    </div>
+  </footer>
+</body>
+</html>
