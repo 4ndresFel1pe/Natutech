@@ -12,6 +12,25 @@
   <link rel="stylesheet" href="css/estilos.css">
   <link rel="stylesheet" href="css/mejoras.css">
   <link rel="stylesheet" href="css/movil.css">
+  <style>
+    /* Fondo ilustrado "encantado" en la sección de contacto (imagen original, sin filtros ni recompresión) */
+    .sec.contacto{
+      background: #1f6b43 url("img/encantado.png") center center / cover no-repeat !important;
+      min-height: clamp(380px, 30vw, 640px);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      position: relative;
+      isolation: isolate;
+    }
+    .sec.contacto::before,.sec.contacto::after{background-image:none !important}
+    .sec.contacto .contenedor{position:relative;z-index:1;text-align:center}
+    .sec.contacto .sec-title{color:#fff;text-shadow:0 2px 12px rgba(0,40,20,.55)}
+    .sec.contacto .sec-lead{color:#eaf7e6;text-shadow:0 1px 8px rgba(0,40,20,.6)}
+    @media (max-width:640px){
+      .sec.contacto{min-height:420px;background-position:center center}
+    }
+  </style>
   <script src="js/api.js" defer></script>
   <script src="js/app.js" defer></script>
   <script src="js/escena.js" defer></script>
