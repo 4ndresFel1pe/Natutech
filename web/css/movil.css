@@ -44,7 +44,7 @@ dialog.wa::backdrop { background: transparent; }
 }
 /* ---------- PANTALLA DE CARGA: ASPIRADORA ---------- */
 html.loading { overflow: hidden; }
-#loader { position: fixed; inset: 0; z-index: 200; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px; background: #0b2416; color: #fff; transition: transform .95s cubic-bezier(.77, 0, .175, 1); will-change: transform; }
+#loader { position: fixed; inset: 0; z-index: 200; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px; background: #0b2416; color: #fff; transition: transform .55s cubic-bezier(.77, 0, .175, 1); will-change: transform; }
 #loader.out { transform: translateY(-105%); }
 #loader > :not(.bubbles):not(.ld-wave) { position: relative; z-index: 1; }
 .ld-art { width: min(380px, 88vw); height: auto; display: block; }
