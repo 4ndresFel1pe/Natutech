@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pedidos | Panel del Vivero Las Acacias</title>
+  <meta name="description" content="Registro de pedidos por WhatsApp y en tienda del Vivero Las Acacias, con su estado y el descuento del inventario.">
+  <meta name="theme-color" content="#133b21">
+  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fuentes/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <script>try{if(sessionStorage.getItem('vla'))document.documentElement.classList.add('rapida')}catch(e){}</script>
+  <link rel="stylesheet" href="css/estilos.css">
+  <link rel="stylesheet" href="css/mejoras.css">
+  <link rel="stylesheet" href="css/movil.css">
+  <script src="js/api.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/escena.js" defer></script>
+  <script src="js/ambiente.js" defer></script>
+  <script src="js/cargas.js" defer></script>
+  <script src="js/movil.js" defer></script>
+</head>
+<body data-pagina="pedidos">
+  <div id="loader" class="t-reparto" role="status" aria-live="polite"><div class="carga__luciernagas" aria-hidden="true"><i style="left:63%;top:71%;--d:8s;--w:1.6s;--x:25px;--y:-58px"></i><i style="left:29%;top:77%;--d:8s;--w:2.0s;--x:28px;--y:-20px"></i><i style="left:29%;top:24%;--d:8s;--w:0.9s;--x:-32px;--y:-65px"></i><i style="left:74%;top:17%;--d:9s;--w:1.2s;--x:7px;--y:-29px"></i><i style="left:84%;top:32%;--d:9s;--w:0.0s;--x:17px;--y:-66px"></i><i style="left:13%;top:16%;--d:6s;--w:2.8s;--x:-20px;--y:-32px"></i><i style="left:9%;top:71%;--d:7s;--w:1.4s;--x:25px;--y:-17px"></i><i style="left:31%;top:78%;--d:6s;--w:2.0s;--x:-13px;--y:-39px"></i><i style="left:6%;top:22%;--d:8s;--w:2.0s;--x:-15px;--y:-44px"></i><i style="left:76%;top:22%;--d:7s;--w:1.0s;--x:47px;--y:-56px"></i><i style="left:71%;top:48%;--d:5s;--w:0.2s;--x:22px;--y:-21px"></i><i style="left:19%;top:63%;--d:5s;--w:2.7s;--x:-13px;--y:-46px"></i></div><svg class="ld-art" viewBox="0 0 360 230" aria-hidden="true"><rect x="20" y="178" width="320" height="16" rx="8" fill="#2a1f14"/><rect class="r-trail" x="20" y="178" width="320" height="16" rx="8" fill="#2f8450"/><g transform="translate(60 178)"><g class="r-cart"><path d="M-38-30L-60-54" stroke="#cfe3c9" stroke-width="5" stroke-linecap="round"/><rect x="-38" y="-46" width="74" height="34" rx="6" fill="#d9a066"/><rect x="-6" y="-46" width="12" height="34" fill="#f5c518" opacity=".85"/><path d="M-18-46V-70" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><circle cx="-18" cy="-74" r="7" fill="#f4a9c6"/><path d="M14-46V-80" stroke="#4fa86a" stroke-width="3" stroke-linecap="round"/><path d="M14-82c-8-4-8-12 0-16 8 4 8 12 0 16z" fill="#e2525f"/><g class="r-w"><circle cx="-20" cy="-4" r="9" fill="#f6f8f6"/><path d="M-20-12v16M-28-4h16" stroke="#9cb3b1" stroke-width="2"/></g><g class="r-w"><circle cx="22" cy="-4" r="9" fill="#f6f8f6"/><path d="M22-12v16M14-4h16" stroke="#9cb3b1" stroke-width="2"/></g></g></g></svg><p class="ld-t"><span class="ld-msg">Cargando los pedidos</span><span class="ld-dots"><i>.</i><i>.</i><i>.</i></span></p><p class="ld-num" aria-hidden="true">0%</p><div class="ld-wave" aria-hidden="true"><svg viewBox="0 0 2880 80" preserveAspectRatio="none"><path fill="currentColor" d="M0 40 C120 0 240 0 360 40 S600 80 720 40 S960 0 1080 40 S1320 80 1440 40 S1680 0 1800 40 S2040 80 2160 40 S2400 0 2520 40 S2760 80 2880 40 L2880 80 L0 80 Z"/></svg></div></div>
+  <script>
+  (function(){var ld=document.getElementById('loader');if(!ld)return;var h=document.documentElement,rm=matchMedia('(prefers-reduced-motion: reduce)').matches,t0=performance.now(),first=true,nav=false;
+  function run(el){var n=el.querySelector('.ld-num'),a0=performance.now(),p=0,go=true;
+   function set(v){p=v;el.style.setProperty('--p',v.toFixed(3));if(n)n.textContent=Math.round(v*100)+'%'}
+   function f(now){if(!go)return;set(rm?.9:.9*(1-Math.exp(-(now-a0)/1100)));requestAnimationFrame(f)}
+   requestAnimationFrame(f);
+   return function(cb){go=false;var s=p,b=performance.now();(function g(now){var k=Math.min(1,(now-b)/300);set(s+(1-s)*k);if(k<1)requestAnimationFrame(g);else if(cb)cb()})(b)}}
+  window.__ldRun=run;
+  try{first=!sessionStorage.getItem('vla');nav=sessionStorage.getItem('vla-nav')==='1';sessionStorage.setItem('vla','1');sessionStorage.removeItem('vla-nav')}catch(e){}
+  var MIN=rm?400:first?1900:nav?650:900,loaded=false,done=false,end=run(ld);h.classList.add('loading');
+  function finish(){if(done)return;done=true;end(function(){setTimeout(function(){ld.classList.add('out');h.classList.remove('loading');setTimeout(function(){ld.remove();window.__ldDone=true;document.dispatchEvent(new Event('loader-done'))},rm?300:1000)},120)})}
+  function check(){if(done)return;var t=performance.now()-t0;if((loaded&&!document.querySelector('[aria-busy="true"]')&&t>=MIN)||t>=4500)finish();else setTimeout(check,100)}
+  addEventListener('load',function(){loaded=true});if(document.readyState==='complete')loaded=true;check();})();
+  </script>
+
+  
+
+  <a class="saltar-enlace" href="#contenido">Saltar al contenido</a>
+
+  <header class="encabezado encabezado--panel">
+    <div class="contenedor encabezado__fila">
+      <a class="marca" href="inventario.html">
+        <img class="marca__logo" src="img/logo-claro.svg" alt="" width="40" height="40">
+        <span>
+          <span class="marca__nombre">Vivero Las Acacias</span>
+          <span class="marca__lugar">Panel del vivero</span>
+        </span>
+      </a>
+      <nav class="navegacion" aria-label="Panel">
+        <ul>
+          <li><a href="inventario.html">Inventario</a></li>
+          <li><a href="pedidos.html" aria-current="page">Pedidos</a></li>
+          <li><a href="producto-form.html">Nuevo producto</a></li>
+          <li><a href="index.html">Ver catálogo público</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido" class="contenedor pagina">
+    <h1>Pedidos</h1>
+
+    <section id="seccion-nuevo" aria-labelledby="nuevo-titulo">
+      <h2 id="nuevo-titulo">Registrar un pedido</h2>
+      <p>Para ventas por WhatsApp o en la tienda. Al registrarlo, las unidades se descuentan del inventario.</p>
+
+      <div id="zona-formulario-pedido" aria-busy="true">
+        <div class="estado" role="status">
+          <div class="cargador" aria-hidden="true"></div>
+          <h3>Preparando el formulario</h3>
+          <p>Estamos trayendo los productos y sus existencias.</p>
+        </div>
+      </div>
+
+      <div class="resumen-errores" id="resumen-errores" role="alert" tabindex="-1" hidden>
+        <h2>Revise los datos del pedido</h2>
+        <ul></ul>
+      </div>
+
+      <form class="formulario" id="form-pedido" novalidate hidden>
+        <fieldset>
+          <legend>Cliente</legend>
+          <div class="formulario__columnas">
+            <div class="campo">
+              <label for="cliente_nombre">Nombre <span class="obligatorio" aria-hidden="true">*</span></label>
+              <input type="text" id="cliente_nombre" name="cliente_nombre" required maxlength="80" autocomplete="off" aria-describedby="cliente_nombre-error">
+              <p class="campo__error" id="cliente_nombre-error"></p>
+            </div>
+            <div class="campo">
+              <label for="cliente_telefono">Celular <span class="obligatorio" aria-hidden="true">*</span></label>
+              <p class="campo__ayuda" id="cliente_telefono-ayuda">10 dígitos. Por ejemplo: 300 123 4567.</p>
+              <input type="tel" id="cliente_telefono" name="cliente_telefono" required maxlength="17" autocomplete="off" inputmode="tel" aria-describedby="cliente_telefono-ayuda cliente_telefono-error">
+              <p class="campo__error" id="cliente_telefono-error"></p>
+            </div>
+          </div>
+
+          <div class="campo">
+            <fieldset>
+              <legend>Por dónde llegó el pedido</legend>
+              <div class="opciones-en-linea">
+                <div class="opcion"><input type="radio" id="canal-whatsapp" name="canal" value="whatsapp" checked><label for="canal-whatsapp">WhatsApp</label></div>
+                <div class="opcion"><input type="radio" id="canal-tienda" name="canal" value="tienda"><label for="canal-tienda">En la tienda</label></div>
+              </div>
+            </fieldset>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Productos</legend>
+          <div id="lineas"></div>
+          <p><button type="button" class="boton boton--secundario" id="agregar-linea">Agregar otro producto</button></p>
+          <p class="total-pedido" id="total-pedido" aria-live="polite">Total: $ 0</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Entrega</legend>
+          <div class="formulario__columnas">
+            <div class="campo">
+              <label for="fecha_entrega">Fecha de entrega</label>
+              <p class="campo__ayuda" id="fecha_entrega-ayuda">Opcional. Para encargos con fecha, como el Día de los Difuntos.</p>
+              <input type="date" id="fecha_entrega" name="fecha_entrega" aria-describedby="fecha_entrega-ayuda fecha_entrega-error">
+              <p class="campo__error" id="fecha_entrega-error"></p>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="nota">Nota</label>
+            <p class="campo__ayuda" id="nota-ayuda">Opcional. Por ejemplo: entregar en la tarde. Máximo 300 caracteres.</p>
+            <textarea id="nota" name="nota" maxlength="300" aria-describedby="nota-ayuda nota-error"></textarea>
+            <p class="campo__error" id="nota-error"></p>
+          </div>
+        </fieldset>
+
+        <div class="formulario__acciones">
+          <button type="submit" class="boton" id="boton-registrar">Registrar pedido</button>
+        </div>
+      </form>
+      <div id="resultado-pedido"></div>
+    </section>
+
+    <section id="seccion-lista" aria-labelledby="lista-titulo">
+      <h2 id="lista-titulo" tabindex="-1">Pedidos registrados</h2>
+      <div class="barra-filtros">
+        <div class="campo">
+          <label for="filtro-estado">Mostrar</label>
+          <select id="filtro-estado">
+            <option value="">Todos los pedidos</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="confirmado">Confirmados</option>
+            <option value="entregado">Entregados</option>
+            <option value="cancelado">Cancelados</option>
+          </select>
+        </div>
+      </div>
+      <p class="campo__error" id="error-lista" role="alert"></p>
+      <div id="zona-pedidos" aria-busy="true" aria-live="polite">
+        <div class="estado" role="status">
+          <div class="cargador" aria-hidden="true"></div>
+          <h3>Cargando los pedidos</h3>
+          <p>Un momento, por favor.</p>
+        </div>
+      </div>
+    </section>
+
+    <p class="visualmente-oculto" id="anuncios" aria-live="polite"></p>
+  </main>
+
+  <footer class="pie">
+    <div class="contenedor">
+      <div class="pie__columnas">
+        <div>
+          <h2>Panel del vivero</h2>
+          <p>Existencias, pedidos, alertas de reabastecimiento y registro de productos del Vivero Las Acacias.</p>
+        </div>
+        <nav aria-labelledby="pie-navegacion">
+          <h2 id="pie-navegacion">Páginas</h2>
+          <ul>
+            <li><a href="inventario.html">Inventario</a></li>
+            <li><a href="pedidos.html">Pedidos</a></li>
+            <li><a href="producto-form.html">Nuevo producto</a></li>
+            <li><a href="index.html">Catálogo público</a></li>
+          </ul>
+        </nav>
+      </div>
+      <p class="pie__creditos">Natutech, equipo 4 de Tecnologías Web, Unitrópico. Entrega 3. Los clientes y teléfonos de los datos de ejemplo son inventados.</p>
+    </div>
+  </footer>
+</body>
+</html>
