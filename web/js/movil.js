@@ -11,11 +11,26 @@ const IC = { wa: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" st
 /* ---------- Pantalla de carga al hacer clic: una animación distinta por destino ---------- */
 const TEMA = [[/detalle/, 'brote', 'Trayendo tu planta'], [/inventario/, 'estante', 'Abriendo el inventario'], [/pedidos/, 'reparto', 'Cargando los pedidos'], [/producto-form/, 'brote', 'Preparando una planta nueva'], [/ingresar/, 'puerta', 'Abriendo el panel'], [/./, 'siembra', 'Abriendo el vivero']];
 let yendo = false;
+const normRuta = p => p.replace(/index\.html$/, '').replace(/\/+$/, '') || '/';
+const mismaPagina = u => u.origin === location.origin && normRuta(u.pathname) === normRuta(location.pathname) && u.search === location.search;   // '/' e '/index.html' son la misma página
 document.addEventListener('click', e => {
   if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || yendo) return;
   const a = e.target.closest && e.target.closest('a[href]');
   if (!a || a.target === '_blank' || a.hasAttribute('download') || a.hasAttribute('data-sin-carga') || a.closest('dialog')) return;
   let u; try { u = new URL(a.href, location.href); } catch (x) { return; }
+  /* Enlaces a la misma página (secciones, logo): desplazamiento suave, sin recargar y sin pantalla de carga */
+  if (a.getAttribute('href') !== '#' && !a.hasAttribute('data-wa') && mismaPagina(u)) {
+    const id = u.hash ? decodeURIComponent(u.hash.slice(1)) : '', el = id ? document.getElementById(id) : null;
+    if (id && !el) return;
+    e.preventDefault();
+    if (el) {
+      el.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'start' });
+      try { history.replaceState(null, '', u.hash); } catch (x) {}      // cambia la URL sin disparar hashchange ni recarga
+      if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+      try { el.focus({ preventScroll: true }); } catch (x) {}
+    } else window.scrollTo({ top: 0, behavior: RM ? 'auto' : 'smooth' });
+    return;
+  }
   if (u.origin !== location.origin || (u.pathname === location.pathname && u.search === location.search) || !window.__ldCrear || !window.__ldRun) return;
   e.preventDefault(); yendo = true; buzz(6);
   const t = TEMA.find(m => m[0].test(u.pathname)), ld = window.__ldCrear(t[1], t[2]);
