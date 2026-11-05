@@ -20,6 +20,11 @@ export function crearPool(cadenaConexion, { esquema } = {}) {
   return new Pool({
     connectionString: cadenaConexion,
     max: 10,
+    // Tiempos de espera: si la base no responde, la petición falla con el error 500
+    // controlado de errores.js en lugar de quedarse esperando sin límite.
+    connectionTimeoutMillis: 5000, // conseguir una conexión: máximo 5 s
+    statement_timeout: 15000, // cada consulta: máximo 15 s (la corta PostgreSQL)
+    idle_in_transaction_session_timeout: 30000, // transacción abierta sin actividad: 30 s
     options: `-c timezone=America/Bogota${esquema ? ` -c search_path=${esquema},public` : ""}`,
   });
 }

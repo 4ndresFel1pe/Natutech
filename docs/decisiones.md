@@ -89,7 +89,7 @@ Registro de las decisiones que condicionan el proyecto. Cada una dice qué se de
 
 **Tipografía.** Atkinson Hyperlegible, diseñada por el Braille Institute para personas con baja visión, porque el panel se va a usar desde el celular en el mostrador. Se sirve desde `web/fuentes/` (licencia SIL OFL) y no desde Google Fonts: el sitio no hace peticiones a terceros y no depende de otro servicio para verse bien.
 
-**Resultado.** Lighthouse da 100 en accesibilidad, buenas prácticas, SEO y rendimiento en las cuatro pantallas, en celular y en escritorio (medido en local el 30 de septiembre; las capturas oficiales sobre la URL publicada están en `docs/evidencias/`).
+**Resultado.** Lighthouse da 100 en accesibilidad, buenas prácticas, SEO y rendimiento en las cuatro pantallas, en celular y en escritorio (medido en local el 30 de septiembre; las capturas oficiales sobre la URL publicada están en `docs/evidencias/`). Esa medición es anterior a las animaciones y videos que se agregaron a la portada después de la Entrega 3, así que debe repetirse antes de volver a citar esas cifras.
 
 ## D9. Publicación del prototipo con GitHub Actions
 
@@ -113,10 +113,12 @@ Registro de las decisiones que condicionan el proyecto. Cada una dice qué se de
 - `POST /sesiones` recibe correo y contraseña y devuelve un token JWT firmado con `JWT_SECRETO` (mínimo 32 caracteres, solo en `.env`) que dura `JWT_EXPIRA_EN` (8 horas, una jornada).
 - Las contraseñas se guardan con bcrypt, costo 12. Si el correo no existe, el servidor compara igual contra un hash de relleno: así la respuesta tarda lo mismo y no revela qué correos están registrados. El mensaje de error también es el mismo en los dos casos.
 - Dos roles: `administrador` y `empleado`. El empleado registra productos, pedidos y atiende alertas; solo el administrador crea, cambia o borra categorías, borra productos o temporadas y ajusta precios en bloque. Si un empleado lo intenta, la API responde `403 SIN_PERMISO`.
-- El primer administrador se crea solo al arrancar, con `ADMIN_CORREO` y `ADMIN_CONTRASENA` del `.env`, únicamente si no hay ningún usuario. Los demás se crean con `npm run crear-usuario`, que pide la contraseña por variable de entorno para que no quede en el historial de la terminal.
+- El primer administrador se crea solo al arrancar, con `ADMIN_CORREO` y `ADMIN_CONTRASENA` del `.env`, únicamente si no hay ningún usuario. Los demás se crean con `npm run crear-usuario`, que pide la contraseña por variable de entorno. Para que no quede en el historial de la terminal, la contraseña se lee antes con `read -s` y se pasa como `"$CLAVE"` (ver `docs/despliegue.md`): si se escribe directamente en el comando, sí queda en el historial.
 - En el navegador, el token se guarda en `sessionStorage`: se borra al cerrar la pestaña.
 
-**Riesgo aceptado.** Un token en `sessionStorage` lo podría leer un script inyectado en la página. Se reduce ese riesgo porque el prototipo nunca usa `innerHTML` (todo texto se inserta como texto) y no carga scripts de terceros. Pasar el token a una cookie `HttpOnly` queda anotado para la Entrega 4, junto con HTTPS.
+**Riesgo aceptado.** Un token en `sessionStorage` lo podría leer un script inyectado en la página. Se reduce ese riesgo porque los datos que llegan de la API siempre se insertan como texto (función `crear()` de `js/app.js`, nunca con `innerHTML`) y el prototipo no carga scripts de terceros. Pasar el token a una cookie `HttpOnly` queda anotado para la Entrega 4, junto con HTTPS.
+
+**Corrección del 5 de noviembre.** Las animaciones que se agregaron después de la Entrega 3 (`js/cargas.js` y `js/movil.js`) sí usan `innerHTML`, pero solo con contenido fijo escrito en el propio código, nunca con datos de la API ni con lo que escribe el usuario. HTTPS ya está en producción (D16); la cookie `HttpOnly` sigue pendiente.
 
 ## D12. La validación sale del contrato
 
