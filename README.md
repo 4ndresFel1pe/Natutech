@@ -155,6 +155,10 @@ curl http://localhost:8080/api/alertas -H "Authorization: Bearer EL_TOKEN"
 | Inventario | [`web/inventario.html`](web/inventario.html) | Resumen de existencias, próxima temporada, alertas de reabastecimiento (se atienden desde aquí) y tabla de productos |
 | Formulario de producto | [`web/producto-form.html`](web/producto-form.html) | Crear o editar un producto; muestra en cada campo los errores del navegador y los de la API |
 | Pedidos | [`web/pedidos.html`](web/pedidos.html) | Registrar un pedido con varios productos y cambiar su estado; cancelar devuelve las unidades al inventario |
+| Categorías | [`web/categorias.html`](web/categorias.html) | Crear, editar y eliminar categorías (solo administración; la empleada las consulta). No deja eliminar una categoría que todavía tiene productos |
+| Proveedores | [`web/proveedores.html`](web/proveedores.html) | Registrar y editar proveedores, con celular, municipio y días de entrega; se desactivan en lugar de eliminarse |
+| Temporadas | [`web/temporadas.html`](web/temporadas.html) | Registrar y editar las fechas que activan las alertas de reabastecimiento; eliminar es solo de la administración |
+| Ajuste de precios | [`web/precios.html`](web/precios.html) | Subir o bajar en un porcentaje los precios de una categoría, con vista previa de cada producto antes de aplicarlo (solo administración) |
 
 Los estados de carga, vacío y error se ven desde el pie de cada página o agregando `?estado=cargando`, `?estado=vacio` o `?estado=error` a la dirección.
 
@@ -174,7 +178,7 @@ Los estados de carga, vacío y error se ven desde el pie de cada página o agreg
 | E1 Anteproyecto | 17 sep | Entregada | Problema validado con el vivero, repositorio, wireframes, ruta y plan de trabajo |
 | E2 Prototipo y contrato | 1 oct | Entregada (v0.2.0) | Prototipo navegable publicado, contrato OpenAPI 3.1 validado con servidor simulado, modelo de datos y tablero de tareas |
 | E3 MVP del backend | 15 oct | Entregada (v0.3.0) | API en Fastify con PostgreSQL: CRUD de productos, categorías, temporadas, proveedores y pedidos; autenticación JWT con roles; validación desde el contrato; alertas automáticas; pruebas en CI; todo levanta con `docker compose up`; prototipo conectado |
-| E4 Despliegue contenerizado | 5 nov | **En esta versión (v0.4.0)** | Publicada en https://natutech.lat: instancia EC2 de AWS con el mismo Compose, HTTPS automático con Caddy, dominio propio y tiempos de espera en la conexión con la base. Pendientes: despliegue automático desde CI, respaldos con restauración probada, cookie `HttpOnly` y las pantallas de categorías, proveedores, temporadas y ajuste de precios |
+| E4 Despliegue contenerizado | 5 nov | **En esta versión (v0.4.0)** | Publicada en https://natutech.lat: instancia EC2 de AWS con el mismo Compose, HTTPS automático con Caddy, dominio propio y tiempos de espera en la conexión con la base. Pantallas de categorías, proveedores, temporadas y ajuste de precios. Pendientes: despliegue automático desde CI, respaldos con restauración probada y cookie `HttpOnly` |
 | E5 Versión candidata | 26 nov | Pendiente | Funcionalidades congeladas, pruebas, auditorías, respaldo restaurado |
 | E6 Sustentación EXIS | 4 dic | Pendiente | |
 
@@ -221,6 +225,7 @@ Natutech/
     ├── index.html, detalle.html                     Catálogo público
     ├── ingresar.html                                Ingreso del personal
     ├── inventario.html, producto-form.html, pedidos.html   Panel del vivero
+    ├── categorias.html, proveedores.html, temporadas.html, precios.html   Gestión del catálogo (Entrega 4)
     ├── css/estilos.css       Estilos base, variables en :root
     ├── css/mejoras.css, portada.css, movil.css, movil-apple.css   Portada, animaciones y versión móvil
     ├── js/api.js             Conexión con la API, sesión y modo demostración
@@ -246,7 +251,7 @@ Natutech/
 |---|---|---|---|
 | Claude (Anthropic) | E2 | Proponer la estructura del repositorio y redactar borradores del contrato OpenAPI, del modelo de datos y de la documentación. Revisar la coherencia entre contrato, modelo y datos de ejemplo. | El problema, la encuesta al vivero, la elección de ruta y las decisiones son del equipo. |
 | Claude (Anthropic) | E3 | Generar el código del servidor (Fastify, migraciones, autenticación, recursos y alertas), las pruebas, los archivos de Docker y de los flujos de GitHub Actions, la conexión del prototipo con la API y los borradores de esta documentación y de las decisiones D10 a D15. | El equipo definió qué debía hacer el sistema y sus reglas (encuesta y decisiones D1 a D9), aprobó la elección de Fastify y repartió el trabajo. Cada integrante revisó, probó y subió su parte, y responde por ella en la sustentación. |
-| Claude (Anthropic) | E4 | Comparar opciones y precios de servidor y dominio; redactar `docker-compose.prod.yml`, el `Caddyfile`, la guía `docs/despliegue.md` y la decisión D16; agregar los tiempos de espera de la conexión con la base y su prueba, actualizar la dependencia vulnerable que señaló `npm audit`, quitar archivos sin uso, corregir la D11 y preparar la versión 0.4.0. | Andres Felipe Gomez eligió el proveedor (AWS, después de que Azure for Students bloqueara las máquinas virtuales) y el dominio, creó y pagó las cuentas, configuró el servidor, verificó el despliegue en vivo y responde por él en la sustentación. |
+| Claude (Anthropic) | E4 | Comparar opciones y precios de servidor y dominio; redactar `docker-compose.prod.yml`, el `Caddyfile`, la guía `docs/despliegue.md` y la decisión D16; agregar los tiempos de espera de la conexión con la base y su prueba, actualizar la dependencia vulnerable que señaló `npm audit`, quitar archivos sin uso, corregir la D11, preparar la versión 0.4.0 y programar las pantallas de categorías, proveedores, temporadas y ajuste de precios, con sus pruebas en el navegador. | Andres Felipe Gomez eligió el proveedor (AWS, después de que Azure for Students bloqueara las máquinas virtuales) y el dominio, creó y pagó las cuentas, configuró el servidor, verificó el despliegue en vivo y responde por él en la sustentación. |
 
 Los datos de ejemplo son sintéticos: los productos son del tipo que vende el vivero, pero precios, existencias, proveedores, clientes y teléfonos son inventados.
 
