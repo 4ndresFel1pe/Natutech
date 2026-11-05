@@ -47,6 +47,11 @@ services:
       ADMIN_NOMBRE: ${ADMIN_NOMBRE:-Administración del vivero}
       ADMIN_CORREO: ${ADMIN_CORREO:?Falta ADMIN_CORREO en .env}
       ADMIN_CONTRASENA: ${ADMIN_CONTRASENA:?Falta ADMIN_CONTRASENA en .env}
+      # Pagos en línea con Wompi (opcionales: sin ellos el cobro en línea queda apagado).
+      WOMPI_LLAVE_PUBLICA: ${WOMPI_LLAVE_PUBLICA:-}
+      WOMPI_SECRETO_INTEGRIDAD: ${WOMPI_SECRETO_INTEGRIDAD:-}
+      WOMPI_SECRETO_EVENTOS: ${WOMPI_SECRETO_EVENTOS:-}
+      URL_PUBLICA: ${URL_PUBLICA:-http://localhost:${WEB_PUERTO:-8080}}
     # Sin "ports": la API solo es visible dentro de la red de Compose; se llega a
     # ella por el servicio web (http://localhost:8080/api).
 
@@ -58,9 +63,13 @@ services:
         condition: service_healthy
     ports:
       - "${WEB_PUERTO:-8080}:80"
+    environment:
+      # Número de WhatsApp del vivero (solo en .env). nginx lo publica en /configuracion.json.
+      WHATSAPP_NUMERO: ${WHATSAPP_NUMERO:-}
     volumes:
       - ./web:/usr/share/nginx/html:ro
-      - ./infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # Plantilla: la imagen de nginx la completa con las variables de entorno al arrancar.
+      - ./infra/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
 
 volumes:
   datos_postgres:

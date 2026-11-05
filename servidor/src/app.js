@@ -10,6 +10,7 @@ import rutasSalud from "./rutas/salud.js";
 import rutasSesiones from "./rutas/sesiones.js";
 import rutasCatalogo from "./rutas/catalogo.js";
 import rutasGestion from "./rutas/gestion.js";
+import rutasPagos from "./rutas/pagos.js";
 
 export async function construirApp({ config, db, contratoDoc, registro = true }) {
   const app = Fastify({
@@ -32,10 +33,11 @@ export async function construirApp({ config, db, contratoDoc, registro = true })
   });
   await app.register(autenticacion, { secreto: config.jwtSecreto, expiraEn: config.jwtExpiraEn });
 
-  const opciones = { db, contrato, version: contrato.version };
+  const opciones = { db, contrato, config, version: contrato.version };
   await app.register(rutasSalud, opciones);
   await app.register(rutasSesiones, opciones);
   await app.register(rutasCatalogo, opciones);
   await app.register(rutasGestion, opciones);
+  await app.register(rutasPagos, opciones);
   return app;
 }

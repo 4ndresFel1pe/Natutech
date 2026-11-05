@@ -24,6 +24,24 @@ function entero(nombre, porDefecto) {
   return numero;
 }
 
+function leerPagos() {
+  const llavePublica = process.env.WOMPI_LLAVE_PUBLICA?.trim() || "";
+  const secretoIntegridad = process.env.WOMPI_SECRETO_INTEGRIDAD?.trim() || "";
+  const secretoEventos = process.env.WOMPI_SECRETO_EVENTOS?.trim() || "";
+  const produccion = llavePublica.startsWith("pub_prod_");
+  return {
+    activo: Boolean(llavePublica && secretoIntegridad && secretoEventos),
+    ambiente: produccion ? "produccion" : "pruebas",
+    llavePublica,
+    secretoIntegridad,
+    secretoEventos,
+    urlCheckout: "https://checkout.wompi.co/p/",
+    urlApi: produccion ? "https://production.wompi.co/v1" : "https://sandbox.wompi.co/v1",
+    // Dirección pública del sitio: Wompi devuelve al cliente a {urlPublica}/pago-resultado.html.
+    urlPublica: (process.env.URL_PUBLICA?.trim() || "http://localhost:8080").replace(/\/+$/, ""),
+  };
+}
+
 export function leerConfiguracion() {
   const jwtSecreto = obligatoria("JWT_SECRETO");
   if (jwtSecreto.length < 32) {
@@ -45,6 +63,9 @@ export function leerConfiguracion() {
     sembrarDatosEjemplo: (process.env.SEMBRAR_DATOS_EJEMPLO || "no").toLowerCase() === "si",
     // Cada cuántas horas se recalculan las alertas de reabastecimiento.
     horasEntreAlertas: entero("HORAS_ENTRE_ALERTAS", 6),
+    // Pagos en línea con Wompi (decisión D17). Sin las tres llaves, el cobro queda apagado
+    // y el resto del sistema funciona igual. Las llaves pub_test_ son del ambiente de pruebas.
+    pagos: leerPagos(),
     administradorInicial: {
       nombre: process.env.ADMIN_NOMBRE?.trim() || "Administración del vivero",
       correo: process.env.ADMIN_CORREO?.trim() || "",

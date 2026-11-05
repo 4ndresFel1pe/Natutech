@@ -1283,3 +1283,14 @@ summary {
 .encabezado--panel .navegacion a[aria-current="true"]:hover {
   background: #ffd93d;
 }
+
+/* Pagos en línea con Wompi: panel con el enlace de pago en la pantalla de pedidos */
+#resultado-cobro:not(:empty) {
+  margin: 0 0 var(--espacio-5);
+}
+
+.campo--enlace {
+  max-width: 40rem;
+  margin: var(--espacio-4) auto 0;
+  text-align: left;
+}
