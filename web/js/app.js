@@ -1,7 +1,7 @@
 /* =========================================================================
    Natutech · Vivero Las Acacias · Lógica de las pantallas (Entregas 3 y 4)
 
-   Un solo archivo para las diez pantallas. Cada página dice cuál es en
+   Un solo archivo para las once pantallas. Cada página dice cuál es en
    <body data-pagina="...">, y al final del archivo se llama la función que le toca.
 
    Los datos llegan de la API (js/api.js) cuando el sitio corre con Docker Compose,
@@ -17,7 +17,8 @@
 const CONFIG = {
   rutaDatos: "datos/ejemplo.json",
   nombreNegocio: "Vivero Las Acacias",
-  // Número de ejemplo. Se reemplaza por el del vivero cuando el dueño lo autorice.
+  // Número de ejemplo. En el servidor se reemplaza por WHATSAPP_NUMERO del .env, que nginx
+  // publica en /configuracion.json (decisión D17): el número real no va en el repositorio.
   whatsapp: "573000000000",
   // En el catálogo público se avisa "Quedan N" desde este número hacia abajo.
   pocasUnidades: 3,
@@ -277,8 +278,33 @@ function mostrarEn(zona, ...contenido) {
 
 /* ---------- WhatsApp y disponibilidad ---------- */
 
-function enlaceWhatsApp(mensaje) {
-  return `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensaje)}`;
+// "313 293 6198", "+57 313 293 6198" o "573132936198" → "573132936198" (formato de wa.me).
+function numeroWhatsApp(texto) {
+  const digitos = String(texto || "").replace(/\D/g, "");
+  return digitos.length === 10 ? `57${digitos}` : digitos;
+}
+
+// Con servidor, el número del vivero sale de /configuracion.json (nginx lo arma con el .env).
+// Sin servidor (GitHub Pages) o sin número configurado, queda el número de ejemplo.
+async function cargarConfiguracion() {
+  if ((await Api.detectarModo()) !== "api") return;
+  try {
+    const respuesta = await fetch("configuracion.json", { headers: { accept: "application/json" }, signal: AbortSignal.timeout(3000) });
+    if (!respuesta.ok) return;
+    const numero = numeroWhatsApp((await respuesta.json()).whatsapp);
+    if (numero.length < 11) return;
+    CONFIG.whatsapp = numero;
+    // Enlaces que ya estén en la página (por ejemplo, el del pie) pasan al número real.
+    for (const enlace of document.querySelectorAll('a[href*="wa.me/"]')) {
+      enlace.href = enlace.href.replace(/wa\.me\/\d+/, `wa.me/${numero}`);
+    }
+  } catch {
+    /* sin configuración: queda el número de ejemplo */
+  }
+}
+
+function enlaceWhatsApp(mensaje, numero = CONFIG.whatsapp) {
+  return `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
 }
 
 function mensajeProducto(producto) {
@@ -1172,6 +1198,14 @@ async function iniciarIngresar() {
 
 const NOMBRES_ESTADO = { pendiente: "Pendiente", confirmado: "Confirmado", entregado: "Entregado", cancelado: "Cancelado" };
 const CLASE_ESTADO = { pendiente: "disponibilidad--pocas", cancelado: "disponibilidad--agotado" };
+// Estado del último pago en línea con Wompi (Entrega 4): [texto, clase de la etiqueta].
+const ESTADOS_PAGO = {
+  pendiente: ["Enlace enviado", "disponibilidad--pocas"],
+  aprobado: ["Pagado", ""],
+  rechazado: ["Pago rechazado", "disponibilidad--agotado"],
+  anulado: ["Pago anulado", "disponibilidad--agotado"],
+  error: ["Error en el pago", "disponibilidad--agotado"],
+};
 // Las mismas transiciones que valida el servidor: [estado nuevo, texto del botón].
 const TRANSICIONES = {
   pendiente: [["confirmado", "Confirmar"], ["cancelado", "Cancelar"]],
@@ -1269,6 +1303,18 @@ async function iniciarPedidos() {
         boton.addEventListener("click", () => cambiarEstado(pedido, nuevo, boton));
         return boton;
       });
+      // Cobro en línea con Wompi: para cualquier pedido no cancelado que todavía no esté pagado.
+      if (pedido.estado !== "cancelado" && pedido.estado_pago !== "aprobado") {
+        const cobrar = crear(
+          "button",
+          { type: "button", clase: "boton boton--secundario" },
+          pedido.estado_pago ? "Nuevo enlace de pago" : "Enlace de pago",
+          crear("span", { clase: "visualmente-oculto", texto: ` para el pedido de ${pedido.cliente_nombre}` })
+        );
+        cobrar.addEventListener("click", () => generarEnlacePago(pedido, cobrar));
+        acciones.push(cobrar);
+      }
+      const [textoPago, clasePago] = ESTADOS_PAGO[pedido.estado_pago] || [];
       return crear(
         "tr",
         {},
@@ -1283,6 +1329,7 @@ async function iniciarPedidos() {
         crear("td", { "data-etiqueta": "Registrado", texto: formatoFechaHora.format(new Date(pedido.creado_en)) }),
         crear("td", { "data-etiqueta": "Entrega", texto: pedido.fecha_entrega ? formatoFecha.format(fechaLocal(pedido.fecha_entrega)) : "Sin fecha" }),
         crear("td", { "data-etiqueta": "Estado" }, crear("span", { clase: `disponibilidad ${CLASE_ESTADO[pedido.estado] || ""}`, texto: NOMBRES_ESTADO[pedido.estado] })),
+        crear("td", { "data-etiqueta": "Pago en línea" }, textoPago ? crear("span", { clase: `disponibilidad ${clasePago}`, texto: textoPago }) : "Sin cobro en línea"),
         crear("td", { "data-etiqueta": "Acciones" }, acciones.length ? crear("div", { clase: "acciones-fila" }, ...acciones) : "Cerrado")
       );
     });
@@ -1305,7 +1352,7 @@ async function iniciarPedidos() {
           crear(
             "tr",
             {},
-            ...["Cliente", "Productos", "Total", "Registrado", "Entrega", "Estado", "Acciones"].map((columna) =>
+            ...["Cliente", "Productos", "Total", "Registrado", "Entrega", "Estado", "Pago en línea", "Acciones"].map((columna) =>
               crear("th", { scope: "col", clase: columna === "Total" ? "numero" : null, texto: columna })
             )
           )
@@ -1340,6 +1387,59 @@ async function iniciarPedidos() {
       $("#error-lista").textContent = `No se pudo cambiar el pedido de ${pedido.cliente_nombre}. ${error.message}`;
       boton.focus();
     }
+  }
+
+  // POST /pedidos/{id}/pagos: la API crea el intento de pago y firma el enlace de Wompi con
+  // el secreto de integridad (el secreto nunca llega al navegador). El vivero le manda el
+  // enlace al cliente por WhatsApp, como ya cierra sus ventas (decisión D2).
+  async function generarEnlacePago(pedido, boton) {
+    boton.disabled = true;
+    $("#error-lista").textContent = "";
+    let pago;
+    try {
+      pago = await Api.pedir(`/pedidos/${pedido.id}/pagos`, { metodo: "POST", conSesion: true });
+    } catch (error) {
+      boton.disabled = false;
+      $("#error-lista").textContent = `No se pudo generar el enlace de pago de ${pedido.cliente_nombre}. ${error.message}`;
+      boton.focus();
+      return;
+    }
+    const prueba = pago.enlace_pago.includes("pub_test_");
+    const mensaje = `Hola, ${pedido.cliente_nombre}. Puede pagar su pedido de ${CONFIG.nombreNegocio} por ${formatoPrecio.format(pago.monto)} en este enlace seguro de Wompi: ${pago.enlace_pago}`;
+    const enviar = crear(
+      "a",
+      { clase: "boton", href: enlaceWhatsApp(mensaje, numeroWhatsApp(pedido.cliente_telefono)), target: "_blank", rel: "noopener" },
+      "Enviar por WhatsApp",
+      crear("span", { clase: "visualmente-oculto", texto: ` a ${pedido.cliente_nombre} (se abre en una pestaña nueva)` })
+    );
+    const abrir = crear(
+      "a",
+      { clase: "boton boton--secundario", href: pago.enlace_pago, target: "_blank", rel: "noopener" },
+      "Abrir el pago",
+      crear("span", { clase: "visualmente-oculto", texto: " (se abre en una pestaña nueva)" })
+    );
+    const copiar = crear("button", { type: "button", clase: "boton boton--secundario", texto: "Copiar el enlace" });
+    const campo = crear("input", { type: "text", id: "enlace-pago", readonly: true, value: pago.enlace_pago });
+    copiar.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(pago.enlace_pago);
+        copiar.textContent = "Enlace copiado";
+        anuncios.textContent = "Enlace de pago copiado.";
+      } catch {
+        campo.select();
+        anuncios.textContent = "El enlace quedó seleccionado: cópielo con Ctrl + C.";
+      }
+    });
+    const panel = panelEstado("exito", {
+      nivel: "h3",
+      titulo: `Enlace de pago para ${pedido.cliente_nombre}`,
+      texto: `${formatoPrecio.format(pago.monto)}, referencia ${pago.referencia}. Mándeselo al cliente por WhatsApp: cuando pague, Wompi le avisa al sistema y el pedido queda confirmado.${prueba ? " Es un pago de prueba (sandbox): no se cobra dinero real." : ""}`,
+      acciones: [enviar, abrir, copiar],
+    });
+    panel.append(crear("div", { clase: "campo campo--enlace" }, crear("label", { for: "enlace-pago", texto: "Enlace de pago" }), campo));
+    $("#resultado-cobro").replaceChildren(panel);
+    await pintarLista();
+    $("#resultado-cobro h3").focus();
   }
 
   filtroEstado.addEventListener("change", () => {
@@ -2207,6 +2307,90 @@ async function iniciarPrecios() {
   );
 }
 
+/* ---------- Pantalla 11: resultado del pago (pago-resultado.html?id=...) ---------- */
+
+// Wompi devuelve al cliente a esta página con ?id=<transacción>. El resultado no se toma de
+// la dirección (se podría falsificar): se le pregunta a la API, que lo confirma con Wompi.
+const RESULTADOS_PAGO = {
+  aprobado: {
+    tipo: "exito",
+    titulo: "Pago aprobado",
+    texto: (r) => `Recibimos su pago de ${formatoPrecio.format(r.monto)} (referencia ${r.referencia}). El vivero le escribirá por WhatsApp para coordinar la entrega.`,
+  },
+  rechazado: { tipo: "error", titulo: "El pago fue rechazado", texto: () => "No se hizo ningún cobro. Puede intentarlo de nuevo con el mismo enlace o escribirnos por WhatsApp para pagar de otra forma." },
+  anulado: { tipo: "error", titulo: "El pago fue anulado", texto: () => "La transacción se anuló y no quedó ningún cobro. Escríbanos por WhatsApp si necesita ayuda." },
+  error: { tipo: "error", titulo: "No se pudo completar el pago", texto: () => "Hubo un problema al procesar el pago y no quedó ningún cobro. Intente de nuevo o escríbanos por WhatsApp." },
+};
+
+async function iniciarResultadoPago() {
+  const zona = $("#zona-pago");
+  const id = parametros.get("id");
+  const escribir = () =>
+    crear(
+      "a",
+      { clase: "boton", href: enlaceWhatsApp(`Hola, ${CONFIG.nombreNegocio}. Les escribo por mi pago en línea${id ? ` (transacción ${id})` : ""}.`), target: "_blank", rel: "noopener" },
+      "Escribir por WhatsApp",
+      crear("span", { clase: "visualmente-oculto", texto: " (se abre en una pestaña nueva)" })
+    );
+  const volver = () => crear("a", { clase: "boton boton--secundario", href: "index.html", texto: "Volver al catálogo" });
+
+  const modo = await Api.detectarModo();
+  if (modo !== "api" || !id || !/^[A-Za-z0-9-]{5,60}$/.test(id)) {
+    mostrarEn(
+      zona,
+      panelEstado("vacio", {
+        titulo: modo !== "api" ? "Esta copia no procesa pagos" : "No encontramos el pago",
+        texto:
+          modo !== "api"
+            ? "Los pagos en línea funcionan en el sitio del vivero, no en esta copia de demostración."
+            : "La dirección no trae el número de la transacción. Si acaba de pagar, escríbanos por WhatsApp y le confirmamos.",
+        acciones: [escribir(), volver()],
+      })
+    );
+    return;
+  }
+
+  // Wompi puede tardar unos segundos en dar el resultado: se pregunta hasta 10 veces, cada 3 s.
+  for (let intento = 1; intento <= 10; intento += 1) {
+    let resultado = null;
+    try {
+      resultado = await Api.pedir(`/pagos/transacciones/${encodeURIComponent(id)}`);
+    } catch (error) {
+      if (!(error instanceof Api.ErrorApi && error.estado === 404)) {
+        mostrarEn(
+          zona,
+          panelEstado("error", {
+            titulo: "No pudimos confirmar el pago",
+            texto: `${error.message} Si ya pagó, escríbanos por WhatsApp con la referencia que le mostró Wompi.`,
+            acciones: [escribir(), volver()],
+          })
+        );
+        return;
+      }
+    }
+    if (resultado && resultado.estado !== "pendiente") {
+      const final = RESULTADOS_PAGO[resultado.estado];
+      const aprobado = resultado.estado === "aprobado";
+      const avisoPrueba =
+        resultado.ambiente === "pruebas"
+          ? crear("div", { clase: "aviso" }, crear("p", {}, crear("strong", { texto: "Pago de prueba. " }), "Este sitio usa el ambiente de pruebas de Wompi: no se cobró dinero real."))
+          : null;
+      // La zona es aria-live: el lector de pantalla anuncia el resultado sin mover el foco.
+      mostrarEn(zona, avisoPrueba, panelEstado(final.tipo, { titulo: final.titulo, texto: final.texto(resultado), acciones: aprobado ? [volver(), escribir()] : [escribir(), volver()] }));
+      return;
+    }
+    await esperar(3000);
+  }
+  mostrarEn(
+    zona,
+    panelEstado("vacio", {
+      titulo: "Su pago está en proceso",
+      texto: "Wompi todavía no confirma el resultado. Puede cerrar esta página: cuando se confirme, el vivero le escribirá por WhatsApp.",
+      acciones: [escribir(), volver()],
+    })
+  );
+}
+
 /* ---------- Arranque ---------- */
 
 const PANTALLAS = {
@@ -2220,9 +2404,11 @@ const PANTALLAS = {
   proveedores: iniciarGestion,
   temporadas: iniciarGestion,
   precios: iniciarPrecios,
+  pago: iniciarResultadoPago,
 };
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await cargarConfiguracion();
   const enlacePie = $("#whatsapp-pie");
   if (enlacePie) enlacePie.href = enlaceWhatsApp(`Hola, ${CONFIG.nombreNegocio}. Quiero hacer una consulta.`);
   // En el celular las pestañas de gestión se desplazan de lado: la de esta página queda a la vista.
