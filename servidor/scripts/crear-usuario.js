@@ -1,7 +1,9 @@
 // npm run crear-usuario -- --nombre "Ana" --correo ana@vivero.test --rol empleado
-// La contraseña se pide por la variable NUEVA_CONTRASENA para que no quede en el
-// historial de la terminal ni en ningún archivo:
-//   NUEVA_CONTRASENA='una-clave-larga' npm run crear-usuario -- --nombre ... --correo ...
+// La contraseña se pide por la variable NUEVA_CONTRASENA y no por un argumento, para
+// que no quede en ningún archivo. Para que tampoco quede en el historial de la
+// terminal, léala antes con read -s y pásela como variable:
+//   read -s -p "Contraseña: " CLAVE; echo
+//   NUEVA_CONTRASENA="$CLAVE" npm run crear-usuario -- --nombre ... --correo ...
 import { parseArgs } from "node:util";
 import { crearPool } from "../src/db.js";
 import { crearUsuario } from "../src/servicios/usuarios.js";
