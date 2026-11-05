@@ -2,6 +2,7 @@
 
 Catálogo en línea, inventario y alertas de reabastecimiento por temporada para el Vivero Las Acacias, en Yopal (Casanare).
 
+**Aplicación desplegada:** https://natutech.lat (cómo se publica y se mantiene: [`docs/despliegue.md`](docs/despliegue.md))
 **Prototipo publicado (modo demostración):** https://4ndresfel1pe.github.io/Natutech/
 **Documentación de la API:** https://4ndresfel1pe.github.io/Natutech/documentacion-api.html (se genera desde [`api/openapi.yaml`](api/openapi.yaml))
 **Modelo de datos:** [`docs/modelo-datos.md`](docs/modelo-datos.md) · **Decisiones:** [`docs/decisiones.md`](docs/decisiones.md)
@@ -70,6 +71,10 @@ curl http://localhost:8080/api/salud
 ```
 
 **Si sale `port is already allocated`:** otro programa usa ese puerto (por ejemplo, un PostgreSQL instalado en el computador usa el 5432). En `.env`, quite el `#` de `DB_PUERTO_LOCAL=5432` o de `WEB_PUERTO=8080`, cambie el número (por ejemplo, `5433` u `8081`) y vuelva a ejecutar `docker compose up -d`.
+
+### En el servidor (producción)
+
+La versión pública corre en una instancia EC2 de AWS con el mismo `docker-compose.yml` más [`docker-compose.prod.yml`](docker-compose.prod.yml). Ese segundo archivo agrega Caddy, que obtiene y renueva solo el certificado HTTPS, y deja a nginx y a la base sin puertos publicados. Los pasos completos, la operación diaria y qué hacer si algo falla están en [`docs/despliegue.md`](docs/despliegue.md); la razón de cada elección, en la [decisión D16](docs/decisiones.md#d16-despliegue-una-máquina-virtual-con-el-mismo-compose-y-caddy-para-https).
 
 ### La API sin Docker (para desarrollar)
 
@@ -169,7 +174,7 @@ Los estados de carga, vacío y error se ven desde el pie de cada página o agreg
 | E1 Anteproyecto | 17 sep | Entregada | Problema validado con el vivero, repositorio, wireframes, ruta y plan de trabajo |
 | E2 Prototipo y contrato | 1 oct | Entregada (v0.2.0) | Prototipo navegable publicado, contrato OpenAPI 3.1 validado con servidor simulado, modelo de datos y tablero de tareas |
 | E3 MVP del backend | 15 oct | **En esta versión (v0.3.0)** | API en Fastify con PostgreSQL: CRUD de productos, categorías, temporadas, proveedores y pedidos; autenticación JWT con roles; validación desde el contrato; alertas automáticas; pruebas en CI; todo levanta con `docker compose up`; prototipo conectado |
-| E4 Despliegue contenerizado | 12 nov | Pendiente | Servidor en la nube, CI/CD, HTTPS y dominio propio, respaldos |
+| E4 Despliegue contenerizado | 5 nov | En curso | Publicada en https://natutech.lat: instancia EC2 de AWS con el mismo Compose, HTTPS automático con Caddy y dominio propio. Faltan CI/CD que despliega y respaldos |
 | E5 Versión candidata | 26 nov | Pendiente | Funcionalidades congeladas, pruebas, auditorías, respaldo restaurado |
 | E6 Sustentación EXIS | 4 dic | Pendiente | |
 
@@ -183,6 +188,7 @@ Natutech/
 ├── .env.example              Nombres de las variables, sin valores reales
 ├── .dockerignore             Lo único que entra a la imagen de la API
 ├── docker-compose.yml        Base de datos, API y prototipo
+├── docker-compose.prod.yml   En el servidor: agrega Caddy (HTTPS) y quita puertos publicados
 ├── .redocly.lint-ignore.yaml Advertencias del contrato aceptadas, con su razón
 ├── .github/workflows/        Contrato, pruebas, contenedores y publicación (ver arriba)
 ├── api/
@@ -201,10 +207,12 @@ Natutech/
 │   │   └── servicios/        Reglas del negocio y consultas SQL por recurso
 │   └── test/                 Pruebas contra el contrato
 ├── infra/nginx/default.conf  Sirve web/ y reenvía /api a la API
+├── infra/caddy/Caddyfile     Entrada desde internet y certificado HTTPS (solo en el servidor)
 ├── docs/
 │   ├── modelo-datos.md       Entidades, atributos, relaciones e índices
 │   ├── modelo-datos.png      Diagrama entidad-relación
 │   ├── decisiones.md         Decisiones de arquitectura y su porqué
+│   ├── despliegue.md         Cómo publicar y mantener el servidor
 │   ├── wireframes/           Wireframes de la Entrega 1 y capturas del prototipo
 │   ├── entrevista/           Encuesta aplicada al vivero y sus resultados
 │   ├── evidencias/           Capturas de Lighthouse, pruebas y recorridos
@@ -234,6 +242,7 @@ Natutech/
 |---|---|---|---|
 | Claude (Anthropic) | E2 | Proponer la estructura del repositorio y redactar borradores del contrato OpenAPI, del modelo de datos y de la documentación. Revisar la coherencia entre contrato, modelo y datos de ejemplo. | El problema, la encuesta al vivero, la elección de ruta y las decisiones son del equipo. |
 | Claude (Anthropic) | E3 | Generar el código del servidor (Fastify, migraciones, autenticación, recursos y alertas), las pruebas, los archivos de Docker y de los flujos de GitHub Actions, la conexión del prototipo con la API y los borradores de esta documentación y de las decisiones D10 a D15. | El equipo definió qué debía hacer el sistema y sus reglas (encuesta y decisiones D1 a D9), aprobó la elección de Fastify y repartió el trabajo. Cada integrante revisó, probó y subió su parte, y responde por ella en la sustentación. |
+| Claude (Anthropic) | E4 | Comparar opciones y precios de servidor y dominio, y redactar `docker-compose.prod.yml`, el `Caddyfile`, la guía `docs/despliegue.md` y la decisión D16. | Andres Felipe Gomez eligió el proveedor (AWS, después de que Azure for Students bloqueara las máquinas virtuales) y el dominio, creó y pagó las cuentas, configuró el servidor, verificó el despliegue en vivo y responde por él en la sustentación. |
 
 Los datos de ejemplo son sintéticos: los productos son del tipo que vende el vivero, pero precios, existencias, proveedores, clientes y teléfonos son inventados.
 

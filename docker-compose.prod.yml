@@ -1,0 +1,39 @@
+# Cambios para el servidor en la nube (Entrega 4, decisión D16). No reemplaza a
+# docker-compose.yml: se suma a él. En el servidor, .env trae
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml
+# así que "docker compose up -d --build" usa los dos archivos sin escribir -f.
+# Requiere Docker Compose 2.24 o superior (por "!reset"). Guía: docs/despliegue.md
+#
+# Qué cambia frente al uso local:
+#   - Entra Caddy (servicio proxy): es lo único que recibe tráfico de internet, por
+#     los puertos 80 y 443. Pide y renueva solo el certificado HTTPS (Let's Encrypt)
+#     y reenvía todo a nginx (servicio web), que sigue sirviendo el prototipo y /api.
+#   - nginx y PostgreSQL dejan de publicar puertos: solo se llega a ellos desde la
+#     red interna de Compose.
+services:
+  db:
+    ports: !reset []
+
+  web:
+    ports: !reset []
+
+  proxy:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"     # HTTP: para obtener el certificado y redirigir a HTTPS
+      - "443:443"   # HTTPS
+    environment:
+      DOMINIO: ${DOMINIO:?Falta DOMINIO en .env (por ejemplo natutech.lat)}
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificados y cuenta de Let's Encrypt. Si se pierden, Caddy los vuelve a
+      # pedir, pero Let's Encrypt limita cuántas veces por semana se puede hacer.
+      - datos_caddy:/data
+      - config_caddy:/config
+
+volumes:
+  datos_caddy:
+  config_caddy:
