@@ -4,8 +4,10 @@ import { enTransaccion } from "../db.js";
 import { noEncontrado, validacionFallida } from "../errores.js";
 import { paginacion } from "./sql.js";
 
+// estado_pago: el del último intento de pago en línea (Entrega 4), o null si nunca se cobró en línea.
 const COLUMNAS_PEDIDO = `p.id, p.cliente_nombre, p.cliente_telefono, p.canal, p.estado, p.fecha_entrega,
-  p.nota, p.total, p.creado_en, p.actualizado_en`;
+  p.nota, p.total, p.creado_en, p.actualizado_en,
+  (SELECT pg.estado FROM pago pg WHERE pg.pedido_id = p.id ORDER BY pg.creado_en DESC LIMIT 1) AS estado_pago`;
 const COLUMNAS_DETALLE = "id, pedido_id, producto_id, cantidad, precio_unitario, creado_en, actualizado_en";
 
 // Transiciones permitidas (el contrato las declara en PATCH /pedidos/{id}).

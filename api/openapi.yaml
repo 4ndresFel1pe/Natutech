@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: API de Natutech para el Vivero Las Acacias
-  version: 0.4.0
+  version: 0.4.1
   summary: Catálogo, inventario, pedidos y alertas de reabastecimiento por temporada.
   description: |
     Contrato que implementa el backend desde la Entrega 3 (carpeta `servidor/`).
@@ -47,6 +47,11 @@ tags:
     description: Avisos de reabastecimiento por stock mínimo o por temporada cercana.
   - name: Sesiones
     description: Inicio de sesión del personal del vivero.
+  - name: Pagos
+    description: |
+      Pagos en línea con Wompi (desde la Entrega 4). La venta se sigue cerrando por WhatsApp:
+      el vivero genera un enlace de pago para un pedido y se lo manda al cliente. Con las llaves
+      de pruebas de Wompi (pub_test_...) las transacciones son de prueba y no mueven dinero real.
   - name: Operación
     description: Estado del servicio, para las comprobaciones de salud de los contenedores.
 
@@ -1076,6 +1081,151 @@ paths:
                       - campo: estado
                         problema: transición de entregado a pendiente no permitida
 
+  /pedidos/{pedido_id}/pagos:
+    parameters:
+      - name: pedido_id
+        in: path
+        required: true
+        description: Identificador del pedido.
+        schema:
+          type: string
+          format: uuid
+        example: fdec65fe-7212-4737-b222-d7283ab5a383
+    get:
+      tags: [Pagos]
+      operationId: listarPagos
+      summary: Lista los intentos de pago en línea de un pedido
+      description: Del más reciente al más antiguo. Los pendientes traen su enlace de pago.
+      responses:
+        '200':
+          description: Intentos de pago del pedido (puede ser una lista vacía)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pago'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+    post:
+      tags: [Pagos]
+      operationId: crearPago
+      summary: Genera un enlace de pago de Wompi para el pedido
+      description: |
+        Crea un intento de pago pendiente por el total del pedido, con una referencia nueva, y
+        devuelve el enlace al Web Checkout de Wompi firmado con el secreto de integridad. El
+        vivero se lo manda al cliente por WhatsApp. No se puede cobrar un pedido cancelado ni
+        uno que ya tiene un pago aprobado.
+      responses:
+        '201':
+          description: Enlace generado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pago'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: El pedido está cancelado o ya está pagado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                yaPagado:
+                  summary: El pedido ya tiene un pago aprobado
+                  value:
+                    codigo: CONFLICTO
+                    mensaje: Este pedido ya tiene un pago aprobado.
+                    detalles:
+                      - campo: pedido_id
+                        problema: el pedido ya está pagado
+        '503':
+          $ref: '#/components/responses/PagosSinConfigurar'
+
+  /pagos/eventos:
+    post:
+      tags: [Pagos]
+      operationId: recibirEventoPago
+      summary: Recibe los eventos de Wompi (webhook)
+      description: |
+        La llama Wompi cada vez que cambia una transacción. Se configura en el panel de
+        comercios de Wompi como URL de eventos: https://natutech.lat/api/pagos/eventos.
+        Solo se acepta con la firma correcta. Un evento repetido no cambia nada, y un pago
+        aprobado confirma el pedido si todavía estaba pendiente.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventoPago'
+      responses:
+        '200':
+          description: Evento recibido y procesado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaEvento'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          description: La firma del evento no es válida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                firmaFalsa:
+                  summary: Evento con una firma que no corresponde
+                  value:
+                    codigo: NO_AUTENTICADO
+                    mensaje: La firma del evento no es válida.
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '503':
+          $ref: '#/components/responses/PagosSinConfigurar'
+
+  /pagos/transacciones/{transaccion_id}:
+    parameters:
+      - name: transaccion_id
+        in: path
+        required: true
+        description: Identificador de la transacción en Wompi (llega como ?id= a la página de resultado).
+        schema:
+          type: string
+          pattern: '^[A-Za-z0-9-]{5,60}$'
+        example: 01-1532941443-49201
+    get:
+      tags: [Pagos]
+      operationId: verTransaccionPago
+      summary: Resultado de un pago, para la página a la que vuelve el cliente
+      description: |
+        Si el evento de Wompi todavía no ha llegado, la API le pregunta el estado directamente
+        a Wompi (GET /transactions/{id}). No devuelve datos del cliente.
+      security: []
+      responses:
+        '200':
+          description: Estado del pago
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultadoTransaccion'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '503':
+          $ref: '#/components/responses/PagosSinConfigurar'
+
   /temporadas:
     get:
       tags: [Temporadas]
@@ -1431,7 +1581,7 @@ paths:
                   value:
                     estado: ok
                     base_de_datos: ok
-                    version: 0.4.0
+                    version: 0.4.1
         '503':
           description: La API está arriba pero la base de datos no responde
           content:
@@ -1444,7 +1594,7 @@ paths:
                   value:
                     estado: degradado
                     base_de_datos: sin_conexion
-                    version: 0.4.0
+                    version: 0.4.1
 
 components:
   securitySchemes:
@@ -1595,6 +1745,18 @@ components:
                     problema: debe ser un número entero mayor o igual a 0
                   - campo: nombre
                     problema: es obligatorio
+    PagosSinConfigurar:
+      description: El servidor no tiene las llaves de Wompi en su .env
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            sinLlaves:
+              summary: Faltan WOMPI_LLAVE_PUBLICA, WOMPI_SECRETO_INTEGRIDAD o WOMPI_SECRETO_EVENTOS
+              value:
+                codigo: SERVICIO_NO_DISPONIBLE
+                mensaje: El cobro en línea no está configurado en este servidor. Faltan las llaves de Wompi en el archivo .env.
 
   examples:
     ProductoAnturio:
@@ -1667,7 +1829,7 @@ components:
         codigo:
           type: string
           description: Código estable que el frontend puede usar para decidir qué mostrar.
-          enum: [SOLICITUD_INVALIDA, NO_AUTENTICADO, SIN_PERMISO, NO_ENCONTRADO, CONFLICTO, VALIDACION_FALLIDA, ERROR_INTERNO]
+          enum: [SOLICITUD_INVALIDA, NO_AUTENTICADO, SIN_PERMISO, NO_ENCONTRADO, CONFLICTO, VALIDACION_FALLIDA, SERVICIO_NO_DISPONIBLE, ERROR_INTERNO]
         mensaje:
           type: string
           description: Explicación en español, lista para mostrarle a la persona.
@@ -2117,6 +2279,12 @@ components:
           minimum: 0
           readOnly: true
           description: Suma de cantidad × precio_unitario de todas las líneas. Lo calcula el servidor.
+        estado_pago:
+          description: Estado del último intento de pago en línea, o null si el pedido nunca se cobró en línea.
+          readOnly: true
+          oneOf:
+            - $ref: '#/components/schemas/EstadoPago'
+            - type: 'null'
         detalles:
           type: array
           minItems: 1
@@ -2137,6 +2305,104 @@ components:
             $ref: '#/components/schemas/Pedido'
         paginacion:
           $ref: '#/components/schemas/Paginacion'
+
+    EstadoPago:
+      type: string
+      enum: [pendiente, aprobado, rechazado, anulado, error]
+      description: |
+        pendiente: el enlace se generó y el cliente todavía no paga (o Wompi no ha respondido).
+        aprobado, rechazado, anulado y error: el resultado que avisó Wompi.
+
+    Pago:
+      type: object
+      required: [id, pedido_id, referencia, monto, estado, transaccion_id, metodo, enlace_pago, creado_en, actualizado_en]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        pedido_id:
+          $ref: '#/components/schemas/Uuid'
+        referencia:
+          type: string
+          description: Referencia única que se le manda a Wompi y que vuelve en cada evento.
+          examples: [NAT-3F9A1C0B7E22]
+        monto:
+          type: integer
+          minimum: 1
+          description: Pesos colombianos. Es el total del pedido al momento de generar el enlace.
+        estado:
+          $ref: '#/components/schemas/EstadoPago'
+        transaccion_id:
+          type: [string, 'null']
+          description: Identificador de la transacción en Wompi, cuando ya existe.
+        metodo:
+          type: [string, 'null']
+          description: Medio de pago que usó el cliente según Wompi (CARD, NEQUI, PSE...).
+        enlace_pago:
+          type: [string, 'null']
+          format: uri
+          description: Enlace al Web Checkout de Wompi, con la firma de integridad. Solo lo tienen los pagos pendientes.
+        creado_en:
+          $ref: '#/components/schemas/Marca'
+        actualizado_en:
+          $ref: '#/components/schemas/Marca'
+
+    EventoPago:
+      type: object
+      description: |
+        Evento que envía Wompi. Natutech solo usa transaction.updated. La firma se valida con
+        SHA-256 de los valores de signature.properties, el timestamp y el secreto de eventos.
+      required: [event, data, signature, timestamp]
+      properties:
+        event:
+          type: string
+          examples: [transaction.updated]
+        data:
+          type: object
+        environment:
+          type: string
+          examples: [test]
+        signature:
+          type: object
+          required: [properties, checksum]
+          properties:
+            properties:
+              type: array
+              items:
+                type: string
+            checksum:
+              type: string
+        timestamp:
+          type: integer
+        sent_at:
+          type: string
+
+    RespuestaEvento:
+      type: object
+      required: [recibido, actualizado]
+      properties:
+        recibido:
+          type: boolean
+        actualizado:
+          type: boolean
+          description: true si el evento cambió el estado de un pago.
+
+    ResultadoTransaccion:
+      type: object
+      description: Lo que ve el cliente al volver de Wompi. No incluye datos del cliente.
+      required: [referencia, estado, monto, metodo, ambiente]
+      properties:
+        referencia:
+          type: string
+        estado:
+          $ref: '#/components/schemas/EstadoPago'
+        monto:
+          type: integer
+        metodo:
+          type: [string, 'null']
+        ambiente:
+          type: string
+          enum: [pruebas, produccion]
+          description: pruebas cuando el servidor usa las llaves pub_test_ de Wompi.
 
     TemporadaCampos:
       type: object

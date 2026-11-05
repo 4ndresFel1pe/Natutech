@@ -29,6 +29,19 @@ export const HOY = "2026-10-14";
 export const ADMIN = { correo: "admin@prueba.test", contrasena: "clave-admin-prueba" };
 export const EMPLEADO = { correo: "empleado@prueba.test", contrasena: "clave-empleado-prueba" };
 
+// Configuración de Wompi para las pruebas: llaves inventadas del ambiente de pruebas. Las
+// pruebas de pagos.test.js firman los eventos con estos mismos secretos.
+export const PAGOS = {
+  activo: true,
+  ambiente: "pruebas",
+  llavePublica: "pub_test_natutech_prueba",
+  secretoIntegridad: "test_integrity_natutech_prueba",
+  secretoEventos: "test_events_natutech_prueba",
+  urlCheckout: "https://checkout.wompi.co/p/",
+  urlApi: "https://sandbox.wompi.co/v1",
+  urlPublica: "https://natutech.lat",
+};
+
 // Identificadores de web/datos/ejemplo.json que usan varias pruebas.
 export const IDS = {
   anturio: "1f491554-7cdd-48dd-a438-47ce97802716", // stock 3
@@ -58,6 +71,7 @@ export async function prepararEntorno() {
     jwtSecreto: randomBytes(32).toString("hex"), // un secreto nuevo en cada ejecución
     jwtExpiraEn: "1h",
     origenesPermitidos: ["http://localhost:8080"],
+    pagos: PAGOS,
   };
   const app = await construirApp({ config, db, contratoDoc: cargarContrato(path.resolve(aqui, "../../api/openapi.yaml")), registro: false });
   const { contrato } = app;
