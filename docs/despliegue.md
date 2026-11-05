@@ -121,7 +121,7 @@ Debe aparecer `certificate obtained successfully`. Luego, desde cualquier comput
 
 ```bash
 curl https://natutech.lat/api/salud
-# {"estado":"ok","base_de_datos":"ok","version":"0.4.0"}
+# {"estado":"ok","base_de_datos":"ok","version":"0.4.1"}
 ```
 
 ## 6. Crear la cuenta de la empleada
@@ -137,6 +137,50 @@ unset CLAVE
 - Para crear otro administrador, agregue `--rol administrador`.
 
 Las cuentas de prueba para la evaluación se entregan al docente por un medio privado, nunca en el repositorio.
+
+## 7. Número de WhatsApp y pagos de prueba con Wompi
+
+Los dos son opcionales y viven solo en el `.env` (decisión D17).
+
+**Número de WhatsApp** de los botones del catálogo: indicativo `57` y el celular, solo dígitos.
+
+```bash
+grep -q '^WHATSAPP_NUMERO=' .env || echo 'WHATSAPP_NUMERO=' >> .env
+read -p "WhatsApp (57 y el celular, solo dígitos): " NUMERO
+sed -i "s/^WHATSAPP_NUMERO=.*/WHATSAPP_NUMERO=$NUMERO/" .env
+```
+
+- `grep -q … || echo … >> .env`: si el `.env` no tiene la línea, la agrega vacía. `-q` busca sin mostrar nada y `||` ejecuta lo de la derecha solo si no la encontró; `>>` escribe al final del archivo sin borrar lo demás.
+- `sed -i "s/^WHATSAPP_NUMERO=.*/…/" .env`: cambia esa línea por la del número nuevo. `-i` modifica el archivo directamente; `s/viejo/nuevo/` reemplaza, y `^…=.*` es «la línea que empieza por WHATSAPP_NUMERO=, con lo que tenga después».
+
+**Llaves de Wompi.** Se copian del panel de comercios de Wompi, en modo de pruebas, en **Desarrollo → Programadores**.
+
+```bash
+read -p "Llave pública (pub_test_...): " WPUB
+read -s -p "Secreto de integridad: " WINT; echo
+read -s -p "Secreto de eventos: " WEVT; echo
+cat >> .env <<EOF
+WOMPI_LLAVE_PUBLICA=$WPUB
+WOMPI_SECRETO_INTEGRIDAD=$WINT
+WOMPI_SECRETO_EVENTOS=$WEVT
+EOF
+unset WPUB WINT WEVT
+docker compose up -d --build
+```
+
+- La llave pública no es secreta y se puede ver al escribirla; los dos secretos se escriben con `-s`, sin que se vean.
+- `cat >> .env <<EOF`: agrega las tres líneas al final del `.env`.
+- `docker compose up -d --build`: recrea los contenedores para que lean el `.env` nuevo (`restart` no lo vuelve a leer).
+
+Luego, en el panel de Wompi, en **URL de eventos** del ambiente de pruebas, ponga `https://natutech.lat/api/pagos/eventos` y guarde.
+
+Comprobación:
+
+```bash
+curl -s https://natutech.lat/configuracion.json; echo
+```
+
+Debe mostrar `{"whatsapp":"57…"}` con el número. Para el pago: en **Pedidos**, presione **Enlace de pago**, ábralo y pague con la tarjeta de prueba `4242 4242 4242 4242` (cualquier fecha futura y cualquier CVC). Al volver, la página debe decir **Pago aprobado** y el pedido debe quedar **Confirmado** y **Pagado**.
 
 ## Operación diaria
 

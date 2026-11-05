@@ -5,7 +5,7 @@ Registro de las decisiones que condicionan el proyecto. Cada una dice qué se de
 | # | Decisión | Estado | Fecha |
 |---|---|---|---|
 | D1 | Ruta A: contenerización y DevOps | Vigente | 17 sep 2026 |
-| D2 | La venta se cierra por WhatsApp, sin pasarela de pago | Vigente | 17 sep 2026 |
+| D2 | La venta se cierra por WhatsApp, sin pasarela de pago | Vigente, actualizada por D17 | 17 sep 2026 · 5 nov 2026 |
 | D3 | PostgreSQL como base de datos | Vigente | 1 oct 2026 |
 | D4 | Contrato primero (OpenAPI 3.1) | Vigente | 1 oct 2026 |
 | D5 | Catálogo público separado de la gestión | Vigente, actualizada | 1 oct 2026 · 14 oct 2026 |
@@ -19,6 +19,8 @@ Registro de las decisiones que condicionan el proyecto. Cada una dice qué se de
 | D13 | Un solo origen: nginx sirve el prototipo y reenvía /api | Vigente | 14 oct 2026 |
 | D14 | El conjunto arranca solo con docker compose up | Vigente | 14 oct 2026 |
 | D15 | Pruebas contra el contrato, en dos zonas horarias | Vigente | 14 oct 2026 |
+| D16 | Despliegue: una máquina virtual con el mismo Compose y Caddy para HTTPS | Vigente | 4 nov 2026 |
+| D17 | Pago en línea opcional con Wompi (modo de pruebas) y número de WhatsApp desde el .env | Vigente | 5 nov 2026 |
 
 ---
 
@@ -37,6 +39,8 @@ Registro de las decisiones que condicionan el proyecto. Cada una dice qué se de
 **Decisión.** El catálogo es público y cada producto tiene un botón que abre WhatsApp con un mensaje ya escrito ("Me interesa: Monstera deliciosa, $45.000"). El personal registra el pedido en el panel después de acordarlo.
 
 **Consecuencias.** No se manejan datos de pago ni cuentas de cliente. El pedido lo crea siempre alguien autenticado del vivero, lo que reduce la superficie de ataque.
+
+**Actualización del 5 de noviembre (D17).** La venta se sigue cerrando por WhatsApp, pero ahora el vivero puede mandarle al cliente un enlace de pago de Wompi. Natutech sigue sin ver ni guardar datos de tarjetas: el cliente paga en la página de Wompi.
 
 ## D3. PostgreSQL como base de datos
 
@@ -170,6 +174,25 @@ Registro de las decisiones que condicionan el proyecto. Cada una dice qué se de
 **Seguridad.** El security group de AWS solo deja entrar por los puertos 22 (SSH, únicamente con llave), 80 y 443. La instancia tiene una IP elástica para que el dominio no deje de apuntar al servidor si este se reinicia. Los secretos están en el `.env` del servidor, con permisos 600, y se generan allí mismo con `openssl rand`: no pasan por el repositorio ni por el chat del equipo.
 
 **Pendiente.** Respaldos con `pg_dump` y una restauración probada, despliegue automático desde GitHub Actions y rollback verificado.
+
+
+## D17. Pago en línea opcional con Wompi y número de WhatsApp desde el .env
+
+**Decisión.** El pedido se sigue registrando en el panel después de acordarlo por WhatsApp (D2). Desde la pantalla de pedidos, el personal puede generar un **enlace de pago de Wompi** y mandárselo al cliente por WhatsApp. Wompi avisa el resultado a `POST /api/pagos/eventos`; un pago aprobado confirma el pedido. El cliente vuelve a `pago-resultado.html`, que le pregunta el resultado a la API.
+
+**Por qué Wompi.** Es una pasarela colombiana (de Bancolombia) que recibe tarjetas, Nequi, PSE y Bancolombia en pesos, y tiene un ambiente de pruebas con dinero ficticio que se activa con solo registrarse. Con las llaves `pub_test_…` se demuestra el flujo completo sin cobros reales. Pasar a producción solo exige cambiar las llaves en el `.env`, pero para eso el vivero tiene que abrir su propia cuenta de comercio con sus documentos (RUT y cuenta bancaria); mientras eso no pase, el sistema queda en pruebas.
+
+**Seguridad.**
+- Los secretos de Wompi solo están en el `.env` del servidor. El navegador nunca los ve: la API arma el enlace.
+- El enlace lleva la **firma de integridad** de Wompi (SHA-256 de referencia, monto en centavos, moneda y secreto de integridad). Si alguien cambia el monto en la dirección, Wompi rechaza el pago.
+- Cada evento se acepta solo si su **firma** coincide (SHA-256 de las propiedades que indica el evento, el timestamp y el secreto de eventos). Un evento con firma falsa recibe 401.
+- El monto y la moneda del evento tienen que ser los del enlace. Un evento repetido no cambia nada (Wompi reintenta hasta tres veces), y un pedido no puede tener dos pagos aprobados (índice único parcial).
+- La página de resultado no le cree a la dirección: la API confirma el estado con el evento firmado o, si todavía no llegó, consultando a Wompi (`GET /transactions/{id}`). Esa respuesta pública no incluye datos del cliente.
+- Sin las llaves, el cobro en línea responde 503 y el resto del sistema funciona igual.
+
+**Número de WhatsApp.** El número del vivero va en `WHATSAPP_NUMERO` del `.env` y nunca en el repositorio. nginx lo publica en `/configuracion.json` a partir de la plantilla `infra/nginx/default.conf.template`, y el prototipo lo usa en todos los botones de WhatsApp. En GitHub Pages, o si la variable está vacía, se usa el número de ejemplo.
+
+**Pendiente.** Activar producción cuando el vivero abra su cuenta de comercio en Wompi y cambiar el número de prueba por el del vivero cuando el dueño lo autorice.
 
 ---
 
