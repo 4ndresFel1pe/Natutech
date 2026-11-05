@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: API de Natutech para el Vivero Las Acacias
-  version: 0.3.0
+  version: 0.4.0
   summary: Catálogo, inventario, pedidos y alertas de reabastecimiento por temporada.
   description: |
     Contrato que implementa el backend desde la Entrega 3 (carpeta `servidor/`).
@@ -21,6 +21,8 @@ info:
     identifier: MIT
 
 servers:
+  - url: https://natutech.lat/api
+    description: Producción desde la Entrega 4 (AWS, con HTTPS de Caddy y nginx como proxy)
   - url: http://127.0.0.1:4010
     description: Servidor simulado (Prism) levantado desde este contrato
   - url: http://127.0.0.1:3000
@@ -1429,7 +1431,7 @@ paths:
                   value:
                     estado: ok
                     base_de_datos: ok
-                    version: 0.3.0
+                    version: 0.4.0
         '503':
           description: La API está arriba pero la base de datos no responde
           content:
@@ -1442,7 +1444,7 @@ paths:
                   value:
                     estado: degradado
                     base_de_datos: sin_conexion
-                    version: 0.3.0
+                    version: 0.4.0
 
 components:
   securitySchemes:

@@ -67,7 +67,7 @@ Compruebe las versiones con `git --version`, `docker --version`, `docker compose
 Comprobación rápida desde otra terminal:
 ```bash
 curl http://localhost:8080/api/salud
-# {"estado":"ok","base_de_datos":"ok","version":"0.3.0"}
+# {"estado":"ok","base_de_datos":"ok","version":"0.4.0"}
 ```
 
 **Si sale `port is already allocated`:** otro programa usa ese puerto (por ejemplo, un PostgreSQL instalado en el computador usa el 5432). En `.env`, quite el `#` de `DB_PUERTO_LOCAL=5432` o de `WEB_PUERTO=8080`, cambie el número (por ejemplo, `5433` u `8081`) y vuelva a ejecutar `docker compose up -d`.
@@ -173,8 +173,8 @@ Los estados de carga, vacío y error se ven desde el pie de cada página o agreg
 |---|---|---|---|
 | E1 Anteproyecto | 17 sep | Entregada | Problema validado con el vivero, repositorio, wireframes, ruta y plan de trabajo |
 | E2 Prototipo y contrato | 1 oct | Entregada (v0.2.0) | Prototipo navegable publicado, contrato OpenAPI 3.1 validado con servidor simulado, modelo de datos y tablero de tareas |
-| E3 MVP del backend | 15 oct | **En esta versión (v0.3.0)** | API en Fastify con PostgreSQL: CRUD de productos, categorías, temporadas, proveedores y pedidos; autenticación JWT con roles; validación desde el contrato; alertas automáticas; pruebas en CI; todo levanta con `docker compose up`; prototipo conectado |
-| E4 Despliegue contenerizado | 5 nov | En curso | Publicada en https://natutech.lat: instancia EC2 de AWS con el mismo Compose, HTTPS automático con Caddy y dominio propio. Faltan CI/CD que despliega y respaldos |
+| E3 MVP del backend | 15 oct | Entregada (v0.3.0) | API en Fastify con PostgreSQL: CRUD de productos, categorías, temporadas, proveedores y pedidos; autenticación JWT con roles; validación desde el contrato; alertas automáticas; pruebas en CI; todo levanta con `docker compose up`; prototipo conectado |
+| E4 Despliegue contenerizado | 5 nov | **En esta versión (v0.4.0)** | Publicada en https://natutech.lat: instancia EC2 de AWS con el mismo Compose, HTTPS automático con Caddy, dominio propio y tiempos de espera en la conexión con la base. Pendientes: despliegue automático desde CI, respaldos con restauración probada, cookie `HttpOnly` y las pantallas de categorías, proveedores, temporadas y ajuste de precios |
 | E5 Versión candidata | 26 nov | Pendiente | Funcionalidades congeladas, pruebas, auditorías, respaldo restaurado |
 | E6 Sustentación EXIS | 4 dic | Pendiente | |
 
@@ -192,7 +192,7 @@ Natutech/
 ├── .redocly.lint-ignore.yaml Advertencias del contrato aceptadas, con su razón
 ├── .github/workflows/        Contrato, pruebas, contenedores y publicación (ver arriba)
 ├── api/
-│   └── openapi.yaml          Contrato de la API (OpenAPI 3.1, versión 0.3.0)
+│   └── openapi.yaml          Contrato de la API (OpenAPI 3.1, versión 0.4.0)
 ├── servidor/                 API en Node.js 22 con Fastify
 │   ├── Dockerfile            Imagen de dos etapas, usuario sin privilegios
 │   ├── db/migraciones/       Esquema de PostgreSQL en SQL
@@ -221,11 +221,14 @@ Natutech/
     ├── index.html, detalle.html                     Catálogo público
     ├── ingresar.html                                Ingreso del personal
     ├── inventario.html, producto-form.html, pedidos.html   Panel del vivero
-    ├── css/estilos.css       Un solo archivo de estilos, variables en :root
+    ├── css/estilos.css       Estilos base, variables en :root
+    ├── css/mejoras.css, portada.css, movil.css, movil-apple.css   Portada, animaciones y versión móvil
     ├── js/api.js             Conexión con la API, sesión y modo demostración
     ├── js/app.js             Lógica de las pantallas
+    ├── js/movil.js, cargas.js, escena.js, ambiente.js, flor3d.js, rejilla-movil.js   Animaciones, pantallas de carga y navegación móvil
     ├── datos/ejemplo.json    Datos de ejemplo (también siembran la base)
-    ├── img/                  Logo e ilustraciones por categoría
+    ├── img/                  Logo, ilustraciones por categoría y fotos de la portada
+    ├── videos/               Videos cortos de la portada
     └── fuentes/              Tipografía Atkinson Hyperlegible (licencia OFL)
 ```
 
@@ -235,6 +238,7 @@ Natutech/
 - Los mensajes de commit siguen [Conventional Commits](https://www.conventionalcommits.org/es/v1.0.0/) y dicen qué cambió y por qué.
 - Ningún `.env`, token ni contraseña se sube al repositorio; solo `.env.example` con los nombres de las variables.
 - Las tareas están en el tablero del proyecto en GitHub, con responsable asignado.
+- **Excepción en la Entrega 4:** Andres Felipe Gomez hizo y fusionó solo los cambios de esta entrega (desde el PR #43), sin revisión de otro integrante.
 
 ## Uso de inteligencia artificial
 
@@ -242,7 +246,7 @@ Natutech/
 |---|---|---|---|
 | Claude (Anthropic) | E2 | Proponer la estructura del repositorio y redactar borradores del contrato OpenAPI, del modelo de datos y de la documentación. Revisar la coherencia entre contrato, modelo y datos de ejemplo. | El problema, la encuesta al vivero, la elección de ruta y las decisiones son del equipo. |
 | Claude (Anthropic) | E3 | Generar el código del servidor (Fastify, migraciones, autenticación, recursos y alertas), las pruebas, los archivos de Docker y de los flujos de GitHub Actions, la conexión del prototipo con la API y los borradores de esta documentación y de las decisiones D10 a D15. | El equipo definió qué debía hacer el sistema y sus reglas (encuesta y decisiones D1 a D9), aprobó la elección de Fastify y repartió el trabajo. Cada integrante revisó, probó y subió su parte, y responde por ella en la sustentación. |
-| Claude (Anthropic) | E4 | Comparar opciones y precios de servidor y dominio, y redactar `docker-compose.prod.yml`, el `Caddyfile`, la guía `docs/despliegue.md` y la decisión D16. | Andres Felipe Gomez eligió el proveedor (AWS, después de que Azure for Students bloqueara las máquinas virtuales) y el dominio, creó y pagó las cuentas, configuró el servidor, verificó el despliegue en vivo y responde por él en la sustentación. |
+| Claude (Anthropic) | E4 | Comparar opciones y precios de servidor y dominio; redactar `docker-compose.prod.yml`, el `Caddyfile`, la guía `docs/despliegue.md` y la decisión D16; agregar los tiempos de espera de la conexión con la base y su prueba, actualizar la dependencia vulnerable que señaló `npm audit`, quitar archivos sin uso, corregir la D11 y preparar la versión 0.4.0. | Andres Felipe Gomez eligió el proveedor (AWS, después de que Azure for Students bloqueara las máquinas virtuales) y el dominio, creó y pagó las cuentas, configuró el servidor, verificó el despliegue en vivo y responde por él en la sustentación. |
 
 Los datos de ejemplo son sintéticos: los productos son del tipo que vende el vivero, pero precios, existencias, proveedores, clientes y teléfonos son inventados.
 
