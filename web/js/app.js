@@ -1,7 +1,7 @@
 /* =========================================================================
    Natutech · Vivero Las Acacias · Lógica de las pantallas (Entregas 3 y 4)
 
-   Un solo archivo para las once pantallas. Cada página dice cuál es en
+   Un solo archivo para las doce pantallas. Cada página dice cuál es en
    <body data-pagina="...">, y al final del archivo se llama la función que le toca.
 
    Los datos llegan de la API (js/api.js) cuando el sitio corre con Docker Compose,
@@ -331,6 +331,107 @@ function botonWhatsApp(producto, { ancho = false } = {}) {
   );
 }
 
+/* ---------- Carrito de la tienda en línea (Entrega 4, decisión D18) ---------- */
+
+// El carrito vive en este navegador (localStorage) y solo guarda ids y cantidades. Nombres,
+// precios y existencias se leen siempre del catálogo, y el total final lo calcula el servidor.
+const CLAVE_CARRITO = "natutech.carrito";
+const MAXIMO_POR_PRODUCTO = 50; // el mismo límite del contrato (PedidoTiendaEntrada)
+
+const Carrito = {
+  leer() {
+    try {
+      const lista = JSON.parse(localStorage.getItem(CLAVE_CARRITO));
+      return Array.isArray(lista)
+        ? lista.filter((linea) => typeof linea?.producto_id === "string" && Number.isInteger(linea.cantidad) && linea.cantidad > 0)
+        : [];
+    } catch {
+      return []; // navegador sin localStorage o dato dañado
+    }
+  },
+  guardar(lista) {
+    try {
+      localStorage.setItem(CLAVE_CARRITO, JSON.stringify(lista));
+    } catch {
+      /* sin almacenamiento: el carrito dura lo que dure la página */
+    }
+    actualizarIndicadoresCarrito();
+  },
+  cantidadDe(id) {
+    return this.leer().find((linea) => linea.producto_id === id)?.cantidad || 0;
+  },
+  // Devuelve la cantidad que quedó; nunca pasa de lo que hay en stock ni del máximo.
+  poner(id, cantidad, stock) {
+    const tope = Math.min(stock, MAXIMO_POR_PRODUCTO);
+    const nueva = Math.max(0, Math.min(cantidad, tope));
+    const lista = this.leer();
+    const posicion = lista.findIndex((linea) => linea.producto_id === id);
+    // Cada producto conserva su lugar en el carrito: cambiar la cantidad no lo mueve.
+    if (posicion === -1 && nueva > 0) lista.push({ producto_id: id, cantidad: nueva });
+    else if (posicion !== -1 && nueva > 0) lista[posicion] = { producto_id: id, cantidad: nueva };
+    else if (posicion !== -1) lista.splice(posicion, 1);
+    this.guardar(lista);
+    return nueva;
+  },
+  vaciar() {
+    this.guardar([]);
+  },
+  unidades() {
+    return this.leer().reduce((suma, linea) => suma + linea.cantidad, 0);
+  },
+};
+
+// Número de unidades en el enlace del encabezado y en la pestaña «Carrito» del celular.
+function actualizarIndicadoresCarrito() {
+  const unidades = Carrito.unidades();
+  for (const cuenta of document.querySelectorAll("[data-carrito-cuenta]")) cuenta.textContent = String(unidades);
+  const pestana = document.querySelector('.tabbar .tab[data-s="carrito"]');
+  if (pestana) {
+    let globo = pestana.querySelector(".tab__cuenta");
+    if (!globo) {
+      globo = crear("b", { clase: "tab__cuenta", "aria-hidden": "true" });
+      pestana.append(globo);
+    }
+    globo.textContent = String(unidades);
+    globo.hidden = unidades === 0;
+    pestana.setAttribute("aria-label", `Carrito, ${plural(unidades, "producto", "productos")}`);
+  }
+}
+
+// Región para que el lector de pantalla anuncie lo que se agrega al carrito.
+function anunciar(texto) {
+  let region = $("#anuncios");
+  if (!region) {
+    region = crear("p", { id: "anuncios", clase: "visualmente-oculto", "aria-live": "polite" });
+    document.body.append(region);
+  }
+  region.textContent = texto;
+}
+
+function botonCarrito(producto, { ancho = false } = {}) {
+  const boton = crear("button", { type: "button", clase: `boton boton--secundario${ancho ? " boton--ancho" : ""}` });
+  const pintar = () => {
+    const enCarrito = Carrito.cantidadDe(producto.id);
+    boton.replaceChildren(
+      enCarrito ? `En el carrito (${enCarrito})` : "Agregar al carrito",
+      crear("span", { clase: "visualmente-oculto", texto: enCarrito ? `: ${producto.nombre}. Agregar otra unidad` : `: ${producto.nombre}` })
+    );
+  };
+  boton.disabled = producto.stock === 0;
+  boton.addEventListener("click", () => {
+    const antes = Carrito.cantidadDe(producto.id);
+    const ahora = Carrito.poner(producto.id, antes + 1, producto.stock);
+    pintar();
+    anunciar(
+      ahora === antes
+        ? `No hay más unidades de ${producto.nombre}: ya tiene ${ahora} en el carrito.`
+        : `${producto.nombre} agregado al carrito. Lleva ${plural(Carrito.unidades(), "producto", "productos")}.`
+    );
+  });
+  pintar();
+  return boton;
+}
+
 // Lo que ve el cliente: no se muestra el stock mínimo, solo si hay, si quedan pocas o si se acabó.
 function disponibilidadPublica(producto) {
   if (producto.stock === 0) return { clase: "disponibilidad--agotado", texto: "Agotado" };
@@ -373,7 +474,12 @@ function tarjetaProducto(producto) {
         crear("p", { clase: "tarjeta__presentacion", texto: producto.presentacion }),
         crear("p", { clase: "tarjeta__precio", texto: formatoPrecio.format(producto.precio) }),
         crear("p", { clase: `disponibilidad ${disponibilidad.clase}`, texto: disponibilidad.texto }),
-        crear("div", { clase: "tarjeta__acciones" }, botonWhatsApp(producto, { ancho: true }))
+        crear(
+          "div",
+          { clase: "tarjeta__acciones" },
+          producto.stock > 0 ? botonCarrito(producto, { ancho: true }) : null,
+          botonWhatsApp(producto, { ancho: true })
+        )
       )
     )
   );
@@ -592,9 +698,15 @@ async function iniciarDetalle() {
       crear("p", {
         texto: agotado
           ? "Escríbanos y le avisamos cuando vuelva a llegar."
-          : "Escríbanos por WhatsApp: le confirmamos disponibilidad y se lo separamos.",
+          : "Agréguelo al carrito y pague en línea, o escríbanos por WhatsApp y se lo separamos.",
       }),
-      botonWhatsApp(producto)
+      crear(
+        "div",
+        { clase: "consulta__acciones" },
+        agotado ? null : botonCarrito(producto),
+        agotado ? null : crear("a", { clase: "boton boton--secundario", href: "carrito.html", texto: "Ver el carrito" }),
+        botonWhatsApp(producto)
+      )
     )
   );
 
@@ -1205,7 +1317,10 @@ const ESTADOS_PAGO = {
   rechazado: ["Pago rechazado", "disponibilidad--agotado"],
   anulado: ["Pago anulado", "disponibilidad--agotado"],
   error: ["Error en el pago", "disponibilidad--agotado"],
+  vencido: ["Enlace vencido", "disponibilidad--agotado"],
 };
+const NOMBRES_CANAL = { whatsapp: "WhatsApp", tienda: "En la tienda", web: "Tienda en línea" };
+const formatoHora = new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-digit", timeZone: "America/Bogota" });
 // Las mismas transiciones que valida el servidor: [estado nuevo, texto del botón].
 const TRANSICIONES = {
   pendiente: [["confirmado", "Confirmar"], ["cancelado", "Cancelar"]],
@@ -1322,7 +1437,12 @@ async function iniciarPedidos() {
           "th",
           { scope: "row", clase: "tabla__producto" },
           pedido.cliente_nombre,
-          crear("span", { clase: "tabla__presentacion", texto: `${pedido.cliente_telefono} · ${pedido.canal === "tienda" ? "En la tienda" : "WhatsApp"}` })
+          crear("span", {
+            clase: "tabla__presentacion",
+            texto: `${pedido.cliente_telefono} · ${NOMBRES_CANAL[pedido.canal] || pedido.canal}${
+              pedido.reservado_hasta && pedido.estado === "pendiente" ? ` · apartado hasta las ${formatoHora.format(new Date(pedido.reservado_hasta))}` : ""
+            }`,
+          })
         ),
         crear("td", { "data-etiqueta": "Productos", texto: lineasTexto }),
         crear("td", { clase: "numero", "data-etiqueta": "Total", texto: formatoPrecio.format(pedido.total) }),
@@ -2307,6 +2427,252 @@ async function iniciarPrecios() {
   );
 }
 
+/* ---------- Pantalla 12: carrito de la tienda en línea (carrito.html) ---------- */
+
+async function iniciarCarrito() {
+  const zona = $("#zona-carrito");
+  let datos;
+  try {
+    datos = await cargarDatos();
+  } catch (error) {
+    console.error(error);
+    mostrarEn(zona, panelError("h2", error));
+    return;
+  }
+  const modo = await Api.detectarModo();
+  let porId = new Map(datos.productos.map((producto) => [producto.id, producto]));
+
+  const resumen = crear("div", { clase: "resumen-errores", role: "alert", tabindex: "-1", hidden: true }, crear("h2"), crear("ul"));
+  const zonaLista = crear("div");
+  const totalTexto = crear("p", { clase: "total-pedido", "aria-live": "polite" });
+  const botonPagar = crear("button", { type: "submit", clase: "boton", texto: "Pagar en línea", disabled: modo !== "api" });
+  const enlaceWhatsAppPedido = crear(
+    "a",
+    { clase: "boton boton--secundario", href: "#", target: "_blank", rel: "noopener" },
+    "Enviar el pedido por WhatsApp",
+    crear("span", { clase: "visualmente-oculto", texto: " (se abre en una pestaña nueva)" })
+  );
+
+  const campo = (id, etiqueta, control, ayuda, obligatorio = true) =>
+    crear(
+      "div",
+      { clase: "campo" },
+      crear("label", { for: id }, etiqueta, obligatorio ? " " : null, obligatorio ? crear("span", { clase: "obligatorio", "aria-hidden": "true", texto: "*" }) : null),
+      ayuda ? crear("p", { clase: "campo__ayuda", id: `${id}-ayuda`, texto: ayuda }) : null,
+      control,
+      crear("p", { clase: "campo__error", id: `${id}-error` })
+    );
+  const campoNombre = crear("input", { type: "text", id: "cliente_nombre", name: "cliente_nombre", required: true, maxlength: 80, autocomplete: "name", "aria-describedby": "cliente_nombre-error" });
+  const campoTelefono = crear("input", { type: "tel", id: "cliente_telefono", name: "cliente_telefono", required: true, maxlength: 17, autocomplete: "tel-national", inputmode: "tel", "aria-describedby": "cliente_telefono-ayuda cliente_telefono-error" });
+  const campoNota = crear("textarea", { id: "nota", name: "nota", maxlength: 300, "aria-describedby": "nota-ayuda nota-error" });
+  campoTelefono.addEventListener("blur", () => (campoTelefono.value = formatoTelefono(campoTelefono.value)));
+
+  const formulario = crear(
+    "form",
+    { clase: "formulario", novalidate: true },
+    crear(
+      "fieldset",
+      {},
+      crear("legend", { texto: "Sus datos" }),
+      crear(
+        "div",
+        { clase: "formulario__columnas" },
+        campo("cliente_nombre", "Nombre", campoNombre),
+        campo("cliente_telefono", "Celular", campoTelefono, "10 dígitos. Por aquí le escribimos para coordinar la entrega.")
+      ),
+      campo("nota", "Nota", campoNota, "Opcional. Por ejemplo: es para regalo, o entregar en la tarde.", false)
+    ),
+    crear(
+      "p",
+      { clase: "campo__ayuda" },
+      modo === "api"
+        ? "Al pagar, apartamos estas unidades por 30 minutos. Si no completa el pago en ese tiempo, el pedido se cancela solo y no se cobra nada."
+        : "En esta copia de demostración no se puede pagar en línea: envíe su pedido por WhatsApp."
+    ),
+    crear("div", { clase: "formulario__acciones" }, botonPagar, enlaceWhatsAppPedido)
+  );
+
+  // Líneas del carrito con su producto del catálogo (null si ya no está publicado).
+  const lineas = () => Carrito.leer().map((linea) => ({ ...linea, producto: porId.get(linea.producto_id) || null }));
+  const leyenda = crear("caption");
+  const comprables = () => lineas().filter((linea) => linea.producto && linea.producto.stock > 0);
+
+  function actualizarTotales() {
+    const lista = comprables();
+    const total = lista.reduce((suma, linea) => suma + linea.producto.precio * linea.cantidad, 0);
+    totalTexto.textContent = `Total: ${formatoPrecio.format(total)}`;
+    leyenda.textContent = `${plural(Carrito.unidades(), "unidad", "unidades")} en el carrito. Los precios son los de hoy en el catálogo.`;
+    const nombre = campoNombre.value.trim();
+    const mensaje = [
+      `Hola, ${CONFIG.nombreNegocio}. Quiero hacer este pedido:`,
+      ...lista.map((linea) => `- ${linea.cantidad} × ${linea.producto.nombre} (${linea.producto.presentacion}), ${formatoPrecio.format(linea.producto.precio)} c/u`),
+      `Total: ${formatoPrecio.format(total)}`,
+      nombre ? `A nombre de: ${nombre}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    enlaceWhatsAppPedido.href = enlaceWhatsApp(mensaje);
+    botonPagar.disabled = modo !== "api" || lista.length === 0;
+  }
+
+  function pintar() {
+    const lista = lineas();
+    if (lista.length === 0) {
+      mostrarEn(
+        zona,
+        panelEstado("vacio", {
+          titulo: "Su carrito está vacío",
+          texto: "Agregue plantas e insumos desde el catálogo y aquí podrá pagarlos en línea o enviarnos el pedido por WhatsApp.",
+          acciones: [crear("a", { clase: "boton", href: "index.html#catalogo", texto: "Ver el catálogo" })],
+        })
+      );
+      return false;
+    }
+
+    const filas = lista.map((linea, indice) => {
+      const quitar = crear("button", { type: "button", clase: "boton boton--secundario" }, "Quitar", crear("span", { clase: "visualmente-oculto", texto: ` ${linea.producto?.nombre || "este producto"} del carrito` }));
+      quitar.addEventListener("click", () => {
+        Carrito.poner(linea.producto_id, 0, 0);
+        anunciar(`${linea.producto?.nombre || "Producto"} quitado del carrito.`);
+        if (pintar()) $("#carrito-titulo").focus();
+      });
+      if (!linea.producto || linea.producto.stock === 0) {
+        return crear(
+          "tr",
+          {},
+          crear("th", { scope: "row", clase: "tabla__producto" }, linea.producto?.nombre || "Producto retirado"),
+          crear("td", { colspan: 3, "data-etiqueta": "Estado" }, crear("span", { clase: "disponibilidad disponibilidad--agotado", texto: linea.producto ? "Se agotó" : "Ya no está en el catálogo" })),
+          crear("td", { "data-etiqueta": "Acciones" }, quitar)
+        );
+      }
+      const producto = linea.producto;
+      // Si el stock bajó desde que lo agregó, se ajusta la cantidad a lo que hay.
+      const cantidad = Carrito.poner(producto.id, linea.cantidad, producto.stock);
+      const tope = Math.min(producto.stock, MAXIMO_POR_PRODUCTO);
+      const id = `cantidad-${indice}`;
+      const control = crear("input", { type: "number", id, min: 1, max: tope, step: 1, value: cantidad, inputmode: "numeric", clase: "carrito__cantidad" });
+      const subtotal = crear("td", { clase: "numero", "data-etiqueta": "Subtotal", texto: formatoPrecio.format(producto.precio * cantidad) });
+      control.addEventListener("input", () => {
+        const pedida = Number.parseInt(control.value, 10);
+        if (!Number.isInteger(pedida) || pedida < 1) return; // se corrige al salir del campo
+        const quedo = Carrito.poner(producto.id, pedida, producto.stock);
+        subtotal.textContent = formatoPrecio.format(producto.precio * quedo);
+        actualizarTotales();
+      });
+      control.addEventListener("change", () => {
+        const quedo = Carrito.poner(producto.id, Math.max(1, Number.parseInt(control.value, 10) || 1), producto.stock);
+        control.value = String(quedo);
+        subtotal.textContent = formatoPrecio.format(producto.precio * quedo);
+        actualizarTotales();
+      });
+      return crear(
+        "tr",
+        {},
+        crear("th", { scope: "row", clase: "tabla__producto" }, crear("a", { href: `detalle.html?id=${producto.id}`, texto: producto.nombre }), crear("span", { clase: "tabla__presentacion", texto: producto.presentacion })),
+        crear("td", { clase: "numero", "data-etiqueta": "Precio", texto: formatoPrecio.format(producto.precio) }),
+        crear(
+          "td",
+          { "data-etiqueta": "Cantidad" },
+          crear("label", { for: id, clase: "visualmente-oculto", texto: `Cantidad de ${producto.nombre}` }),
+          control,
+          crear("span", { clase: "tabla__presentacion", texto: producto.stock <= CONFIG.pocasUnidades ? `Quedan ${producto.stock}` : `Hasta ${tope}` })
+        ),
+        subtotal,
+        crear("td", { "data-etiqueta": "Acciones" }, quitar)
+      );
+    });
+
+    zonaLista.replaceChildren(
+      crear(
+        "table",
+        { clase: "tabla" },
+        leyenda,
+        crear("thead", {}, crear("tr", {}, ...["Producto", "Precio", "Cantidad", "Subtotal", "Acciones"].map((columna) => crear("th", { scope: "col", clase: ["Precio", "Subtotal"].includes(columna) ? "numero" : null, texto: columna })))),
+        crear("tbody", {}, ...filas)
+      )
+    );
+    actualizarTotales();
+    if (zona.getAttribute("aria-busy") !== "false" || !zona.contains(formulario)) {
+      mostrarEn(
+        zona,
+        crear("section", { "aria-labelledby": "carrito-titulo" }, crear("h2", { id: "carrito-titulo", tabindex: "-1", texto: "Productos" }), zonaLista, totalTexto),
+        crear("section", { "aria-labelledby": "pago-titulo" }, crear("h2", { id: "pago-titulo", texto: "Finalizar el pedido" }), resumen, formulario)
+      );
+    }
+    return true;
+  }
+
+  campoNombre.addEventListener("input", actualizarTotales);
+  formulario.addEventListener("input", (evento) => {
+    evento.target.removeAttribute("aria-invalid");
+    const mensaje = document.getElementById(`${evento.target.id}-error`);
+    if (mensaje) mensaje.textContent = "";
+  });
+
+  formulario.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    limpiarErrores(formulario, resumen);
+    const lista = comprables();
+    const errores = [];
+    if (campoNombre.value.trim().length < 2) errores.push({ campo: "cliente_nombre", mensaje: "Nombre: escríbalo (al menos 2 letras)." });
+    const telefono = formatoTelefono(campoTelefono.value);
+    if (!/^\+57 \d{3} \d{3} \d{4}$/.test(telefono)) errores.push({ campo: "cliente_telefono", mensaje: "Celular: escriba 10 dígitos, por ejemplo: 300 123 4567." });
+    if (lista.length === 0) errores.push({ campo: "", mensaje: "El carrito no tiene productos disponibles." });
+    if (errores.length) {
+      mostrarErrores(resumen, errores, errores.length === 1 ? "Revise 1 dato" : `Revise ${errores.length} datos`);
+      return;
+    }
+
+    botonPagar.disabled = true;
+    botonPagar.textContent = "Preparando el pago…";
+    try {
+      // POST /catalogo/pedidos: solo ids y cantidades; el servidor pone los precios.
+      const respuesta = await Api.pedir("/catalogo/pedidos", {
+        metodo: "POST",
+        cuerpo: {
+          cliente_nombre: campoNombre.value.trim(),
+          cliente_telefono: telefono,
+          nota: campoNota.value.trim() || null,
+          detalles: lista.map((linea) => ({ producto_id: linea.producto_id, cantidad: linea.cantidad })),
+        },
+      });
+      try {
+        sessionStorage.setItem("natutech.ultimoPedido", JSON.stringify({ referencia: respuesta.referencia }));
+      } catch {
+        /* sin sessionStorage: el carrito se vacía a mano */
+      }
+      window.location.assign(respuesta.enlace_pago);
+      return;
+    } catch (error) {
+      if (!(error instanceof Api.ErrorApi)) console.error(error);
+      if (error instanceof Api.ErrorApi && error.estado === 422 && error.detalles.length) {
+        // "detalles[1].cantidad" → el nombre del segundo producto. Luego se refrescan existencias.
+        const nombreDe = (campoApi) => {
+          const posicion = /^detalles\[(\d+)\]/.exec(campoApi);
+          return posicion ? lista[Number(posicion[1])]?.producto.nombre : { cliente_nombre: "Nombre", cliente_telefono: "Celular", nota: "Nota" }[campoApi] || campoApi;
+        };
+        mostrarErrores(resumen, error.detalles.map((detalle) => ({ campo: lista.length && /^detalles/.test(detalle.campo) ? "" : detalle.campo, mensaje: `${nombreDe(detalle.campo)}: ${detalle.problema}.` })), error.message);
+        try {
+          datos = await cargarDatos();
+          porId = new Map(datos.productos.map((producto) => [producto.id, producto]));
+          pintar();
+        } catch {
+          /* se queda con lo que había */
+        }
+      } else if (error instanceof Api.ErrorApi && error.estado === 503) {
+        mostrarErrores(resumen, [{ campo: "", mensaje: "El pago en línea no está disponible en este momento. Puede enviarnos el pedido por WhatsApp con el botón de abajo." }], "No se pudo iniciar el pago");
+      } else {
+        mostrarErrores(resumen, [{ campo: "", mensaje: error.message }], "No se pudo iniciar el pago");
+      }
+    } finally {
+      botonPagar.textContent = "Pagar en línea";
+      actualizarTotales();
+    }
+  });
+
+  pintar();
+}
+
 /* ---------- Pantalla 11: resultado del pago (pago-resultado.html?id=...) ---------- */
 
 // Wompi devuelve al cliente a esta página con ?id=<transacción>. El resultado no se toma de
@@ -2371,6 +2737,16 @@ async function iniciarResultadoPago() {
     if (resultado && resultado.estado !== "pendiente") {
       const final = RESULTADOS_PAGO[resultado.estado];
       const aprobado = resultado.estado === "aprobado";
+      // Si este pago es el del carrito de este navegador, el carrito ya se puede vaciar.
+      try {
+        const ultimo = JSON.parse(sessionStorage.getItem("natutech.ultimoPedido"));
+        if (aprobado && ultimo?.referencia === resultado.referencia) {
+          Carrito.vaciar();
+          sessionStorage.removeItem("natutech.ultimoPedido");
+        }
+      } catch {
+        /* sin sessionStorage: el carrito se vacía a mano */
+      }
       const avisoPrueba =
         resultado.ambiente === "pruebas"
           ? crear("div", { clase: "aviso" }, crear("p", {}, crear("strong", { texto: "Pago de prueba. " }), "Este sitio usa el ambiente de pruebas de Wompi: no se cobró dinero real."))
@@ -2405,10 +2781,12 @@ const PANTALLAS = {
   temporadas: iniciarGestion,
   precios: iniciarPrecios,
   pago: iniciarResultadoPago,
+  carrito: iniciarCarrito,
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
   await cargarConfiguracion();
+  actualizarIndicadoresCarrito();
   const enlacePie = $("#whatsapp-pie");
   if (enlacePie) enlacePie.href = enlaceWhatsApp(`Hola, ${CONFIG.nombreNegocio}. Quiero hacer una consulta.`);
   // En el celular las pestañas de gestión se desplazan de lado: la de esta página queda a la vista.
