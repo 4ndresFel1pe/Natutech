@@ -1217,3 +1217,69 @@ summary {
 #resultado-pedido:not(:empty) {
   margin: var(--espacio-5) 0 var(--espacio-6);
 }
+
+/* =========================================================================
+   Entrega 4: gestión del catálogo (categorías, proveedores, temporadas y precios)
+   ========================================================================= */
+
+/* "Gestión" queda marcada en la barra del panel en sus cuatro pantallas */
+.encabezado--panel .navegacion a[aria-current="true"] {
+  background: var(--color-araguaney);
+  color: var(--color-tinta);
+}
+
+/* Pestañas de las cuatro pantallas: las mismas píldoras de la barra de secciones del catálogo.
+   No llevan la clase "navegacion" para que sigan visibles en el celular, donde la barra
+   superior se cambia por las pestañas de abajo. */
+.subnavegacion {
+  margin: 0 0 var(--espacio-4);
+}
+
+.subnavegacion ul {
+  display: flex;
+  gap: 2px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border-radius: 999px;
+  background: #e4efe4;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.subnavegacion a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--alto-control);
+  padding-inline: 0.95rem;
+  border-radius: 999px;
+  color: var(--color-tinta);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.subnavegacion a[aria-current="page"] {
+  background: var(--color-hoja);
+  color: #ffffff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .subnavegacion a:hover {
+    background: var(--color-hoja-clara);
+  }
+
+  .subnavegacion a[aria-current="page"]:hover {
+    background: var(--color-hoja-oscura);
+  }
+}
+
+#resultado-gestion:not(:empty) {
+  margin: var(--espacio-5) 0 var(--espacio-6);
+}
+
+.encabezado--panel .navegacion a[aria-current="true"]:hover {
+  background: #ffd93d;
+}
