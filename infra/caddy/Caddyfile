@@ -1,0 +1,19 @@
+# Caddy: la puerta de entrada desde internet. Solo se usa en el servidor
+# (docker-compose.prod.yml, decisión D16). {$DOMINIO} sale del archivo .env.
+#
+# - Pide a Let's Encrypt el certificado HTTPS para el dominio y lo renueva solo.
+# - Redirige http:// a https:// (Caddy lo hace por defecto).
+# - Reenvía todo a nginx (servicio web), que sirve el prototipo y reenvía /api.
+
+{$DOMINIO} {
+	# Comprime las respuestas de texto (HTML, CSS, JavaScript y JSON).
+	encode zstd gzip
+	# El navegador recuerda durante un año que este sitio solo se abre con HTTPS.
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy web:80
+}
+
+# www.natutech.lat lleva al dominio principal.
+www.{$DOMINIO} {
+	redir https://{$DOMINIO}{uri} permanent
+}

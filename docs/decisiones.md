@@ -153,6 +153,22 @@ Registro de las decisiones que condicionan el proyecto. Cada una dice qué se de
 
 **Zonas horarias.** GitHub Actions corre las pruebas dos veces, con `TZ=UTC` y `TZ=America/Bogota`. La base trabaja en hora de Colombia y las fechas salen con `-05:00`, sin depender del reloj de la máquina.
 
+## D16. Despliegue: una máquina virtual con el mismo Compose y Caddy para HTTPS
+
+**Decisión.** La aplicación se publica en https://natutech.lat, en una instancia EC2 de AWS (plan gratuito: 100 US$ de crédito y sin cobros mientras no se cambie a un plan de pago) con Ubuntu 24.04, Docker Engine y el mismo `docker-compose.yml` que se usa en local. En el servidor se le suma `docker-compose.prod.yml`, que agrega Caddy como única entrada desde internet (puertos 80 y 443) y quita los puertos publicados de nginx y de PostgreSQL. Los pasos están en [`despliegue.md`](despliegue.md).
+
+**Por qué AWS y no Azure.** La primera opción fue Azure for Students, que no pide tarjeta. Sin embargo, la suscripción de estudiante rechazó todos los tamaños de máquina virtual que se intentaron, en todas las regiones probadas, con el error `NotAvailableForSubscription`. Por eso se cambió al plan gratuito de AWS.
+
+**Por qué una máquina virtual y no una plataforma como servicio.** Es la ruta A: lo que se evalúa es que el conjunto contenerizado corra igual en el servidor que en el computador del equipo. Las plataformas como servicio no ejecutan un archivo Compose tal cual y llevan la base de datos a otro producto. En la máquina virtual, levantar, actualizar y recuperar el sistema se hace con los mismos comandos de siempre.
+
+**Por qué Caddy delante de nginx.** Caddy obtiene y renueva el certificado de Let's Encrypt sin pasos manuales ni tareas programadas. Con nginx habría que agregar certbot y programar su renovación. nginx sigue haciendo lo mismo que en la D13 (sirve el prototipo y reenvía `/api`), así que la configuración local y la del servidor no se separan.
+
+**Por qué un dominio .lat.** En Porkbun cuesta 1,54 dólares el primer año, frente a 11,81 de un .com y 15,76 de un .co (precios de noviembre de 2026). El dominio solo se necesita durante el semestre, así que la renovación automática quedó desactivada. Si el vivero quiere conservar la dirección, se decide con el dueño.
+
+**Seguridad.** El security group de AWS solo deja entrar por los puertos 22 (SSH, únicamente con llave), 80 y 443. La instancia tiene una IP elástica para que el dominio no deje de apuntar al servidor si este se reinicia. Los secretos están en el `.env` del servidor, con permisos 600, y se generan allí mismo con `openssl rand`: no pasan por el repositorio ni por el chat del equipo.
+
+**Pendiente.** Respaldos con `pg_dump` y una restauración probada, despliegue automático desde GitHub Actions y rollback verificado.
+
 ---
 
 ## Pendientes que vienen de la encuesta
