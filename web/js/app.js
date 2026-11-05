@@ -1,7 +1,7 @@
 /* =========================================================================
-   Natutech · Vivero Las Acacias · Lógica de las pantallas (Entrega 3)
+   Natutech · Vivero Las Acacias · Lógica de las pantallas (Entregas 3 y 4)
 
-   Un solo archivo para las seis pantallas. Cada página dice cuál es en
+   Un solo archivo para las diez pantallas. Cada página dice cuál es en
    <body data-pagina="...">, y al final del archivo se llama la función que le toca.
 
    Los datos llegan de la API (js/api.js) cuando el sitio corre con Docker Compose,
@@ -1540,6 +1540,673 @@ async function iniciarPedidos() {
   await pintarLista();
 }
 
+/* ---------- Pantallas 7 a 9: categorías, proveedores y temporadas (Entrega 4) ---------- */
+
+// Las tres pantallas siguen el mismo esquema que la de pedidos: un formulario para
+// registrar o editar y una tabla con lo que hay. Cada recurso dice sus campos (con las
+// mismas reglas de api/openapi.yaml), sus columnas y qué puede hacer cada rol. El
+// servidor vuelve a revisar cada permiso: aquí solo se evita mostrar botones que
+// terminarían en 403.
+
+const formatoFechaLarga = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long", year: "numeric" });
+
+function mayuscula(texto) {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+function cuandoTemporada(temporada) {
+  const dias = diasHasta(temporada.fecha);
+  if (dias < 0) return "Ya pasó";
+  const texto = dias === 0 ? "Es hoy" : `En ${plural(dias, "día", "días")}`;
+  // Dentro de la ventana de anticipación el sistema ya está revisando existencias.
+  return dias <= temporada.dias_anticipacion ? crear("span", { clase: "disponibilidad disponibilidad--pocas", texto }) : texto;
+}
+
+const RECURSOS = {
+  categorias: {
+    ruta: "/categorias",
+    leerConSesion: false,
+    usaProductos: true,
+    singular: "categoría",
+    plural: "categorías",
+    femenino: true,
+    soloAdministrador: { crear: true, editar: true, eliminar: true },
+    eliminable: true,
+    campos: [
+      { id: "nombre", etiqueta: "Nombre", tipo: "text", obligatorio: true, minimo: 2, maximo: 40, ayuda: "Así se ve en el catálogo y en los filtros. Por ejemplo: Plantas de interior." },
+      { id: "descripcion", etiqueta: "Descripción", tipo: "textarea", maximo: 200, ayuda: "Opcional. Máximo 200 caracteres." },
+    ],
+    ordenar: porNombre,
+    orden: "ordenadas por nombre",
+    titulo: (categoria) => categoria.nombre,
+    subtitulo: () => null,
+    columnas: [
+      ["Descripción", (categoria) => categoria.descripcion || "Sin descripción"],
+      ["Productos", (categoria, contar) => String(contar("categoria_id", categoria.id)), "numero"],
+    ],
+    soloConsulta: "Solo la administración puede crear, cambiar o eliminar categorías. Usted puede consultarlas.",
+    nota: "Una categoría que todavía tiene productos no se puede eliminar: primero hay que moverlos a otra.",
+    vacio: "Cree la primera categoría para poder registrar productos.",
+  },
+  proveedores: {
+    ruta: "/proveedores",
+    leerConSesion: true,
+    usaProductos: true,
+    singular: "proveedor",
+    plural: "proveedores",
+    femenino: false,
+    soloAdministrador: {},
+    eliminable: false,
+    activable: true,
+    campos: [
+      { id: "nombre", etiqueta: "Nombre", tipo: "text", obligatorio: true, minimo: 2, maximo: 80, ayuda: "Persona o empresa. Por ejemplo: Orquídeas del Llano." },
+      { id: "telefono", etiqueta: "Celular", tipo: "tel", obligatorio: true, ayuda: "10 dígitos. Por ejemplo: 310 555 0101." },
+      { id: "municipio", etiqueta: "Municipio", tipo: "text", obligatorio: true, minimo: 3, maximo: 60, ayuda: "Desde dónde despacha. Por ejemplo: Villavicencio." },
+      { id: "suministra", etiqueta: "Qué le vende al vivero", tipo: "text", maximo: 120, ayuda: "Opcional. Por ejemplo: orquídeas y anturios." },
+      { id: "dias_entrega", etiqueta: "Días de entrega", tipo: "number", obligatorio: true, minimo: 0, maximo: 60, porDefecto: 3, ayuda: "Cuántos días tarda en llegar un pedido a Yopal. Aparece en las alertas de reabastecimiento." },
+    ],
+    ordenar: (a, b) => Number(b.activo) - Number(a.activo) || porNombre(a, b),
+    orden: "primero los activos, por nombre",
+    titulo: (proveedor) => proveedor.nombre,
+    subtitulo: (proveedor) => proveedor.telefono,
+    columnas: [
+      ["Municipio", (proveedor) => proveedor.municipio],
+      ["Suministra", (proveedor) => proveedor.suministra || "Sin especificar"],
+      ["Entrega", (proveedor) => plural(proveedor.dias_entrega, "día", "días")],
+      ["Productos", (proveedor, contar) => String(contar("proveedor_id", proveedor.id)), "numero"],
+      ["Estado", (proveedor) => crear("span", { clase: `disponibilidad${proveedor.activo ? "" : " disponibilidad--agotado"}`, texto: proveedor.activo ? "Activo" : "Inactivo" })],
+    ],
+    nota: "Los proveedores no se eliminan, porque cada producto guarda quién lo suministra. Si un proveedor deja de venderle al vivero, desactívelo: ya no aparecerá al registrar productos.",
+    vacio: "Registre el primer proveedor para asociarlo a sus productos y verlo en las alertas.",
+  },
+  temporadas: {
+    ruta: "/temporadas",
+    leerConSesion: false,
+    usaProductos: false,
+    singular: "temporada",
+    plural: "temporadas",
+    femenino: true,
+    soloAdministrador: { eliminar: true },
+    eliminable: true,
+    campos: [
+      { id: "nombre", etiqueta: "Nombre", tipo: "text", obligatorio: true, minimo: 3, maximo: 60, ayuda: "Por ejemplo: Día de la Madre." },
+      { id: "fecha", etiqueta: "Fecha", tipo: "date", obligatorio: true, ayuda: "Las fechas móviles, como el Día de la Madre, cambian cada año: registre la de cada año." },
+      { id: "dias_anticipacion", etiqueta: "Días de anticipación", tipo: "number", obligatorio: true, minimo: 1, maximo: 90, porDefecto: 21, ayuda: "Cuántos días antes de la fecha se empiezan a revisar las existencias y a generar alertas." },
+    ],
+    ordenar: (a, b) => a.fecha.localeCompare(b.fecha),
+    orden: "ordenadas por fecha",
+    titulo: (temporada) => temporada.nombre,
+    subtitulo: (temporada) => formatoFechaLarga.format(fechaLocal(temporada.fecha)),
+    columnas: [
+      ["Cuándo", cuandoTemporada],
+      ["Alertas desde", (temporada) => `${plural(temporada.dias_anticipacion, "día", "días")} antes`],
+    ],
+    soloConsulta: null,
+    nota: "Con la fecha y los días de anticipación, el sistema compara lo que se vendió en la misma temporada del año anterior con las existencias de hoy y avisa si no alcanzan.",
+    vacio: "Registre las fechas especiales del vivero para recibir las alertas de reabastecimiento a tiempo.",
+  },
+};
+
+async function iniciarGestion() {
+  const clave = document.body.dataset.pagina;
+  const recurso = RECURSOS[clave];
+  const zona = $("#zona-gestion");
+  const anuncios = $("#anuncios");
+  const modo = await prepararPanel();
+  if (!modo) return;
+
+  const esAdministrador = modo === "api" && Api.sesion.leer()?.usuario.rol === "administrador";
+  const puede = (accion) => modo === "api" && (!recurso.soloAdministrador[accion] || esAdministrador);
+  const articulo = recurso.femenino ? "la" : "el";
+  const un = recurso.femenino ? "una" : "un";
+  const o = recurso.femenino ? "a" : "o";
+
+  let registros = [];
+  let productos = [];
+  const contar = (campo, id) => productos.filter((producto) => producto[campo] === id).length;
+
+  async function cargar() {
+    if (modo === "demostracion") {
+      const datos = await leerArchivoDeEjemplo();
+      registros = datos[clave];
+      productos = datos.productos;
+      return;
+    }
+    [registros, productos] = await Promise.all([
+      Api.pedir(recurso.ruta, { conSesion: recurso.leerConSesion }),
+      recurso.usaProductos ? Api.todasLasPaginas("/productos", { conSesion: true }) : [],
+    ]);
+  }
+
+  try {
+    if (estadoForzado === "cargando") await esperar(CONFIG.esperaCargaLenta);
+    if (estadoForzado === "error") throw new Error("Error de carga forzado con ?estado=error");
+    await cargar();
+    if (estadoForzado === "vacio") registros = [];
+  } catch (error) {
+    console.error(error);
+    mostrarEn(zona, panelError("h2", error));
+    return;
+  }
+
+  /* --- Tabla de lo registrado --- */
+
+  const zonaLista = crear("div", { "aria-live": "polite" });
+  const errorLista = crear("p", { clase: "campo__error", id: "error-lista", role: "alert" });
+  const conAcciones = puede("editar") || (recurso.eliminable && puede("eliminar"));
+
+  function pintarLista() {
+    const lista = [...registros].sort(recurso.ordenar);
+    if (lista.length === 0) {
+      zonaLista.replaceChildren(panelEstado("vacio", { nivel: "h3", titulo: `Todavía no hay ${recurso.plural}`, texto: recurso.vacio }));
+      return;
+    }
+    const filas = lista.map((registro) => {
+      const nombre = recurso.titulo(registro);
+      const acciones = [];
+      if (puede("editar")) {
+        const editar = crear("button", { type: "button", clase: "boton boton--secundario" }, "Editar", crear("span", { clase: "visualmente-oculto", texto: ` ${nombre}` }));
+        editar.addEventListener("click", () => modoEditar(registro));
+        acciones.push(editar);
+      }
+      if (recurso.activable && puede("editar")) {
+        const cambiar = crear("button", { type: "button", clase: "boton boton--secundario" }, registro.activo ? "Desactivar" : "Activar", crear("span", { clase: "visualmente-oculto", texto: ` ${nombre}` }));
+        cambiar.addEventListener("click", () => cambiarActivo(registro, cambiar));
+        acciones.push(cambiar);
+      }
+      if (recurso.eliminable && puede("eliminar")) {
+        const eliminar = crear("button", { type: "button", clase: "boton boton--secundario" }, "Eliminar", crear("span", { clase: "visualmente-oculto", texto: ` ${nombre}` }));
+        eliminar.addEventListener("click", () => eliminarRegistro(registro, eliminar));
+        acciones.push(eliminar);
+      }
+      const subtitulo = recurso.subtitulo(registro);
+      return crear(
+        "tr",
+        {},
+        crear("th", { scope: "row", clase: "tabla__producto" }, nombre, subtitulo ? crear("span", { clase: "tabla__presentacion", texto: subtitulo }) : null),
+        ...recurso.columnas.map(([columna, valor, clase]) => crear("td", { clase, "data-etiqueta": columna }, valor(registro, contar))),
+        conAcciones ? crear("td", { "data-etiqueta": "Acciones" }, crear("div", { clase: "acciones-fila" }, ...acciones)) : null
+      );
+    });
+    const columnas = [mayuscula(recurso.singular), ...recurso.columnas.map(([columna]) => columna), ...(conAcciones ? ["Acciones"] : [])];
+    const clases = [null, ...recurso.columnas.map(([, , clase]) => clase || null), null];
+    zonaLista.replaceChildren(
+      crear(
+        "table",
+        { clase: "tabla" },
+        crear("caption", { texto: `${plural(lista.length, recurso.singular, recurso.plural)}, ${recurso.orden}` }),
+        crear("thead", {}, crear("tr", {}, ...columnas.map((columna, indice) => crear("th", { scope: "col", clase: clases[indice], texto: columna })))),
+        crear("tbody", {}, ...filas)
+      )
+    );
+  }
+
+  async function recargar() {
+    await cargar();
+    pintarLista();
+  }
+
+  // DELETE: el servidor responde 409 si la categoría todavía tiene productos.
+  async function eliminarRegistro(registro, boton) {
+    const nombre = recurso.titulo(registro);
+    if (!window.confirm(`¿Eliminar ${articulo} ${recurso.singular} «${nombre}»? Esto no se puede deshacer.`)) return;
+    boton.disabled = true;
+    errorLista.textContent = "";
+    try {
+      await Api.pedir(`${recurso.ruta}/${registro.id}`, { metodo: "DELETE", conSesion: true });
+      if (editando?.id === registro.id) modoCrear();
+      await recargar();
+      anuncios.textContent = `${mayuscula(recurso.singular)} «${nombre}» eliminad${o}.`;
+      $("#lista-titulo").focus();
+    } catch (error) {
+      boton.disabled = false;
+      errorLista.textContent = `No se pudo eliminar «${nombre}». ${error.message}`;
+      boton.focus();
+    }
+  }
+
+  async function cambiarActivo(registro, boton) {
+    boton.disabled = true;
+    errorLista.textContent = "";
+    try {
+      await Api.pedir(`${recurso.ruta}/${registro.id}`, { metodo: "PATCH", cuerpo: { activo: !registro.activo }, conSesion: true });
+      await recargar();
+      anuncios.textContent = `${mayuscula(recurso.singular)} «${registro.nombre}» ${registro.activo ? "desactivado" : "activado"}.`;
+      $("#lista-titulo").focus();
+    } catch (error) {
+      boton.disabled = false;
+      errorLista.textContent = `No se pudo cambiar «${registro.nombre}». ${error.message}`;
+      boton.focus();
+    }
+  }
+
+  const seccionLista = crear(
+    "section",
+    { "aria-labelledby": "lista-titulo" },
+    crear("h2", { id: "lista-titulo", tabindex: "-1", texto: `${mayuscula(recurso.plural)} registrad${o}s` }),
+    crear("p", { clase: "campo__ayuda", texto: recurso.nota }),
+    errorLista,
+    zonaLista
+  );
+
+  /* --- Formulario para registrar o editar --- */
+
+  let editando = null;
+  const tituloFormulario = crear("h2", { id: "formulario-titulo", tabindex: "-1" });
+  const resumen = crear("div", { clase: "resumen-errores", role: "alert", tabindex: "-1", hidden: true }, crear("h2"), crear("ul"));
+  const resultado = crear("div", { id: "resultado-gestion" });
+  const botonGuardar = crear("button", { type: "submit", clase: "boton" });
+  const botonCancelar = crear("button", { type: "button", clase: "boton boton--secundario", texto: "Cancelar la edición", hidden: true });
+
+  function crearCampo(campo) {
+    const idAyuda = `${campo.id}-ayuda`;
+    const idError = `${campo.id}-error`;
+    const atributos = {
+      id: campo.id,
+      name: campo.id,
+      required: campo.obligatorio,
+      autocomplete: "off",
+      "aria-describedby": campo.ayuda ? `${idAyuda} ${idError}` : idError,
+    };
+    let control;
+    if (campo.tipo === "textarea") control = crear("textarea", { ...atributos, maxlength: campo.maximo });
+    else if (campo.tipo === "number") control = crear("input", { ...atributos, type: "number", min: campo.minimo, max: campo.maximo, step: 1, inputmode: "numeric", value: campo.porDefecto });
+    else if (campo.tipo === "tel") control = crear("input", { ...atributos, type: "tel", maxlength: 17, inputmode: "tel" });
+    else control = crear("input", { ...atributos, type: campo.tipo, maxlength: campo.maximo });
+    if (campo.tipo === "tel") control.addEventListener("blur", () => (control.value = formatoTelefono(control.value)));
+    return crear(
+      "div",
+      { clase: "campo" },
+      crear("label", { for: campo.id }, campo.etiqueta, campo.obligatorio ? " " : null, campo.obligatorio ? crear("span", { clase: "obligatorio", "aria-hidden": "true", texto: "*" }) : null),
+      campo.ayuda ? crear("p", { clase: "campo__ayuda", id: idAyuda, texto: campo.ayuda }) : null,
+      control,
+      crear("p", { clase: "campo__error", id: idError })
+    );
+  }
+
+  const cortos = recurso.campos.filter((campo) => campo.tipo !== "textarea");
+  const largos = recurso.campos.filter((campo) => campo.tipo === "textarea");
+  const formulario = crear(
+    "form",
+    { clase: "formulario", novalidate: true },
+    crear(
+      "fieldset",
+      {},
+      crear("legend", { texto: `Datos de${recurso.femenino ? " la" : "l"} ${recurso.singular}` }),
+      crear("div", { clase: "formulario__columnas" }, ...cortos.map(crearCampo)),
+      ...largos.map(crearCampo)
+    ),
+    crear("div", { clase: "formulario__acciones" }, botonGuardar, botonCancelar)
+  );
+
+  function modoCrear() {
+    editando = null;
+    formulario.reset();
+    limpiarErrores(formulario, resumen);
+    tituloFormulario.textContent = `Registrar ${un} ${recurso.singular}`;
+    botonGuardar.textContent = `Guardar ${articulo} ${recurso.singular}`;
+    botonCancelar.hidden = true;
+  }
+
+  function modoEditar(registro) {
+    editando = registro;
+    limpiarErrores(formulario, resumen);
+    resultado.replaceChildren();
+    for (const campo of recurso.campos) {
+      const valor = registro[campo.id];
+      formulario.elements[campo.id].value = valor === null || valor === undefined ? "" : String(valor);
+    }
+    tituloFormulario.textContent = `Editar ${articulo} ${recurso.singular} «${recurso.titulo(registro)}»`;
+    botonGuardar.textContent = "Guardar los cambios";
+    botonCancelar.hidden = false;
+    formulario.elements[recurso.campos[0].id].focus();
+    anuncios.textContent = tituloFormulario.textContent;
+  }
+
+  botonCancelar.addEventListener("click", () => {
+    modoCrear();
+    tituloFormulario.focus();
+  });
+
+  formulario.addEventListener("input", (evento) => {
+    evento.target.removeAttribute("aria-invalid");
+    const mensaje = document.getElementById(`${evento.target.id}-error`);
+    if (mensaje) mensaje.textContent = "";
+  });
+
+  // Mismas reglas que el esquema del recurso en api/openapi.yaml, revisadas antes de enviar.
+  function validar() {
+    const errores = [];
+    for (const campo of recurso.campos) {
+      const control = formulario.elements[campo.id];
+      const valor = control.value.trim();
+      const error = (mensaje) => errores.push({ campo: campo.id, mensaje: `${campo.etiqueta}: ${mensaje}` });
+      if (campo.tipo === "number" && control.validity.badInput) {
+        error(`escriba un número entero entre ${campo.minimo} y ${campo.maximo}.`);
+      } else if (!valor) {
+        if (campo.obligatorio) error("este dato es obligatorio.");
+      } else if (campo.tipo === "number") {
+        const numero = Number(valor);
+        if (!Number.isInteger(numero) || numero < campo.minimo || numero > campo.maximo) error(`escriba un número entero entre ${campo.minimo} y ${campo.maximo}.`);
+      } else if (campo.tipo === "tel") {
+        if (!/^\+57 \d{3} \d{3} \d{4}$/.test(formatoTelefono(valor))) error("escriba un celular de 10 dígitos, por ejemplo: 310 555 0101.");
+      } else if (campo.tipo === "date") {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) error("elija una fecha válida.");
+      } else if (campo.minimo && valor.length < campo.minimo) {
+        error(`escriba al menos ${campo.minimo} caracteres.`);
+      } else if (campo.maximo && valor.length > campo.maximo) {
+        error(`escriba máximo ${campo.maximo} caracteres.`);
+      }
+    }
+    return errores;
+  }
+
+  function leerValor(campo) {
+    const valor = formulario.elements[campo.id].value.trim();
+    if (!valor) return null;
+    if (campo.tipo === "number") return Number(valor);
+    if (campo.tipo === "tel") return formatoTelefono(valor);
+    return valor;
+  }
+
+  formulario.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    limpiarErrores(formulario, resumen);
+    resultado.replaceChildren();
+    const errores = validar();
+    if (errores.length) {
+      mostrarErrores(resumen, errores);
+      return;
+    }
+
+    // Al crear se mandan todos los campos; al editar, solo los que cambiaron (PATCH).
+    const cuerpo = {};
+    for (const campo of recurso.campos) {
+      const valor = leerValor(campo);
+      if (!editando || valor !== (editando[campo.id] ?? null)) cuerpo[campo.id] = valor;
+    }
+    if (editando && Object.keys(cuerpo).length === 0) {
+      mostrarErrores(resumen, [{ campo: "", mensaje: "No cambió ningún dato. Modifique algo o cancele la edición." }], "No hay cambios para guardar");
+      return;
+    }
+
+    const estabaEditando = Boolean(editando);
+    botonGuardar.disabled = true;
+    botonGuardar.textContent = "Guardando…";
+    try {
+      const guardado = estabaEditando
+        ? await Api.pedir(`${recurso.ruta}/${editando.id}`, { metodo: "PATCH", cuerpo, conSesion: true })
+        : await Api.pedir(recurso.ruta, { metodo: "POST", cuerpo, conSesion: true });
+      modoCrear();
+      await recargar();
+      resultado.replaceChildren(
+        panelEstado("exito", {
+          nivel: "h3",
+          titulo: `${mayuscula(recurso.singular)} ${estabaEditando ? "actualizad" : "registrad"}${o}`,
+          texto: `«${recurso.titulo(guardado)}» ya quedó guardad${o}${estabaEditando ? " con los cambios" : ""}.`,
+        })
+      );
+      resultado.querySelector("h3").focus();
+    } catch (error) {
+      if (!(error instanceof Api.ErrorApi)) console.error(error);
+      const nombres = Object.fromEntries(recurso.campos.map((campo) => [campo.id, campo.etiqueta]));
+      if (error instanceof Api.ErrorApi && (error.estado === 422 || error.estado === 409)) {
+        mostrarErrores(resumen, erroresDeLaApi(error, nombres), error.estado === 409 ? "No se pudo guardar" : undefined);
+      } else if (!(error instanceof Api.ErrorApi && error.estado === 401)) {
+        mostrarErrores(resumen, [{ campo: "", mensaje: error.message }], "No se pudo guardar");
+      }
+    } finally {
+      botonGuardar.disabled = false;
+      botonGuardar.textContent = editando ? "Guardar los cambios" : `Guardar ${articulo} ${recurso.singular}`;
+    }
+  });
+
+  modoCrear();
+  pintarLista();
+
+  const avisoRol =
+    modo === "api" && !puede("crear") && recurso.soloConsulta
+      ? crear("div", { clase: "aviso" }, crear("p", {}, crear("strong", { texto: "Solo consulta. " }), recurso.soloConsulta))
+      : null;
+  const seccionFormulario = puede("crear")
+    ? crear("section", { "aria-labelledby": "formulario-titulo" }, tituloFormulario, resumen, formulario, resultado)
+    : null;
+
+  mostrarEn(zona, avisoDemostracion(modo), avisoRol, seccionFormulario, seccionLista);
+}
+
+/* ---------- Pantalla 10: ajuste de precios por categoría (precios.html) ---------- */
+
+// El mismo cálculo que hace el servidor (servidor/src/servicios/categorias.js): porcentaje
+// entero, redondeo a la centena más cercana y precio entre 0 y 5.000.000.
+function precioAjustado(precio, porcentaje) {
+  return Math.min(5000000, Math.max(0, Math.round((precio * (100 + porcentaje)) / 10000) * 100));
+}
+
+function textoPorcentaje(porcentaje) {
+  return `${porcentaje > 0 ? "+" : ""}${porcentaje} %`;
+}
+
+async function iniciarPrecios() {
+  const zona = $("#zona-gestion");
+  const anuncios = $("#anuncios");
+  const modo = await prepararPanel();
+  if (!modo) return;
+
+  // Solo el rol administrador puede ajustar precios (el servidor responde 403 a los demás).
+  if (modo === "api" && Api.sesion.leer()?.usuario.rol !== "administrador") {
+    mostrarEn(
+      zona,
+      panelEstado("vacio", {
+        titulo: "Solo la administración ajusta precios",
+        texto: "Este cambio afecta los precios de toda una categoría a la vez. Pídale a la administración del vivero que lo haga; usted puede consultar los precios en el inventario.",
+        acciones: [crear("a", { clase: "boton", href: "inventario.html", texto: "Ir al inventario" })],
+      })
+    );
+    return;
+  }
+
+  let datos;
+  try {
+    datos = await cargarDatos("panel");
+  } catch (error) {
+    console.error(error);
+    mostrarEn(zona, panelError("h2", error));
+    return;
+  }
+
+  if (datos.productos.length === 0) {
+    mostrarEn(
+      zona,
+      avisoDemostracion(modo),
+      panelEstado("vacio", {
+        titulo: "No hay productos para ajustar",
+        texto: "Cuando registre productos podrá subir o bajar los precios de una categoría completa desde aquí.",
+        acciones: [crear("a", { clase: "boton", href: "producto-form.html", texto: "Registrar un producto" })],
+      })
+    );
+    return;
+  }
+
+  const contar = (id) => datos.productos.filter((producto) => producto.categoria_id === id).length;
+  const resumen = crear("div", { clase: "resumen-errores", role: "alert", tabindex: "-1", hidden: true }, crear("h2"), crear("ul"));
+  const resultado = crear("div", { id: "resultado-gestion" });
+  const selector = crear(
+    "select",
+    { id: "categoria_id", name: "categoria_id", required: true, "aria-describedby": "categoria_id-error" },
+    crear("option", { value: "", texto: "Elija una categoría" }),
+    ...[...datos.categorias].sort(porNombre).map((categoria) => {
+      const cantidad = contar(categoria.id);
+      return crear("option", { value: categoria.id, disabled: cantidad === 0, texto: `${categoria.nombre} (${cantidad === 0 ? "sin productos" : plural(cantidad, "producto", "productos")})` });
+    })
+  );
+  const campoPorcentaje = crear("input", {
+    type: "number",
+    id: "porcentaje",
+    name: "porcentaje",
+    required: true,
+    min: -50,
+    max: 100,
+    step: 1,
+    inputmode: "numeric",
+    autocomplete: "off",
+    "aria-describedby": "porcentaje-ayuda porcentaje-error",
+  });
+  const botonAplicar = crear("button", { type: "submit", clase: "boton", texto: "Aplicar el ajuste", disabled: modo !== "api" });
+  const formulario = crear(
+    "form",
+    { clase: "formulario", novalidate: true },
+    crear(
+      "fieldset",
+      {},
+      crear("legend", { texto: "Ajuste" }),
+      crear(
+        "div",
+        { clase: "formulario__columnas" },
+        crear(
+          "div",
+          { clase: "campo" },
+          crear("label", { for: "categoria_id" }, "Categoría ", crear("span", { clase: "obligatorio", "aria-hidden": "true", texto: "*" })),
+          selector,
+          crear("p", { clase: "campo__error", id: "categoria_id-error" })
+        ),
+        crear(
+          "div",
+          { clase: "campo" },
+          crear("label", { for: "porcentaje" }, "Porcentaje ", crear("span", { clase: "obligatorio", "aria-hidden": "true", texto: "*" })),
+          crear("p", { clase: "campo__ayuda", id: "porcentaje-ayuda", texto: "Número entero entre -50 y 100, sin el signo %. Por ejemplo: 10 sube los precios un 10 %; -15 los baja un 15 %." }),
+          campoPorcentaje,
+          crear("p", { clase: "campo__error", id: "porcentaje-error" })
+        )
+      )
+    ),
+    crear("div", { clase: "formulario__acciones" }, botonAplicar)
+  );
+
+  const zonaPrevia = crear("div", { "aria-live": "polite" });
+
+  function porcentajeValido() {
+    const numero = Number(campoPorcentaje.value);
+    return campoPorcentaje.value.trim() !== "" && Number.isInteger(numero) && numero >= -50 && numero <= 100 && numero !== 0 ? numero : null;
+  }
+
+  function pintarVistaPrevia() {
+    const categoria = datos.categorias.find((c) => c.id === selector.value);
+    if (!categoria) {
+      zonaPrevia.replaceChildren(panelEstado("vacio", { nivel: "h3", titulo: "Elija una categoría", texto: "Aquí verá cada producto con su precio actual y el que quedaría después del ajuste." }));
+      return;
+    }
+    const porcentaje = porcentajeValido();
+    const lista = datos.productos.filter((producto) => producto.categoria_id === categoria.id).sort(porNombre);
+    const filas = lista.map((producto) => {
+      const nuevo = porcentaje === null ? null : precioAjustado(producto.precio, porcentaje);
+      const diferencia = nuevo === null ? null : nuevo - producto.precio;
+      return crear(
+        "tr",
+        {},
+        crear("th", { scope: "row", clase: "tabla__producto" }, producto.nombre, crear("span", { clase: "tabla__presentacion", texto: producto.presentacion })),
+        crear("td", { clase: "numero", "data-etiqueta": "Precio actual", texto: formatoPrecio.format(producto.precio) }),
+        crear("td", { clase: "numero", "data-etiqueta": "Precio nuevo", texto: nuevo === null ? "—" : formatoPrecio.format(nuevo) }),
+        crear("td", { clase: "numero", "data-etiqueta": "Diferencia", texto: diferencia === null ? "—" : `${diferencia > 0 ? "+" : ""}${formatoPrecio.format(diferencia)}` })
+      );
+    });
+    zonaPrevia.replaceChildren(
+      crear(
+        "table",
+        { clase: "tabla" },
+        crear(
+          "caption",
+          {
+            texto:
+              porcentaje === null
+                ? `${plural(lista.length, "producto", "productos")} de «${categoria.nombre}». Escriba un porcentaje para ver los precios nuevos.`
+                : `${plural(lista.length, "producto", "productos")} de «${categoria.nombre}» con un ajuste de ${textoPorcentaje(porcentaje)}. Los precios nuevos se redondean a la centena.`,
+          }
+        ),
+        crear(
+          "thead",
+          {},
+          crear("tr", {}, ...["Producto", "Precio actual", "Precio nuevo", "Diferencia"].map((columna, indice) => crear("th", { scope: "col", clase: indice ? "numero" : null, texto: columna })))
+        ),
+        crear("tbody", {}, ...filas)
+      )
+    );
+  }
+
+  formulario.addEventListener("input", (evento) => {
+    evento.target.removeAttribute("aria-invalid");
+    const mensaje = document.getElementById(`${evento.target.id}-error`);
+    if (mensaje) mensaje.textContent = "";
+    pintarVistaPrevia();
+  });
+  selector.addEventListener("change", pintarVistaPrevia);
+
+  formulario.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    limpiarErrores(formulario, resumen);
+    resultado.replaceChildren();
+    const errores = [];
+    const categoria = datos.categorias.find((c) => c.id === selector.value);
+    if (!categoria) errores.push({ campo: "categoria_id", mensaje: "Categoría: elija la categoría que quiere ajustar." });
+    const porcentaje = porcentajeValido();
+    if (porcentaje === null) {
+      errores.push({ campo: "porcentaje", mensaje: "Porcentaje: escriba un número entero entre -50 y 100, distinto de 0." });
+    }
+    if (errores.length) {
+      mostrarErrores(resumen, errores, errores.length === 1 ? "Revise 1 dato del ajuste" : `Revise ${errores.length} datos del ajuste`);
+      return;
+    }
+    const cantidad = contar(categoria.id);
+    const confirmacion = `¿Cambiar en ${textoPorcentaje(porcentaje)} los precios de ${plural(cantidad, "producto", "productos")} de «${categoria.nombre}»? Los pedidos ya registrados conservan su precio.`;
+    if (!window.confirm(confirmacion)) return;
+
+    botonAplicar.disabled = true;
+    botonAplicar.textContent = "Aplicando…";
+    try {
+      // POST /categorias/{id}/ajuste-precios: el servidor cambia todos los precios en una transacción.
+      const respuesta = await Api.pedir(`/categorias/${categoria.id}/ajuste-precios`, { metodo: "POST", cuerpo: { porcentaje }, conSesion: true });
+      datos.productos = await Api.todasLasPaginas("/productos", { conSesion: true });
+      campoPorcentaje.value = "";
+      pintarVistaPrevia();
+      resultado.replaceChildren(
+        panelEstado("exito", {
+          nivel: "h3",
+          titulo: "Precios actualizados",
+          texto: `Se cambiaron los precios de ${plural(respuesta.productos_actualizados, "producto", "productos")} de «${categoria.nombre}» (${textoPorcentaje(porcentaje)}). Ya se ven en el catálogo y en el inventario.`,
+        })
+      );
+      resultado.querySelector("h3").focus();
+      anuncios.textContent = "";
+    } catch (error) {
+      if (!(error instanceof Api.ErrorApi)) console.error(error);
+      if (error instanceof Api.ErrorApi && error.estado === 422) {
+        mostrarErrores(resumen, erroresDeLaApi(error, { porcentaje: "Porcentaje" }), error.message);
+      } else if (!(error instanceof Api.ErrorApi && error.estado === 401)) {
+        mostrarErrores(resumen, [{ campo: "", mensaje: error.message }], "No se pudieron ajustar los precios");
+      }
+    } finally {
+      botonAplicar.disabled = modo !== "api";
+      botonAplicar.textContent = "Aplicar el ajuste";
+    }
+  });
+
+  pintarVistaPrevia();
+  mostrarEn(
+    zona,
+    avisoDemostracion(modo),
+    crear(
+      "section",
+      { "aria-labelledby": "ajuste-titulo" },
+      crear("h2", { id: "ajuste-titulo", texto: "Subir o bajar los precios de una categoría" }),
+      crear("p", { texto: "Útil antes de una temporada o cuando sube el costo de un proveedor. Cambia todos los productos de la categoría a la vez; los pedidos ya registrados no cambian, porque cada uno guarda su precio." }),
+      resumen,
+      formulario,
+      resultado
+    ),
+    crear("section", { "aria-labelledby": "previa-titulo" }, crear("h2", { id: "previa-titulo", texto: "Vista previa" }), zonaPrevia)
+  );
+}
+
 /* ---------- Arranque ---------- */
 
 const PANTALLAS = {
@@ -1549,11 +2216,21 @@ const PANTALLAS = {
   formulario: iniciarFormulario,
   ingresar: iniciarIngresar,
   pedidos: iniciarPedidos,
+  categorias: iniciarGestion,
+  proveedores: iniciarGestion,
+  temporadas: iniciarGestion,
+  precios: iniciarPrecios,
 };
 
 document.addEventListener("DOMContentLoaded", () => {
   const enlacePie = $("#whatsapp-pie");
   if (enlacePie) enlacePie.href = enlaceWhatsApp(`Hola, ${CONFIG.nombreNegocio}. Quiero hacer una consulta.`);
+  // En el celular las pestañas de gestión se desplazan de lado: la de esta página queda a la vista.
+  const pestanaActual = $(".subnavegacion [aria-current='page']");
+  if (pestanaActual) {
+    const lista = pestanaActual.closest("ul");
+    lista.scrollLeft += pestanaActual.getBoundingClientRect().left - lista.getBoundingClientRect().left - 4;
+  }
   const iniciar = PANTALLAS[document.body.dataset.pagina];
   if (iniciar) iniciar();
 });
