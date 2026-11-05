@@ -6,7 +6,7 @@ import { paginacion } from "./sql.js";
 
 // estado_pago: el del último intento de pago en línea (Entrega 4), o null si nunca se cobró en línea.
 const COLUMNAS_PEDIDO = `p.id, p.cliente_nombre, p.cliente_telefono, p.canal, p.estado, p.fecha_entrega,
-  p.nota, p.total, p.creado_en, p.actualizado_en,
+  p.nota, p.total, p.reservado_hasta, p.creado_en, p.actualizado_en,
   (SELECT pg.estado FROM pago pg WHERE pg.pedido_id = p.id ORDER BY pg.creado_en DESC LIMIT 1) AS estado_pago`;
 const COLUMNAS_DETALLE = "id, pedido_id, producto_id, cantidad, precio_unitario, creado_en, actualizado_en";
 
@@ -63,7 +63,9 @@ export async function ver(db, id) {
   return (await conDetalles(db, rows))[0];
 }
 
-export async function crear(pool, entrada) {
+// opciones (tienda en línea, D18): soloVisibles no deja comprar productos ocultos del
+// catálogo; reservadoHasta marca hasta cuándo se apartan las unidades si no se paga.
+export async function crear(pool, entrada, { soloVisibles = false, reservadoHasta = null } = {}) {
   const repetidos = entrada.detalles
     .map((detalle, i) => ({ ...detalle, i }))
     .filter((detalle, _, todos) => todos.findIndex((otro) => otro.producto_id === detalle.producto_id) !== detalle.i);
@@ -80,7 +82,8 @@ export async function crear(pool, entrada) {
     // de id para que dos transacciones nunca se esperen la una a la otra.
     const ids = entrada.detalles.map((detalle) => detalle.producto_id);
     const { rows: productos } = await cliente.query(
-      "SELECT id, nombre, precio, stock FROM producto WHERE id = ANY($1) ORDER BY id FOR UPDATE",
+      `SELECT id, nombre, precio, stock FROM producto WHERE id = ANY($1)${soloVisibles ? " AND visible_en_catalogo" : ""}
+        ORDER BY id FOR UPDATE`,
       [ids],
     );
     const porId = new Map(productos.map((producto) => [producto.id, producto]));
@@ -110,9 +113,17 @@ export async function crear(pool, entrada) {
       0,
     );
     const { rows } = await cliente.query(
-      `INSERT INTO pedido (cliente_nombre, cliente_telefono, canal, fecha_entrega, nota, total)
-       VALUES ($1, $2, coalesce($3::canal_pedido, 'whatsapp'), $4, $5, $6) RETURNING id`,
-      [entrada.cliente_nombre, entrada.cliente_telefono, entrada.canal ?? null, entrada.fecha_entrega ?? null, entrada.nota ?? null, total],
+      `INSERT INTO pedido (cliente_nombre, cliente_telefono, canal, fecha_entrega, nota, total, reservado_hasta)
+       VALUES ($1, $2, coalesce($3::canal_pedido, 'whatsapp'), $4, $5, $6, $7) RETURNING id`,
+      [
+        entrada.cliente_nombre,
+        entrada.cliente_telefono,
+        entrada.canal ?? null,
+        entrada.fecha_entrega ?? null,
+        entrada.nota ?? null,
+        total,
+        reservadoHasta,
+      ],
     );
     const pedidoId = rows[0].id;
 

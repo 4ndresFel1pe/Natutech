@@ -67,7 +67,7 @@ Compruebe las versiones con `git --version`, `docker --version`, `docker compose
 Comprobación rápida desde otra terminal:
 ```bash
 curl http://localhost:8080/api/salud
-# {"estado":"ok","base_de_datos":"ok","version":"0.4.1"}
+# {"estado":"ok","base_de_datos":"ok","version":"0.4.2"}
 ```
 
 **Si sale `port is already allocated`:** otro programa usa ese puerto (por ejemplo, un PostgreSQL instalado en el computador usa el 5432). En `.env`, quite el `#` de `DB_PUERTO_LOCAL=5432` o de `WEB_PUERTO=8080`, cambie el número (por ejemplo, `5433` u `8081`) y vuelva a ejecutar `docker compose up -d`.
@@ -134,6 +134,7 @@ curl http://localhost:8080/api/alertas -H "Authorization: Bearer EL_TOKEN"
 | Recurso | Operaciones | Quién |
 |---|---|---|
 | Catálogo | `GET /catalogo/productos` (búsqueda sin tildes, filtros, páginas) · `GET /catalogo/productos/{id}` | Público |
+| Tienda en línea | `POST /catalogo/pedidos` (crea el pedido desde el carrito, aparta el stock 30 minutos y devuelve el enlace de Wompi; 10 por conexión cada 15 minutos) | Público |
 | Categorías | `GET /categorias` | Público |
 | | `POST` · `PATCH /{id}` · `DELETE /{id}` · `POST /{id}/ajuste-precios` | Administrador |
 | Temporadas | `GET /temporadas` · `GET /temporadas/{id}` | Público |
@@ -154,13 +155,13 @@ curl http://localhost:8080/api/alertas -H "Authorization: Bearer EL_TOKEN"
 { "codigo": "VALIDACION_FALLIDA", "mensaje": "Revise los campos marcados.",
   "detalles": [{ "campo": "precio", "problema": "debe ser un número entero" }] }
 ```
-`400` dirección o JSON mal formado · `401` sin sesión o firma de Wompi falsa · `403` solo administrador · `404` no existe · `409` nombre repetido o algo que todavía se usa · `422` datos que no cumplen las reglas · `503` cobro en línea sin configurar · `500` error interno. Detalle en [D12](docs/decisiones.md#d12-la-validación-sale-del-contrato).
+`400` dirección o JSON mal formado · `401` sin sesión o firma de Wompi falsa · `403` solo administrador · `404` no existe · `409` nombre repetido o algo que todavía se usa · `422` datos que no cumplen las reglas · `429` demasiados pedidos desde la misma conexión · `503` cobro en línea sin configurar · `500` error interno. Detalle en [D12](docs/decisiones.md#d12-la-validación-sale-del-contrato).
 
 ## Pantallas
 
 | Pantalla | Archivo | Qué hace |
 |---|---|---|
-| Catálogo público (principal) | [`web/index.html`](web/index.html) | Productos con buscador, filtros por categoría, luz y existencia, cuenta regresiva a la próxima temporada y botón de WhatsApp |
+| Catálogo público (principal) | [`web/index.html`](web/index.html) | Productos con buscador, filtros por categoría, luz y existencia, cuenta regresiva a la próxima temporada y botón de WhatsApp y botón para agregar al carrito |
 | Detalle del producto | [`web/detalle.html`](web/detalle.html) | Precio, disponibilidad, cuidados y productos de la misma categoría |
 | Ingreso | [`web/ingresar.html`](web/ingresar.html) | Inicio de sesión del personal |
 | Inventario | [`web/inventario.html`](web/inventario.html) | Resumen de existencias, próxima temporada, alertas de reabastecimiento (se atienden desde aquí) y tabla de productos |
@@ -170,6 +171,7 @@ curl http://localhost:8080/api/alertas -H "Authorization: Bearer EL_TOKEN"
 | Proveedores | [`web/proveedores.html`](web/proveedores.html) | Registrar y editar proveedores, con celular, municipio y días de entrega; se desactivan en lugar de eliminarse |
 | Temporadas | [`web/temporadas.html`](web/temporadas.html) | Registrar y editar las fechas que activan las alertas de reabastecimiento; eliminar es solo de la administración |
 | Ajuste de precios | [`web/precios.html`](web/precios.html) | Subir o bajar en un porcentaje los precios de una categoría, con vista previa de cada producto antes de aplicarlo (solo administración) |
+| Carrito | [`web/carrito.html`](web/carrito.html) | Productos agregados desde el catálogo, con cantidades, total y datos del cliente. Se paga en línea con Wompi o se envía el pedido por WhatsApp |
 | Resultado del pago | [`web/pago-resultado.html`](web/pago-resultado.html) | Adonde Wompi devuelve al cliente: confirma con la API si el pago quedó aprobado, rechazado o en proceso |
 
 Los estados de carga, vacío y error se ven desde el pie de cada página o agregando `?estado=cargando`, `?estado=vacio` o `?estado=error` a la dirección.
@@ -190,7 +192,7 @@ Los estados de carga, vacío y error se ven desde el pie de cada página o agreg
 | E1 Anteproyecto | 17 sep | Entregada | Problema validado con el vivero, repositorio, wireframes, ruta y plan de trabajo |
 | E2 Prototipo y contrato | 1 oct | Entregada (v0.2.0) | Prototipo navegable publicado, contrato OpenAPI 3.1 validado con servidor simulado, modelo de datos y tablero de tareas |
 | E3 MVP del backend | 15 oct | Entregada (v0.3.0) | API en Fastify con PostgreSQL: CRUD de productos, categorías, temporadas, proveedores y pedidos; autenticación JWT con roles; validación desde el contrato; alertas automáticas; pruebas en CI; todo levanta con `docker compose up`; prototipo conectado |
-| E4 Despliegue contenerizado | 5 nov | **En esta versión (v0.4.0)** | Publicada en https://natutech.lat: instancia EC2 de AWS con el mismo Compose, HTTPS automático con Caddy, dominio propio y tiempos de espera en la conexión con la base. Pantallas de categorías, proveedores, temporadas y ajuste de precios; pago en línea con Wompi en modo de pruebas (v0.4.1). Pendientes: despliegue automático desde CI, respaldos con restauración probada y cookie `HttpOnly` |
+| E4 Despliegue contenerizado | 5 nov | **En esta versión (v0.4.0)** | Publicada en https://natutech.lat: instancia EC2 de AWS con el mismo Compose, HTTPS automático con Caddy, dominio propio y tiempos de espera en la conexión con la base. Pantallas de categorías, proveedores, temporadas y ajuste de precios; pago en línea con Wompi en modo de pruebas (v0.4.1); tienda en línea con carrito (v0.4.2). Pendientes: despliegue automático desde CI, respaldos con restauración probada y cookie `HttpOnly` |
 | E5 Versión candidata | 26 nov | Pendiente | Funcionalidades congeladas, pruebas, auditorías, respaldo restaurado |
 | E6 Sustentación EXIS | 4 dic | Pendiente | |
 
@@ -208,7 +210,7 @@ Natutech/
 ├── .redocly.lint-ignore.yaml Advertencias del contrato aceptadas, con su razón
 ├── .github/workflows/        Contrato, pruebas, contenedores y publicación (ver arriba)
 ├── api/
-│   └── openapi.yaml          Contrato de la API (OpenAPI 3.1, versión 0.4.1)
+│   └── openapi.yaml          Contrato de la API (OpenAPI 3.1, versión 0.4.2)
 ├── servidor/                 API en Node.js 22 con Fastify
 │   ├── Dockerfile            Imagen de dos etapas, usuario sin privilegios
 │   ├── db/migraciones/       Esquema de PostgreSQL en SQL
@@ -238,6 +240,7 @@ Natutech/
     ├── ingresar.html                                Ingreso del personal
     ├── inventario.html, producto-form.html, pedidos.html   Panel del vivero
     ├── categorias.html, proveedores.html, temporadas.html, precios.html   Gestión del catálogo (Entrega 4)
+    ├── carrito.html          Carrito de la tienda en línea: pagar con Wompi o enviar por WhatsApp
     ├── pago-resultado.html   Adonde vuelve el cliente después de pagar con Wompi
     ├── css/estilos.css       Estilos base, variables en :root
     ├── css/mejoras.css, portada.css, movil.css, movil-apple.css   Portada, animaciones y versión móvil
@@ -264,7 +267,7 @@ Natutech/
 |---|---|---|---|
 | Claude (Anthropic) | E2 | Proponer la estructura del repositorio y redactar borradores del contrato OpenAPI, del modelo de datos y de la documentación. Revisar la coherencia entre contrato, modelo y datos de ejemplo. | El problema, la encuesta al vivero, la elección de ruta y las decisiones son del equipo. |
 | Claude (Anthropic) | E3 | Generar el código del servidor (Fastify, migraciones, autenticación, recursos y alertas), las pruebas, los archivos de Docker y de los flujos de GitHub Actions, la conexión del prototipo con la API y los borradores de esta documentación y de las decisiones D10 a D15. | El equipo definió qué debía hacer el sistema y sus reglas (encuesta y decisiones D1 a D9), aprobó la elección de Fastify y repartió el trabajo. Cada integrante revisó, probó y subió su parte, y responde por ella en la sustentación. |
-| Claude (Anthropic) | E4 | Comparar opciones y precios de servidor y dominio; redactar `docker-compose.prod.yml`, el `Caddyfile`, la guía `docs/despliegue.md` y la decisión D16; agregar los tiempos de espera de la conexión con la base y su prueba, actualizar la dependencia vulnerable que señaló `npm audit`, quitar archivos sin uso, corregir la D11, preparar la versión 0.4.0, programar las pantallas de categorías, proveedores, temporadas y ajuste de precios, y programar el pago en línea con Wompi y el número de WhatsApp desde el .env (D17), con sus pruebas. | Andres Felipe Gomez eligió el proveedor (AWS, después de que Azure for Students bloqueara las máquinas virtuales) y el dominio, creó y pagó las cuentas, configuró el servidor, verificó el despliegue en vivo y responde por él en la sustentación. |
+| Claude (Anthropic) | E4 | Comparar opciones y precios de servidor y dominio; redactar `docker-compose.prod.yml`, el `Caddyfile`, la guía `docs/despliegue.md` y la decisión D16; agregar los tiempos de espera de la conexión con la base y su prueba, actualizar la dependencia vulnerable que señaló `npm audit`, quitar archivos sin uso, corregir la D11, preparar la versión 0.4.0, programar las pantallas de categorías, proveedores, temporadas y ajuste de precios, programar el pago en línea con Wompi y el número de WhatsApp desde el .env (D17) y la tienda en línea con carrito (D18), con sus pruebas. | Andres Felipe Gomez eligió el proveedor (AWS, después de que Azure for Students bloqueara las máquinas virtuales) y el dominio, creó y pagó las cuentas, configuró el servidor, verificó el despliegue en vivo y responde por él en la sustentación. |
 
 Los datos de ejemplo son sintéticos: los productos son del tipo que vende el vivero, pero precios, existencias, proveedores, clientes y teléfonos son inventados.
 

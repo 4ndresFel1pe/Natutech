@@ -1294,3 +1294,44 @@ summary {
   margin: var(--espacio-4) auto 0;
   text-align: left;
 }
+
+/* Tienda en línea (decisión D18): carrito en el catálogo público */
+.tarjeta__acciones {
+  display: grid;
+  gap: var(--espacio-2);
+}
+
+.consulta__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-3);
+}
+
+/* Cantidad dentro de la tabla del carrito: mismo aspecto que los campos de los formularios */
+.carrito__cantidad {
+  width: 6rem;
+  min-height: var(--alto-control);
+  padding: var(--espacio-2) var(--espacio-3);
+  border: 2px solid var(--color-tinta-suave);
+  border-radius: var(--radio-chico);
+  background: var(--color-fondo);
+  color: var(--color-tinta);
+  font: inherit;
+}
+
+/* Número de productos sobre el ícono de la pestaña «Carrito» (celular) */
+.tab__cuenta {
+  position: absolute;
+  top: 4px;
+  left: calc(50% + 4px);
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--color-hoja);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.15rem;
+  text-align: center;
+}

@@ -3,13 +3,13 @@
 'use strict';
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const pag = document.body.dataset.pagina || '', html = document.documentElement;
-const publico = /^(catalogo|detalle)$/.test(pag), panel = /^(inventario|pedidos|formulario|categorias|proveedores|temporadas|precios)$/.test(pag);
+const publico = /^(catalogo|detalle|carrito)$/.test(pag), panel = /^(inventario|pedidos|formulario|categorias|proveedores|temporadas|precios)$/.test(pag);
 const buzz = n => { if (navigator.vibrate) try { navigator.vibrate(n); } catch (e) {} };
 const pickSrc = (s, v) => { const p = s.split('|'); if (p.length < 2) return s; return v.canPlayType('video/mp4; codecs="avc1.640028"') ? p[0] : v.canPlayType('video/webm; codecs="vp9"') ? p[1] : p[0]; };
 const IC = { wa: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.4 18.7z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-2-1-.9.7a4 4 0 0 1-1.6-1.6l.7-.9-1-2z"/></svg>' };
 
 /* ---------- Pantalla de carga al hacer clic: una animación distinta por destino ---------- */
-const TEMA = [[/detalle/, 'brote', 'Trayendo tu planta'], [/inventario/, 'estante', 'Abriendo el inventario'], [/pedidos/, 'reparto', 'Cargando los pedidos'], [/producto-form/, 'brote', 'Preparando una planta nueva'], [/ingresar/, 'puerta', 'Abriendo el panel'], [/categorias|proveedores|temporadas|precios/, 'estante', 'Abriendo la gestión del catálogo'], [/./, 'siembra', 'Abriendo el vivero']];
+const TEMA = [[/detalle/, 'brote', 'Trayendo tu planta'], [/inventario/, 'estante', 'Abriendo el inventario'], [/pedidos/, 'reparto', 'Cargando los pedidos'], [/producto-form/, 'brote', 'Preparando una planta nueva'], [/ingresar/, 'puerta', 'Abriendo el panel'], [/carrito/, 'reparto', 'Abriendo su carrito'], [/categorias|proveedores|temporadas|precios/, 'estante', 'Abriendo la gestión del catálogo'], [/./, 'siembra', 'Abriendo el vivero']];
 let yendo = false;
 const normRuta = p => p.replace(/index\.html$/, '').replace(/\/+$/, '') || '/';
 const mismaPagina = u => u.origin === location.origin && normRuta(u.pathname) === normRuta(location.pathname) && u.search === location.search;   // '/' e '/index.html' son la misma página
@@ -86,9 +86,10 @@ const P = {
   inventario: 'M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8',
   pedidos: 'M9 6h11M9 12h11M9 18h11M4.5 6l1 1 2-2M4.5 12l1 1 2-2M4.5 18l1 1 2-2',
   nuevo: 'M12 5v14M5 12h14',
-  gestion: 'M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4'
+  gestion: 'M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4',
+  carrito: 'M6 8h12l-1.2 12H7.2zM9 8V6.5a3 3 0 0 1 6 0V8'
 };
-const TABS = publico ? [['inicio', 'Inicio', H('#inicio')], ['catalogo', 'Catálogo', H('#catalogo')], ['temporada', 'Temporada', H('#temporada')], ['nosotros', 'Nosotros', H('#nosotros')], ['escribir', 'Escribir', '#', 1]]
+const TABS = publico ? [['inicio', 'Inicio', H('#inicio')], ['catalogo', 'Catálogo', H('#catalogo')], ['temporada', 'Temporada', H('#temporada')], ['carrito', 'Carrito', 'carrito.html'], ['escribir', 'Escribir', '#', 1]]
   : panel ? [['inventario', 'Inventario', 'inventario.html'], ['pedidos', 'Pedidos', 'pedidos.html'], ['nuevo', 'Nuevo', 'producto-form.html'], ['gestion', 'Gestión', 'categorias.html'], ['catalogo', 'Catálogo', 'index.html#catalogo']] : [];
 let tabbar = null;
 if (TABS.length) {
@@ -105,6 +106,7 @@ const activar = id => {
   tabs.forEach((t, i) => { const on = t.dataset.s === key; if (on) { t.setAttribute('aria-current', 'true'); tabbar.style.setProperty('--i', i); } else t.removeAttribute('aria-current'); });
 };
 if (pag === 'detalle') activar('catalogo');
+if (pag === 'carrito') activar('carrito');
 if (panel) activar(pag === 'formulario' ? 'nuevo' : /^(categorias|proveedores|temporadas|precios)$/.test(pag) ? 'gestion' : pag);
 if (own && 'IntersectionObserver' in window) {
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) activar(e.target.id); }), { rootMargin: '-40% 0px -55% 0px' });

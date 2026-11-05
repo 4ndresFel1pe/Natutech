@@ -11,6 +11,7 @@ import rutasSesiones from "./rutas/sesiones.js";
 import rutasCatalogo from "./rutas/catalogo.js";
 import rutasGestion from "./rutas/gestion.js";
 import rutasPagos from "./rutas/pagos.js";
+import rutasTienda from "./rutas/tienda.js";
 
 export async function construirApp({ config, db, contratoDoc, registro = true }) {
   const app = Fastify({
@@ -39,5 +40,6 @@ export async function construirApp({ config, db, contratoDoc, registro = true })
   await app.register(rutasCatalogo, opciones);
   await app.register(rutasGestion, opciones);
   await app.register(rutasPagos, opciones);
+  await app.register(rutasTienda, opciones);
   return app;
 }

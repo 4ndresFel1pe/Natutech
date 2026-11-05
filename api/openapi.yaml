@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: API de Natutech para el Vivero Las Acacias
-  version: 0.4.1
+  version: 0.4.2
   summary: Catálogo, inventario, pedidos y alertas de reabastecimiento por temporada.
   description: |
     Contrato que implementa el backend desde la Entrega 3 (carpeta `servidor/`).
@@ -129,6 +129,60 @@ paths:
                       total: 6
         '400':
           $ref: '#/components/responses/SolicitudInvalida'
+
+  /catalogo/pedidos:
+    post:
+      tags: [Catálogo público]
+      operationId: crearPedidoTienda
+      summary: Crea un pedido desde el carrito y devuelve el enlace para pagarlo con Wompi
+      description: |
+        Tienda en línea (decisión D18). No pide sesión. El servidor calcula los precios y el
+        total, descuenta el stock y lo aparta 30 minutos; el enlace de Wompi vence a esa misma
+        hora. Si no hay un pago aprobado, el pedido se cancela solo y el stock vuelve. Cada
+        conexión puede crear 10 pedidos cada 15 minutos.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoTiendaEntrada'
+            examples:
+              carrito:
+                summary: Dos productos desde el carrito
+                value:
+                  cliente_nombre: Paola Rincón
+                  cliente_telefono: +57 300 000 0301
+                  detalles:
+                    - producto_id: 1f491554-7cdd-48dd-a438-47ce97802716
+                      cantidad: 1
+                    - producto_id: 2215207b-73ad-46d2-86b2-6213df17d4c3
+                      cantidad: 2
+      responses:
+        '201':
+          description: Pedido creado; el cliente sigue en el enlace de pago
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PedidoTiendaCreado'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          description: Demasiados pedidos seguidos desde la misma conexión
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                muchos:
+                  summary: Más de 10 pedidos en 15 minutos
+                  value:
+                    codigo: DEMASIADAS_SOLICITUDES
+                    mensaje: Se hicieron muchos pedidos seguidos desde esta conexión. Espere unos minutos o escríbanos por WhatsApp.
+        '503':
+          $ref: '#/components/responses/PagosSinConfigurar'
 
   /catalogo/productos/{producto_id}:
     parameters:
@@ -1581,7 +1635,7 @@ paths:
                   value:
                     estado: ok
                     base_de_datos: ok
-                    version: 0.4.1
+                    version: 0.4.2
         '503':
           description: La API está arriba pero la base de datos no responde
           content:
@@ -1594,7 +1648,7 @@ paths:
                   value:
                     estado: degradado
                     base_de_datos: sin_conexion
-                    version: 0.4.1
+                    version: 0.4.2
 
 components:
   securitySchemes:
@@ -1829,7 +1883,7 @@ components:
         codigo:
           type: string
           description: Código estable que el frontend puede usar para decidir qué mostrar.
-          enum: [SOLICITUD_INVALIDA, NO_AUTENTICADO, SIN_PERMISO, NO_ENCONTRADO, CONFLICTO, VALIDACION_FALLIDA, SERVICIO_NO_DISPONIBLE, ERROR_INTERNO]
+          enum: [SOLICITUD_INVALIDA, NO_AUTENTICADO, SIN_PERMISO, NO_ENCONTRADO, CONFLICTO, VALIDACION_FALLIDA, SERVICIO_NO_DISPONIBLE, DEMASIADAS_SOLICITUDES, ERROR_INTERNO]
         mensaje:
           type: string
           description: Explicación en español, lista para mostrarle a la persona.
@@ -2266,7 +2320,8 @@ components:
           $ref: '#/components/schemas/Telefono'
         canal:
           type: string
-          enum: [whatsapp, tienda]
+          enum: [whatsapp, tienda, web]
+          description: web es un pedido que hizo el cliente desde el carrito del catálogo (tienda en línea).
         estado:
           $ref: '#/components/schemas/EstadoPedido'
         fecha_entrega:
@@ -2279,6 +2334,12 @@ components:
           minimum: 0
           readOnly: true
           description: Suma de cantidad × precio_unitario de todas las líneas. Lo calcula el servidor.
+        reservado_hasta:
+          description: Solo en los pedidos de la tienda en línea sin pagar. Si a esa hora no hay un pago aprobado, el pedido se cancela solo y el stock vuelve.
+          readOnly: true
+          oneOf:
+            - $ref: '#/components/schemas/Marca'
+            - type: 'null'
         estado_pago:
           description: Estado del último intento de pago en línea, o null si el pedido nunca se cobró en línea.
           readOnly: true
@@ -2308,10 +2369,11 @@ components:
 
     EstadoPago:
       type: string
-      enum: [pendiente, aprobado, rechazado, anulado, error]
+      enum: [pendiente, aprobado, rechazado, anulado, error, vencido]
       description: |
         pendiente: el enlace se generó y el cliente todavía no paga (o Wompi no ha respondido).
         aprobado, rechazado, anulado y error: el resultado que avisó Wompi.
+        vencido: el enlace de un pedido de la tienda en línea venció sin pago.
 
     Pago:
       type: object
@@ -2340,7 +2402,12 @@ components:
         enlace_pago:
           type: [string, 'null']
           format: uri
-          description: Enlace al Web Checkout de Wompi, con la firma de integridad. Solo lo tienen los pagos pendientes.
+          description: Enlace al Web Checkout de Wompi, con la firma de integridad. Solo lo tienen los pagos pendientes y sin vencer.
+        vence_en:
+          oneOf:
+            - $ref: '#/components/schemas/Marca'
+            - type: 'null'
+          description: Hasta cuándo se puede pagar (solo los enlaces de la tienda en línea vencen).
         creado_en:
           $ref: '#/components/schemas/Marca'
         actualizado_en:
@@ -2375,6 +2442,58 @@ components:
           type: integer
         sent_at:
           type: string
+
+    PedidoTiendaEntrada:
+      type: object
+      description: |
+        Lo que manda el carrito del catálogo. Solo ids y cantidades: los precios y el total los
+        calcula el servidor con los precios de ese momento.
+      required: [cliente_nombre, cliente_telefono, detalles]
+      additionalProperties: false
+      properties:
+        cliente_nombre:
+          type: string
+          minLength: 2
+          maxLength: 80
+        cliente_telefono:
+          $ref: '#/components/schemas/Telefono'
+        nota:
+          type: [string, 'null']
+          maxLength: 300
+        detalles:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items:
+            type: object
+            required: [producto_id, cantidad]
+            additionalProperties: false
+            properties:
+              producto_id:
+                type: string
+                format: uuid
+              cantidad:
+                type: integer
+                minimum: 1
+                maximum: 50
+
+    PedidoTiendaCreado:
+      type: object
+      required: [pedido_id, referencia, total, enlace_pago, reservado_hasta]
+      properties:
+        pedido_id:
+          $ref: '#/components/schemas/Uuid'
+        referencia:
+          type: string
+        total:
+          type: integer
+          minimum: 1
+        enlace_pago:
+          type: string
+          format: uri
+          description: Enlace al Web Checkout de Wompi, firmado y con vencimiento (expiration-time).
+        reservado_hasta:
+          $ref: '#/components/schemas/Marca'
 
     RespuestaEvento:
       type: object

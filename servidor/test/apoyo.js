@@ -42,6 +42,9 @@ export const PAGOS = {
   urlPublica: "https://natutech.lat",
 };
 
+// Tienda en línea: sin límite práctico por conexión, salvo en la prueba que lo comprueba.
+export const TIENDA = { minutosReserva: 30, pedidosPorVentana: 1000, minutosVentana: 15 };
+
 // Identificadores de web/datos/ejemplo.json que usan varias pruebas.
 export const IDS = {
   anturio: "1f491554-7cdd-48dd-a438-47ce97802716", // stock 3
@@ -72,6 +75,7 @@ export async function prepararEntorno() {
     jwtExpiraEn: "1h",
     origenesPermitidos: ["http://localhost:8080"],
     pagos: PAGOS,
+    tienda: TIENDA,
   };
   const app = await construirApp({ config, db, contratoDoc: cargarContrato(path.resolve(aqui, "../../api/openapi.yaml")), registro: false });
   const { contrato } = app;
