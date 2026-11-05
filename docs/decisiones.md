@@ -5,7 +5,7 @@ Registro de las decisiones que condicionan el proyecto. Cada una dice qué se de
 | # | Decisión | Estado | Fecha |
 |---|---|---|---|
 | D1 | Ruta A: contenerización y DevOps | Vigente | 17 sep 2026 |
-| D2 | La venta se cierra por WhatsApp, sin pasarela de pago | Vigente, actualizada por D17 | 17 sep 2026 · 5 nov 2026 |
+| D2 | La venta se cierra por WhatsApp, sin pasarela de pago | Vigente, actualizada por D17 y D18 | 17 sep 2026 · 5 nov 2026 |
 | D3 | PostgreSQL como base de datos | Vigente | 1 oct 2026 |
 | D4 | Contrato primero (OpenAPI 3.1) | Vigente | 1 oct 2026 |
 | D5 | Catálogo público separado de la gestión | Vigente, actualizada | 1 oct 2026 · 14 oct 2026 |
@@ -21,6 +21,7 @@ Registro de las decisiones que condicionan el proyecto. Cada una dice qué se de
 | D15 | Pruebas contra el contrato, en dos zonas horarias | Vigente | 14 oct 2026 |
 | D16 | Despliegue: una máquina virtual con el mismo Compose y Caddy para HTTPS | Vigente | 4 nov 2026 |
 | D17 | Pago en línea opcional con Wompi (modo de pruebas) y número de WhatsApp desde el .env | Vigente | 5 nov 2026 |
+| D18 | Tienda en línea: carrito en el catálogo y pedidos sin sesión con stock apartado 30 minutos | Vigente | 5 nov 2026 |
 
 ---
 
@@ -40,7 +41,7 @@ Registro de las decisiones que condicionan el proyecto. Cada una dice qué se de
 
 **Consecuencias.** No se manejan datos de pago ni cuentas de cliente. El pedido lo crea siempre alguien autenticado del vivero, lo que reduce la superficie de ataque.
 
-**Actualización del 5 de noviembre (D17).** La venta se sigue cerrando por WhatsApp, pero ahora el vivero puede mandarle al cliente un enlace de pago de Wompi. Natutech sigue sin ver ni guardar datos de tarjetas: el cliente paga en la página de Wompi.
+**Actualización del 5 de noviembre (D17).** La venta se sigue cerrando por WhatsApp, pero ahora el vivero puede mandarle al cliente un enlace de pago de Wompi. Natutech sigue sin ver ni guardar datos de tarjetas: el cliente paga en la página de Wompi. Con la D18, el cliente también puede armar su pedido en un carrito y pagarlo él mismo; el pedido por WhatsApp sigue disponible desde el mismo carrito.
 
 ## D3. PostgreSQL como base de datos
 
@@ -193,6 +194,24 @@ Registro de las decisiones que condicionan el proyecto. Cada una dice qué se de
 **Número de WhatsApp.** El número del vivero va en `WHATSAPP_NUMERO` del `.env` y nunca en el repositorio. nginx lo publica en `/configuracion.json` a partir de la plantilla `infra/nginx/default.conf.template`, y el prototipo lo usa en todos los botones de WhatsApp. En GitHub Pages, o si la variable está vacía, se usa el número de ejemplo.
 
 **Pendiente.** Activar producción cuando el vivero abra su cuenta de comercio en Wompi y cambiar el número de prueba por el del vivero cuando el dueño lo autorice.
+
+
+## D18. Tienda en línea: carrito en el catálogo y pedidos sin sesión
+
+**Contexto.** Con la D17, el pago en línea solo empezaba desde el panel: el cliente no podía comprar por su cuenta desde el catálogo. En la encuesta, el dueño dijo que le gustaría recibir pedidos por la página.
+
+**Decisión.** Cada producto del catálogo y del detalle tiene el botón «Agregar al carrito». El carrito (`carrito.html`) muestra los productos con los precios y existencias de hoy y ofrece dos caminos: **pagar en línea** con Wompi o **enviar el pedido por WhatsApp**, con el pedido ya escrito, como siempre. Pagar en línea llama a `POST /api/catalogo/pedidos`, que crea un pedido con canal `web` y devuelve el enlace de Wompi. El personal lo ve en Pedidos como «Tienda en línea» y, cuando está pagado, le escribe al cliente para coordinar la entrega.
+
+**Qué cambia frente a la D2.** Hasta ahora, solo el personal con sesión creaba pedidos. Esta es la primera ruta que crea datos sin sesión, así que se protege así:
+- **Del navegador solo llegan ids y cantidades.** El esquema no admite precios, y el servidor calcula precios y total con los de ese momento.
+- **Solo se compran productos visibles en el catálogo y con stock suficiente**, con el mismo bloqueo de filas que los demás pedidos (D3), así que dos clientes no pueden comprar la misma unidad.
+- **Las unidades quedan apartadas 30 minutos.** El enlace de Wompi vence a esa hora (`expiration-time`, incluido en la firma de integridad). Si a los 40 minutos no hay un pago aprobado, el pedido se cancela solo, el stock vuelve y el enlace queda «vencido». Lo revisa la API al arrancar, cada 5 minutos y antes de cada pedido nuevo.
+- **Cada conexión puede crear 10 pedidos cada 15 minutos.** Si pasa de ahí, recibe 429. Así nadie puede apartar todo el inventario con un programa. Detrás de Caddy y nginx, la API ve la IP real del cliente.
+- **Si el personal genera otro enlace para un pedido de la tienda, el pedido deja de vencer:** desde ese momento lo atiende el vivero.
+
+**Por qué el carrito vive en el navegador.** Guardarlo en `localStorage` evita crear cuentas de cliente, que la D2 descartó. Solo guarda ids y cantidades, así que no hay nada sensible.
+
+**Alternativas descartadas.** Pagar primero y descontar el stock después: con poco inventario, dos clientes podrían pagar la misma unidad. Pedir que el cliente cree una cuenta: es una barrera para un vivero de barrio, y el celular basta para coordinar la entrega.
 
 ---
 

@@ -121,7 +121,7 @@ Debe aparecer `certificate obtained successfully`. Luego, desde cualquier comput
 
 ```bash
 curl https://natutech.lat/api/salud
-# {"estado":"ok","base_de_datos":"ok","version":"0.4.1"}
+# {"estado":"ok","base_de_datos":"ok","version":"0.4.2"}
 ```
 
 ## 6. Crear la cuenta de la empleada
