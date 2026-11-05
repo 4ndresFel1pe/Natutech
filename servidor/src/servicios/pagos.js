@@ -12,7 +12,7 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { enTransaccion } from "../db.js";
 import { ErrorApi, conflicto, noAutenticado, noEncontrado } from "../errores.js";
 
-const COLUMNAS = "id, pedido_id, referencia, monto, estado, transaccion_id, metodo, creado_en, actualizado_en";
+const COLUMNAS = "id, pedido_id, referencia, monto, estado, transaccion_id, metodo, vence_en, creado_en, actualizado_en";
 const MONEDA = "COP";
 
 // Estados de una transacción en Wompi → estados de un pago en Natutech.
@@ -20,7 +20,7 @@ const ESTADOS = { PENDING: "pendiente", APPROVED: "aprobado", DECLINED: "rechaza
 
 const sha256 = (texto) => createHash("sha256").update(texto).digest("hex");
 
-function sinConfigurar() {
+export function sinConfigurar() {
   return new ErrorApi(
     503,
     "SERVICIO_NO_DISPONIBLE",
@@ -28,26 +28,33 @@ function sinConfigurar() {
   );
 }
 
-export function firmaIntegridad(referencia, montoEnCentavos, moneda, secreto) {
-  return sha256(`${referencia}${montoEnCentavos}${moneda}${secreto}`);
+// Con vencimiento (enlaces de la tienda en línea), Wompi pide la fecha entre la moneda y el secreto.
+export function firmaIntegridad(referencia, montoEnCentavos, moneda, secreto, vencimiento = "") {
+  return sha256(`${referencia}${montoEnCentavos}${moneda}${vencimiento}${secreto}`);
 }
 
 // Enlace al Web Checkout de Wompi con el monto, la referencia y la firma de integridad.
 export function enlaceDePago(config, pago) {
   const centavos = pago.monto * 100;
+  // expiration-time: Wompi no deja pagar después de esa hora (UTC, ISO 8601).
+  const vencimiento = pago.vence_en ? new Date(pago.vence_en).toISOString() : "";
   const parametros = new URLSearchParams({
     "public-key": config.llavePublica,
     currency: MONEDA,
     "amount-in-cents": String(centavos),
     reference: pago.referencia,
-    "signature:integrity": firmaIntegridad(pago.referencia, centavos, MONEDA, config.secretoIntegridad),
+    "signature:integrity": firmaIntegridad(pago.referencia, centavos, MONEDA, config.secretoIntegridad, vencimiento),
     "redirect-url": `${config.urlPublica}/pago-resultado.html`,
   });
+  if (vencimiento) parametros.set("expiration-time", vencimiento);
   return `${config.urlCheckout}?${parametros}`;
 }
 
-// Solo un pago pendiente tiene enlace: uno ya cerrado no se puede volver a pagar.
-const conEnlace = (config, pago) => ({ ...pago, enlace_pago: pago.estado === "pendiente" ? enlaceDePago(config, pago) : null });
+// Solo un pago pendiente y sin vencer tiene enlace: uno cerrado o vencido no se puede pagar.
+const conEnlace = (config, pago) => ({
+  ...pago,
+  enlace_pago: pago.estado === "pendiente" && (!pago.vence_en || Date.parse(pago.vence_en) > Date.now()) ? enlaceDePago(config, pago) : null,
+});
 
 async function verPedido(db, pedidoId, bloquear = false) {
   const { rows } = await db.query(`SELECT id, estado, total FROM pedido WHERE id = $1${bloquear ? " FOR UPDATE" : ""}`, [pedidoId]);
@@ -61,7 +68,9 @@ export async function listar(pool, config, pedidoId) {
   return rows.map((pago) => conEnlace(config, pago));
 }
 
-export async function crear(pool, config, pedidoId) {
+// venceEn: solo para los pedidos de la tienda en línea (D18). Un enlace que genera el
+// personal no vence, y el pedido deja de estar apartado: desde ahí lo atiende el vivero.
+export async function crear(pool, config, pedidoId, { venceEn = null } = {}) {
   if (!config.activo) throw sinConfigurar();
   const pago = await enTransaccion(pool, async (cliente) => {
     const pedido = await verPedido(cliente, pedidoId, true);
@@ -74,9 +83,10 @@ export async function crear(pool, config, pedidoId) {
     }
     const referencia = `NAT-${randomBytes(6).toString("hex").toUpperCase()}`;
     const { rows } = await cliente.query(
-      `INSERT INTO pago (pedido_id, referencia, monto) VALUES ($1, $2, $3) RETURNING ${COLUMNAS}`,
-      [pedidoId, referencia, pedido.total],
+      `INSERT INTO pago (pedido_id, referencia, monto, vence_en) VALUES ($1, $2, $3, $4) RETURNING ${COLUMNAS}`,
+      [pedidoId, referencia, pedido.total, venceEn],
     );
+    if (!venceEn) await cliente.query("UPDATE pedido SET reservado_hasta = NULL WHERE id = $1", [pedidoId]);
     return rows[0];
   });
   return conEnlace(config, pago);
@@ -95,7 +105,8 @@ async function aplicarTransaccion(pool, transaccion) {
     if (transaccion.amount_in_cents !== pago.monto * 100 || transaccion.currency !== MONEDA) return false;
     if (pago.estado === estado && pago.transaccion_id === transaccion.id) return false;
     // Un pago cerrado no vuelve atrás; lo único posible después de aprobado es la anulación.
-    const permitido = pago.estado === "pendiente" || (pago.estado === "aprobado" && estado === "anulado");
+    // Un enlace vencido todavía acepta el resultado que diga Wompi: si cobró, hay que saberlo.
+    const permitido = ["pendiente", "vencido"].includes(pago.estado) || (pago.estado === "aprobado" && estado === "anulado");
     if (!permitido) return false;
     await cliente.query("UPDATE pago SET estado = $2, transaccion_id = $3, metodo = $4 WHERE id = $1", [
       pago.id,

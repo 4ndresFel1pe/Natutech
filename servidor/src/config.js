@@ -66,6 +66,9 @@ export function leerConfiguracion() {
     // Pagos en línea con Wompi (decisión D17). Sin las tres llaves, el cobro queda apagado
     // y el resto del sistema funciona igual. Las llaves pub_test_ son del ambiente de pruebas.
     pagos: leerPagos(),
+    // Tienda en línea (D18): minutos que se apartan las unidades de un pedido sin pagar y
+    // cuántos pedidos puede crear una misma conexión en la ventana de tiempo.
+    tienda: { minutosReserva: 30, pedidosPorVentana: 10, minutosVentana: 15 },
     administradorInicial: {
       nombre: process.env.ADMIN_NOMBRE?.trim() || "Administración del vivero",
       correo: process.env.ADMIN_CORREO?.trim() || "",

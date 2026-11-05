@@ -9,6 +9,7 @@ import { construirApp } from "./app.js";
 import { sembrarDatosEjemplo } from "./semillas.js";
 import { crearAdministradorInicial } from "./servicios/usuarios.js";
 import { revisarTodo } from "./servicios/alertas.js";
+import { liberarReservasVencidas } from "./servicios/tienda.js";
 
 let config;
 try {
@@ -52,6 +53,19 @@ async function revisarAlertas() {
 }
 await revisarAlertas();
 setInterval(revisarAlertas, config.horasEntreAlertas * 60 * 60 * 1000).unref();
+
+// Tienda en línea (D18): cada 5 minutos se cancelan los pedidos que vencieron sin pagar y
+// sus unidades vuelven al inventario.
+async function liberarReservas() {
+  try {
+    const canceladas = await liberarReservasVencidas(db);
+    if (canceladas) app.log.info({ canceladas }, "reservas vencidas de la tienda en línea");
+  } catch (error) {
+    app.log.error({ err: error }, "falló la liberación de reservas");
+  }
+}
+await liberarReservas();
+setInterval(liberarReservas, 5 * 60 * 1000).unref();
 
 // Apagado ordenado: termina las peticiones en curso y cierra las conexiones.
 for (const senal of ["SIGINT", "SIGTERM"]) {
