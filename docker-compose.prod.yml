@@ -14,6 +14,11 @@ services:
   db:
     ports: !reset []
 
+  api:
+    environment:
+      # Wompi devuelve al cliente a https://{DOMINIO}/pago-resultado.html después de pagar.
+      URL_PUBLICA: https://${DOMINIO:?Falta DOMINIO en .env (por ejemplo natutech.lat)}
+
   web:
     ports: !reset []
 
