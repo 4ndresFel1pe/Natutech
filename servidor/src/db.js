@@ -17,7 +17,7 @@ types.setTypeParser(20, (valor) => Number(valor));
 // no tocar los datos del esquema public de la misma base.
 export function crearPool(cadenaConexion, { esquema } = {}) {
   if (esquema && !/^[a-z_]+$/.test(esquema)) throw new Error(`Nombre de esquema no válido: ${esquema}`);
-  return new Pool({
+  const pool = new Pool({
     connectionString: cadenaConexion,
     max: 10,
     // Tiempos de espera: si la base no responde, la petición falla con el error 500
@@ -27,6 +27,14 @@ export function crearPool(cadenaConexion, { esquema } = {}) {
     idle_in_transaction_session_timeout: 30000, // transacción abierta sin actividad: 30 s
     options: `-c timezone=America/Bogota${esquema ? ` -c search_path=${esquema},public` : ""}`,
   });
+  // Si PostgreSQL cierra una conexión que estaba inactiva en el pool (porque la base se
+  // reinició o se cayó), el pool emite un evento "error". Sin este manejador, Node.js
+  // detiene toda la API; con él, el aviso queda en los registros y el pool abre
+  // conexiones nuevas cuando la base vuelve.
+  pool.on("error", (error) => {
+    console.error(`PostgreSQL cerró una conexión inactiva: ${error.message}`);
+  });
+  return pool;
 }
 
 // Ejecuta fn dentro de una transacción: o se guarda todo, o no se guarda nada.

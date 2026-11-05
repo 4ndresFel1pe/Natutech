@@ -22,6 +22,23 @@ test("PostgreSQL corta cualquier consulta que pase de 15 segundos", async () => 
   }
 });
 
+test("si PostgreSQL cierra una conexión inactiva, la API sigue funcionando", async () => {
+  const db = crearPool(process.env.DATABASE_URL);
+  const otra = crearPool(process.env.DATABASE_URL);
+  try {
+    const { rows } = await db.query("SELECT pg_backend_pid() AS pid");
+    // La conexión queda inactiva en el pool. Desde otra conexión se cierra a la fuerza,
+    // que es lo mismo que le pasa cuando PostgreSQL se reinicia o se detiene.
+    await otra.query("SELECT pg_terminate_backend($1)", [rows[0].pid]);
+    await new Promise((listo) => setTimeout(listo, 300)); // deja llegar el aviso de cierre
+    const despues = await db.query("SELECT 1 AS uno");
+    assert.equal(despues.rows[0].uno, 1);
+  } finally {
+    await db.end();
+    await otra.end();
+  }
+});
+
 test("sin base de datos, GET /salud responde 503 en pocos segundos", async () => {
   // 10.255.255.1 es una dirección privada sin servidor: sin tiempo de espera, la
   // conexión quedaría colgada.
