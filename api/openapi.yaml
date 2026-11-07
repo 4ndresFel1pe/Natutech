@@ -1,7 +1,7 @@
 openapi: 3.1.0
 
 info:
-  title: API de Natutech para el Vivero Las Acacias
+  title: API de Natutech para el vivero
   version: 0.4.2
   summary: Catálogo, inventario, pedidos y alertas de reabastecimiento por temporada.
   description: |
@@ -1573,7 +1573,7 @@ paths:
               administradora:
                 summary: La administradora del vivero entra al panel
                 value:
-                  correo: administracion@viverolasacacias.test
+                  correo: administracion@vivero.test
                   contrasena: cambie-esta-clave-2026
       responses:
         '201':
@@ -1590,8 +1590,8 @@ paths:
                     expira_en: '2026-10-01T16:00:00-05:00'
                     usuario:
                       id: 1eefb5c0-fe3f-4f14-a06f-c89649f9b43a
-                      nombre: Administración Vivero Las Acacias
-                      correo: administracion@viverolasacacias.test
+                      nombre: Administración del vivero
+                      correo: administracion@vivero.test
                       rol: administrador
                       activo: true
                       creado_en: '2026-08-04T09:00:00-05:00'

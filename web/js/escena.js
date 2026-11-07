@@ -1,4 +1,4 @@
-/* Vivero Las Acacias · carga, resortes y flor 3D (Canvas 2D, sin librerías) */
+/* Natutech · carga, resortes y flor 3D (Canvas 2D, sin librerías) */
 (() => {
 'use strict';
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;

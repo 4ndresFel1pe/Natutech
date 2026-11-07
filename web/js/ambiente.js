@@ -1,4 +1,4 @@
-/* Vivero Las Acacias · fondo vivo v2
+/* Natutech · fondo vivo v2
    Pétalos de orquídea y tulipán, tréboles, hojas verdes, hojas de otoño y polen luminoso.
    Todo se mueve: viento que respira, ráfagas, giro 3D, scroll con paralaje y puntero que las aparta.
    Reemplaza al ambiente.js anterior (mismo nombre, misma carga). */

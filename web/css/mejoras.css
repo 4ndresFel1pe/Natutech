@@ -1,4 +1,4 @@
-/* Vivero Las Acacias · capa visual v2 (se carga después de estilos.css) */
+/* Natutech · capa visual v2 (se carga después de estilos.css) */
 :root{--ease:cubic-bezier(0.23,1,0.32,1);--sombra:0 1px 2px rgb(19 59 33/.08),0 14px 30px -16px rgb(19 59 33/.4);--radio:18px;--noche:#0b2416}
 html{scroll-behavior:smooth;scroll-padding-top:5rem;accent-color:var(--color-hoja)}
 body{background:linear-gradient(#fff,#f3f8f0 45%);-webkit-tap-highlight-color:transparent;font-optical-sizing:auto;caret-color:var(--color-hoja)}

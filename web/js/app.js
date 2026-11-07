@@ -1,5 +1,5 @@
 /* =========================================================================
-   Natutech · Vivero Las Acacias · Lógica de las pantallas (Entregas 3 y 4)
+   Natutech · Lógica de las pantallas (Entregas 3 y 4)
 
    Un solo archivo para las doce pantallas. Cada página dice cuál es en
    <body data-pagina="...">, y al final del archivo se llama la función que le toca.
@@ -16,7 +16,7 @@
 
 const CONFIG = {
   rutaDatos: "datos/ejemplo.json",
-  nombreNegocio: "Vivero Las Acacias",
+  nombreNegocio: "Vivero",
   // Número de ejemplo. En el servidor se reemplaza por WHATSAPP_NUMERO del .env, que nginx
   // publica en /configuracion.json (decisión D17): el número real no va en el repositorio.
   whatsapp: "573000000000",
@@ -644,7 +644,7 @@ async function iniciarDetalle() {
   const producto = datos.productos.find((p) => p.id === id && p.visible_en_catalogo);
 
   if (!producto) {
-    document.title = "Producto no encontrado | Vivero Las Acacias";
+    document.title = "Producto no encontrado | Vivero";
     $("#migas-actual").textContent = "No encontrado";
     mostrarEn(
       zona,
@@ -661,7 +661,7 @@ async function iniciarDetalle() {
   const categoria = datos.categorias.find((c) => c.id === producto.categoria_id);
   const disponibilidad = disponibilidadPublica(producto);
 
-  document.title = `${producto.nombre} | Vivero Las Acacias, Yopal`;
+  document.title = `${producto.nombre} | Vivero`;
   $("#migas-categoria").replaceChildren(
     crear("a", { href: `index.html?categoria_id=${categoria.id}`, texto: categoria.nombre })
   );
@@ -1105,7 +1105,7 @@ async function iniciarFormulario() {
     if (!existente) {
       $("#titulo-formulario").textContent = "No encontramos ese producto";
       $("#migas-actual").textContent = "Producto no encontrado";
-      document.title = "Producto no encontrado | Panel del Vivero Las Acacias";
+      document.title = "Producto no encontrado | Panel del vivero";
       mostrarEn(
         zona,
         panelEstado("error", {
@@ -1121,7 +1121,7 @@ async function iniciarFormulario() {
     }
     $("#titulo-formulario").textContent = `Editar ${existente.nombre}`;
     $("#migas-actual").textContent = `Editar ${existente.nombre}`;
-    document.title = `Editar ${existente.nombre} | Panel del Vivero Las Acacias`;
+    document.title = `Editar ${existente.nombre} | Panel del vivero`;
     botonGuardar.textContent = "Guardar cambios";
     for (const campo of ["nombre", "nombre_cientifico", "categoria_id", "proveedor_id", "presentacion", "descripcion", "precio", "stock", "stock_minimo", "luz", "riego", "imagen_url"]) {
       formulario.elements[campo].value = existente[campo] ?? "";
@@ -1525,7 +1525,7 @@ async function iniciarPedidos() {
       return;
     }
     const prueba = pago.enlace_pago.includes("pub_test_");
-    const mensaje = `Hola, ${pedido.cliente_nombre}. Puede pagar su pedido de ${CONFIG.nombreNegocio} por ${formatoPrecio.format(pago.monto)} en este enlace seguro de Wompi: ${pago.enlace_pago}`;
+    const mensaje = `Hola, ${pedido.cliente_nombre}. Puede pagar su pedido del vivero por ${formatoPrecio.format(pago.monto)} en este enlace seguro de Wompi: ${pago.enlace_pago}`;
     const enviar = crear(
       "a",
       { clase: "boton", href: enlaceWhatsApp(mensaje, numeroWhatsApp(pedido.cliente_telefono)), target: "_blank", rel: "noopener" },

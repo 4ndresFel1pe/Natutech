@@ -1,4 +1,4 @@
-/* Vivero Las Acacias · mecánicas de AYRO CLEAN: carga por clic, hoja de WhatsApp, pestañas móviles y videos */
+/* Natutech · mecánicas de AYRO CLEAN: carga por clic, hoja de WhatsApp, pestañas móviles y videos */
 (() => {
 'use strict';
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -167,7 +167,7 @@ const sheetH = () => sheet.offsetHeight || 420, rubber = (o, d) => o * d * .55 /
 
 const armar = () => {
   const m = area.value.trim();
-  const texto = m ? (m !== inicial.trim() && !/^hola/i.test(m) ? 'Hola, Vivero Las Acacias 👋 Quiero consultar por: ' + m : m) : (inicial || 'Hola, Vivero Las Acacias 👋 Me gustaría consultar por una planta o flor.');
+  const texto = m ? (m !== inicial.trim() && !/^hola/i.test(m) ? 'Hola 👋 Quiero consultar por: ' + m : m) : (inicial || 'Hola 👋 Me gustaría consultar por una planta o flor.');
   go.href = num ? `https://wa.me/${num}?text=${encodeURIComponent(texto)}` : '#';
 };
 area.addEventListener('input', armar);
