@@ -1,5 +1,5 @@
 /* =========================================================================
-   Natutech · Vivero Las Acacias · Estilos del sitio (Entregas 2 y 3)
+   Natutech · Estilos del sitio (Entregas 2 y 3)
    Un solo archivo. Todos los colores, tamaños y espacios están en :root.
    ========================================================================= */
 
@@ -1337,8 +1337,8 @@ summary {
 }
 
 /* ---------- Aviso de proyecto académico ---------- */
-/* Va arriba en todas las páginas: el sitio está publicado y usa el nombre de un vivero
-   real solo como caso de estudio, así que nadie debe confundirlo con su tienda. */
+/* Va arriba en todas las páginas: el sitio está publicado en internet y es un trabajo
+   académico, así que nadie debe confundirlo con una tienda real. */
 .aviso-academico {
   background: var(--color-ambar-clara);
   color: var(--color-tinta);

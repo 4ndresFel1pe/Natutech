@@ -1,7 +1,7 @@
 {
   "name": "natutech-servidor",
   "version": "0.4.2",
-  "description": "API de Natutech para el Vivero Las Acacias: implementa api/openapi.yaml",
+  "description": "API de Natutech para el vivero: implementa api/openapi.yaml",
   "private": true,
   "type": "module",
   "engines": {
