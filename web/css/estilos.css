@@ -1335,3 +1335,19 @@ summary {
   line-height: 1.15rem;
   text-align: center;
 }
+
+/* ---------- Aviso de proyecto académico ---------- */
+/* Va arriba en todas las páginas: el sitio está publicado y usa el nombre de un vivero
+   real solo como caso de estudio, así que nadie debe confundirlo con su tienda. */
+.aviso-academico {
+  background: var(--color-ambar-clara);
+  color: var(--color-tinta);
+  border-bottom: 1px solid var(--color-ambar);
+  font-size: var(--texto-s);
+  line-height: 1.45;
+}
+
+.aviso-academico p {
+  margin-block: 0;
+  padding-block: var(--espacio-2);
+}
