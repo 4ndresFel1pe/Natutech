@@ -1,0 +1,22 @@
+Fotos reales de los productos (fondo blanco, JPG, ~800x600 px).
+Cada archivo debe llamarse exactamente así:
+
+monstera-deliciosa.jpg                        Monstera deliciosa (Monstera deliciosa)
+sansevieria-lengua-de-suegra.jpg              Sansevieria (lengua de suegra) (Dracaena trifasciata)
+espatifilo-cuna-de-moises.jpg                 Espatifilo (cuna de Moisés) (Spathiphyllum wallisii)
+palma-areca.jpg                               Palma areca (Dypsis lutescens)
+anturio-rojo.jpg                              Anturio rojo (Anthurium andraeanum)
+orquidea-cattleya.jpg                         Orquídea Cattleya (Cattleya trianae)
+croto.jpg                                     Croto (Codiaeum variegatum)
+veranera-fucsia.jpg                           Veranera fucsia (Bougainvillea glabra)
+ixora-roja.jpg                                Ixora roja (Ixora coccinea)
+heliconia-platanillo.jpg                      Heliconia (platanillo) (Heliconia psittacorum)
+crisantemo-amarillo-en-matera.jpg             Crisantemo amarillo en matera (Chrysanthemum morifolium)
+suculenta-echeveria.jpg                       Suculenta echeveria (Echeveria elegans)
+cactus-san-pedro.jpg                          Cactus San Pedro (Echinopsis pachanoi)
+poto.jpg                                      Poto (Epipremnum aureum)
+limon-tahiti-injertado.jpg                    Limón Tahití injertado (Citrus × latifolia)
+mango-tommy-injertado.jpg                     Mango Tommy injertado (Mangifera indica)
+matera-de-barro-n-12.jpg                      Matera de barro N.º 12
+tierra-abonada.jpg                            Tierra abonada
+gallinaza-compostada.jpg                      Gallinaza compostada
