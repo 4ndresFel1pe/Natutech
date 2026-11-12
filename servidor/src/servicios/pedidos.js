@@ -93,7 +93,7 @@ export async function crear(pool, entrada, { soloVisibles = false, reservadoHast
       const producto = porId.get(detalle.producto_id);
       if (!producto) {
         problemas.push({ campo: `detalles[${i}].producto_id`, problema: "no existe un producto con ese identificador" });
-      } else if (producto.stock < detalle.cantidad) {
+      } else if (producto.stock < 0) {
         problemas.push({
           campo: `detalles[${i}].cantidad`,
           problema: `se piden ${detalle.cantidad} de «${producto.nombre}» y hay ${producto.stock} en stock`,
